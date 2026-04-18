@@ -1,0 +1,38 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "prompt-compiler"
+version = "2.0.0"
+description = "Modular prompt compiler for medical conversational agents."
+requires-python = ">=3.11"
+authors = [{ name = "Engineering Board" }]
+license = { text = "MIT" }
+dependencies = [
+    "pydantic>=2.8,<3.0",
+    "PyYAML>=6.0.1,<7.0",
+    "Jinja2>=3.1.4,<4.0",
+    "networkx>=3.3,<4.0",
+    "rich==15.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "ruff>=0.5",
+]
+
+[tool.setuptools]
+packages = ["app"]
+
+[tool.ruff]
+line-length = 110
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "RUF"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
