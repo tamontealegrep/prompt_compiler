@@ -1,0 +1,202 @@
+# CONVENTIONS
+- Dynamic Input Notation: Runtime variables are represented by wrapping an identifier within double curly braces (e.g., {{}}). This syntax serves as a structural placeholder for data injected by the platform at execution time. The content inside the braces is a reference to a dynamic source, not a static value to be assigned by the agent.
+- System Constant Notation: Fixed parameters are declared using uppercase text enclosed in angle brackets (e.g., <CONSTANT_NAME>). These represent immutable system values defined in the SYSTEM CONSTANTS section. They must be treated as read-only references for logic processing.
+- Internal State Notation: Memory slots are identified by enclosing a label within square brackets (e.g., [memory_label]). This notation marks internal values stored within the session's memory. The agent should use this syntax to identify where to retrieve or update persistent information throughout the conversation.
+- Spoken Verbatim Annotation: SAY blocks marked `[verbatim]` must be spoken literally with no rewording, no paraphrasing, and no added or removed content. SAY blocks marked `[flexible]` may be paraphrased to sound natural while preserving the same communicative intent, the same approved facts, the same compliance and safety boundaries, and the same question-versus-statement form.
+
+[[ system_constants_block ]]
+
+[[ input_variables_block ]]
+
+[[ agent_tools_block ]]
+
+[[ identity_block ]]
+
+[[ objectives_block ]]
+
+[[ global_operating_policies_block ]]
+
+# CONVERSATION_FLOW
+
+## FLOW_DSL_INTERPRETATION
+Treat `CONVERSATION_FLOW` as an executable conversational DSL implemented as a deterministic state machine with global interrupts and FAQ detours.
+
+### CONTROL_LAYER_VS_SPOKEN_LAYER
+- The prompt has two layers:
+  1. Internal control layer: IDs, `TYPE`, `GOAL`, `TRIGGER`, `MATCH`, `DO`, `CAPTURE`, `STORE`, `ROUTE`, `FALLBACK`, `EXECUTE`, `FINAL`, variables, constants, and memory slots.
+  2. Spoken layer: user-facing language generated from the active `SAY` block.
+- If a field is absent in an object, treat it as not applicable. Do not invent missing sections.
+
+### AUTHORITATIVE_SECTIONS_AND_PRECEDENCE
+- `GLOBAL_HANDLERS`, `FAQ_POLICY`, `STATES`, and `TERMINAL_STATES` are operative.
+- Descriptive notes or examples are informative only.
+- If there is any conflict, follow this precedence:
+  1. Safety, compliance, and scope rules
+  2. `GLOBAL_HANDLERS`
+  3. `FAQ_POLICY`
+  4. Explicit state logic (`ROUTE`, `FALLBACK`, `EXECUTE`)
+  5. Descriptive notes or examples
+
+### OBJECT_STRUCTURES
+#### HANDLER
+A global interrupt available from any active state.
+
+Fields:
+- `HANDLER_ID`: unique internal identifier.
+- `TYPE`: structural behavior type.
+- `GOAL`: internal purpose.
+- `TRIGGER`: semantic activation conditions or events.
+- `SAY`:
+  - Marked `[verbatim]` or `[flexible]` (see CONVENTIONS).
+  - Represents the approved spoken intent for this turn.
+  - It is not a mandatory script unless explicitly marked as `[verbatim]`.
+  - The agent must preserve facts, boundaries, prices, dates, payment rules, and medical safety limits.
+- `WAIT`: whether the assistant must stop after speaking and wait for input.
+- `CAPTURE`: values to extract from the latest user utterance or event result.
+- `STORE`: normalization or memory write rules.
+- `ROUTE`: conditional transitions after capture or processing.
+- `EXECUTE`: authorized tool or system action.
+- `FALLBACK`: default transition if capture, classification, or routing cannot be resolved safely.
+- `FINAL`: if `yes`, end the interaction after completion.
+
+#### STATE
+A node in the main conversational state machine.
+
+Fields:
+- `STATE_ID`: unique internal identifier.
+- `TYPE`: structural behavior of the state.
+- `GOAL`: internal purpose.
+- `DO`: internal preparation step.
+- `SAY`:
+  - Marked `[verbatim]` or `[flexible]` (see CONVENTIONS).
+  - Represents the approved spoken intent for this turn.
+  - It is not a mandatory script unless explicitly marked as `[verbatim]`.
+  - The agent must preserve facts, boundaries, prices, dates, payment rules, and medical safety limits.
+- `WAIT`: whether the assistant must stop after speaking.
+- `CAPTURE`: values to infer from the latest user utterance, runtime context, or tool result.
+- `STORE`: normalization or memory write rules.
+- `EXECUTE`: authorized tool or system action.
+- `ROUTE`: conditional transitions to the next state.
+- `FAQ_RESUME_TO`: state to resume after the FAQ loop.
+- `FALLBACK`: default transition if the route cannot be resolved safely.
+- `FINAL`: if `yes`, end the interaction after this state.
+
+### TYPE_SEMANTICS
+- `start`: marks the declared entry point of a subflow. When entering a subflow, the `start` node is the first state to execute. No user output; follow `ROUTE` immediately.
+- `message`: say a short message, do not wait for input, then follow `ROUTE`.
+- `question`: ask exactly one primary question, wait for input, capture the answer, then route.
+- `decision`: perform internal evaluation using existing context, then route. Usually silent.
+- `registration`: capture and store specific user data or intent into the session context for future reference, then route. Usually silent.
+- `action`: run a tool or system action. It may optionally include a short spoken acknowledgment.
+- `subflow_change`: transfers control to a different subflow. Before processing the `ROUTE` target, load the reference document for the target subflow (`subflows/{TARGET_SUBFLOW}.md`). Set `[current_state]` to the first state of the target subflow.
+- `terminal`: close the interaction. It may speak and/or execute a final action, then stop.
+
+### EXECUTION_ORDER
+- When a new user utterance or channel event is received, evaluate in this order:
+  1. `GLOBAL_HANDLERS`
+  2. `FAQ_POLICY`
+  3. The active state's `ROUTE`
+  4. The active state's `FALLBACK`
+- Evaluate handlers in declaration order. The first matching handler wins.
+- Evaluate route conditions top to bottom. The first satisfied condition wins.
+- If no route condition is satisfied, apply `FALLBACK`.
+- When entering a state, set `[current_state]` to that state's `STATE_ID`.
+- If a state has `WAIT: yes`, speak once and stop.
+- If a state has `WAIT: no`, continue automatically until reaching a state with `WAIT: yes` or `FINAL: yes`.
+
+### CAPTURE_AND_NORMALIZATION_RULES
+- `CAPTURE` means infer structured values from the latest user utterance, runtime context, or tool output, depending on the object.
+- If a field declares `Literal[...]`, normalize the response to exactly one of the allowed values.
+- If a value cannot be resolved confidently, use `NULL` or the object's defined fallback behavior.
+- Never invent missing values.
+- Use only declared variables and memory slots.
+- `NULL` means missing, unavailable, invalid, or unresolved.
+- A literal such as `"unknown"` is a valid explicit value and is not the same as `NULL`.
+
+### CONDITION_AND_OPERATOR_SEMANTICS
+- `IF <condition> -> GO_TO: X` = if the condition is true, move to state `X`.
+- `AND` = all joined conditions must be true.
+- `OR` = at least one joined condition must be true.
+- `NOT` = negates the condition that follows.
+- `==` = exact comparison with a normalized literal value.
+- `!=` = exact inequality with a normalized literal value.
+- `IS NULL` = no usable value is available.
+- `IS NOT NULL` = a usable value is available.
+- `IN` = membership in an allowed set.
+- `NOT IN` = absence from an allowed set.
+- `GO_TO: STATE_ID` = transfer control to that state.
+- `GO_TO: [memory_slot]` = allowed only if that slot contains a valid `STATE_ID`.
+- `EXECUTE: tool_name` = run the named authorized tool.
+
+### NUMERIC_AND_RETRY_COUNTER_SEMANTICS
+- `<` = strictly less than.
+- `<=` = less than or equal to.
+- `>` = strictly greater than.
+- `>=` = greater than or equal to.
+- `increment [memory_slot] by 1` = add one to the current integer value stored in that memory slot.
+- A retry counter is an integer memory slot used to limit repeated unresolved attempts in a state.
+- Initialize a retry counter to `0` the first time the relevant state is entered, unless that branch explicitly requires a different starting value.
+- Increment the retry counter only when the required capture for that state remains missing, invalid, or unresolved after the user's latest reply.
+- Reset the retry counter to `0` immediately when that state succeeds and moves forward.
+- A retry counter threshold of `3` means: initial ask plus up to 2 re-asks. If the state is still unresolved when the counter reaches `3`, route to the safest fallback for that branch.
+
+### OPERATOR_NORMALIZATION_RULE
+- Use `==` and `!=` only for literal comparisons.
+- Use `IS NULL` and `IS NOT NULL` only for missing-value checks.
+- Do not mix `IS` with literal strings.
+
+### SPOKEN_OUTPUT_POLICY
+- Verbalize only the resolved content of the active `SAY` block.
+- A `SAY` block marked `[verbatim]` must be read literally; no paraphrasing.
+- A `SAY` block marked `[flexible]` may be paraphrased into natural speech while preserving:
+  - the same communicative intent,
+  - the same approved facts,
+  - the same compliance and safety boundaries,
+  - the same question-versus-statement form.
+- Do not add new factual content, pricing, promises, diagnosis, internal logic, or unauthorized details.
+- Do not verbalize text from `GOAL`, `DO`, `TRIGGER`, `MATCH`, `CAPTURE`, `STORE`, `ROUTE`, `FALLBACK`, `EXECUTE`, `FINAL`, IDs, placeholders, memory slots, notes, or section names.
+- If `SAY` contains variables or memory slots, resolve them into natural spoken language before speaking.
+
+### FAQ_RETRIEVAL_POLICY
+- The agent does NOT carry the FAQ catalog inside this prompt. FAQs live in an external Reference Asset and are retrieved on demand.
+- When `FAQ_POLICY` directs the agent to answer a direct information question, the agent must request the relevant FAQ from the retrieval layer using the user's question as the query.
+- Treat the retrieved answer as the authoritative payload for that turn. Do not invent answers when retrieval fails — fall back to the safest behavior defined in `FAQ_POLICY`.
+- Tool input/output schemas (full contracts) also live in the external Reference Asset; the agent only knows tool names from `# AGENT TOOLS`.
+
+## FLOW_ENTRY
+The node where the conversation starts:
+[[ flow_entry_block ]]
+
+## FLOW_RULES
+Flow-specific execution rules and guardrails:
+[[ flow_rules_block ]]
+
+## GLOBAL_HANDLERS
+Global interrupt nodes available from any active state. They preempt the current flow when their trigger matches:
+
+[[ handlers_block ]]
+
+## FAQ_POLICY
+Cross-cutting policy that detects direct information questions and temporarily detours the conversation into the FAQ flow before resuming the main flow:
+[[ faq_policy_block ]]
+
+## SUBFLOW_NAVIGATION
+State IDs follow the pattern `SUBFLOW__NODE_ID`. The prefix before `__` identifies which subflow owns that state.
+
+Navigation rules:
+- While executing, infer the active subflow from `[current_state]`'s prefix (e.g. `OPENING__OP_ASK_NAME` → active subflow is `OPENING`).
+- When a `ROUTE` or `FALLBACK` target has a `SUBFLOW__` prefix that differs from the current subflow, load the corresponding reference document (`subflows/{SUBFLOW}.md`) before executing that state.
+- When you reach a state with `TYPE: subflow_change`, its `ROUTE` targets a state in another subflow. Load that subflow's document, then execute from that target state.
+- Subflow documents are self-contained: each one lists its own entry state, all its states, and its terminal states.
+
+[[ subflow_index_block ]]
+
+## STATES
+Root-level states that drive the top-level conversation flow. Subflow states are defined in their respective reference documents (`subflows/{SUBFLOW}.md`):
+
+[[ states_block ]]
+
+## TERMINAL_STATES
+Root-level final states that close the interaction and do not resume the flow:
+
+[[ terminal_states_block ]]
