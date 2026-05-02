@@ -1,0 +1,39 @@
+# Medical compliance profile (Spanish-speaking markets).
+#
+# Each rule has:
+#   rule_id     — stable identifier matched against ^[A-Z]+_[0-9]+$
+#   description — human-readable summary surfaced in validation reports
+#   severity    — "error" (blocks the build) or "warning" (advisory)
+#   check       — name of a function registered in
+#                 app.validators._COMPLIANCE_CHECKERS
+#
+# To add a new rule:
+#   1. Implement the checker in app/validators.py and register it in the
+#      _COMPLIANCE_CHECKERS dict.
+#   2. Append a rule entry below referencing the new check name.
+#   3. No other code change is required (the validator iterates this list
+#      dynamically).
+
+profile_id: medical_es
+display_name: "Medical Compliance - Spanish"
+
+rules:
+  - rule_id: MED_001
+    description: "Los bloques SAY no pueden contener promesas diagnósticas."
+    severity: error
+    check: no_diagnostic_promises
+
+  - rule_id: MED_002
+    description: "Debe existir al menos un nodo con disclaimer legal o de privacidad."
+    severity: warning
+    check: requires_disclaimer_node
+
+  - rule_id: MED_003
+    description: "Los bloques SAY no pueden garantizar precios ni resultados."
+    severity: error
+    check: no_price_guarantees
+
+  - rule_id: MED_004
+    description: "Las reglas de compliance y scope no pueden estar vacías."
+    severity: error
+    check: scope_rules_required

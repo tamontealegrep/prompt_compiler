@@ -1,0 +1,47 @@
+# Async text channel profile — asynchronous, message-based conversations
+# such as email, SMS, or WhatsApp where there is no expectation of an
+# immediate reply.
+#
+# Compared to chat:
+#
+# - Adds DELIVERY_WINDOW_POLICY (when may the agent reach out).
+# - Adds THREAD_CONTINUITY_RULES (how to reference earlier messages in the
+#   thread when the user replies hours or days later).
+# - Adds ATTACHMENT_HANDLING (how to deal with images, PDFs, audio notes).
+# - Drops TOOL_WAITING_BEHAVIOR — async channels never block on tools.
+
+channel: async_text
+display_name: Async Text Channel
+
+policy_sections:
+  - name: style_and_async_rules
+    label: STYLE_AND_ASYNC_RULES
+    required: true
+
+  - name: response_length_rules
+    label: RESPONSE_LENGTH_RULES
+    required: false
+
+  - name: formatting_rules
+    label: FORMATTING_RULES
+    required: false
+
+  - name: delivery_window_policy
+    label: DELIVERY_WINDOW_POLICY
+    required: false
+
+  - name: thread_continuity_rules
+    label: THREAD_CONTINUITY_RULES
+    required: false
+
+  - name: attachment_handling
+    label: ATTACHMENT_HANDLING
+    required: false
+
+  - name: compliance_and_scope_rules
+    label: COMPLIANCE_AND_SCOPE_RULES
+    required: true
+
+  - name: data_and_variable_rules
+    label: DATA_AND_VARIABLE_RULES
+    required: true

@@ -1,0 +1,39 @@
+# Chat channel profile — synchronous text conversation (web chat widget,
+# in-app chat, etc.). Compared to voice, chat:
+#
+# - Has no pronunciation, silence-recovery, barge-in, pause-tolerance or
+#   natural-voice rules (none of those exist in text).
+# - Adds STYLE_AND_CHAT_RULES (replaces STYLE_AND_VUI_RULES).
+# - Adds optional RESPONSE_LENGTH_RULES and FORMATTING_RULES (markdown,
+#   line breaks, emoji policy).
+#
+# Compliance and data/variable rules remain required because they are
+# channel-agnostic safety guarantees.
+
+channel: chat
+display_name: Chat Channel
+
+policy_sections:
+  - name: style_and_chat_rules
+    label: STYLE_AND_CHAT_RULES
+    required: true
+
+  - name: response_length_rules
+    label: RESPONSE_LENGTH_RULES
+    required: false
+
+  - name: formatting_rules
+    label: FORMATTING_RULES
+    required: false
+
+  - name: tool_waiting_behavior
+    label: TOOL_WAITING_BEHAVIOR
+    required: false
+
+  - name: compliance_and_scope_rules
+    label: COMPLIANCE_AND_SCOPE_RULES
+    required: true
+
+  - name: data_and_variable_rules
+    label: DATA_AND_VARIABLE_RULES
+    required: true

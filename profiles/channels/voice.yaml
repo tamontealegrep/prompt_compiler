@@ -1,0 +1,63 @@
+# Voice channel profile — declares which policy sections are valid for a
+# voice agent and which are required for compilation to succeed.
+#
+# The compiler reads this file from profiles/channels/voice.yaml whenever
+# CompilationParams.channel == ChannelType.VOICE. Section names listed here
+# are the ONLY ones a voice agent's policies.yaml (and any included
+# fragments) may declare. A typo in any agent yaml will surface as a
+# RuntimeError at merge time because the section is unknown to the profile.
+#
+# Required sections (required: true) MUST contain at least one rule after
+# fragment merging, otherwise compilation fails with REQUIRED_POLICY_SECTION_EMPTY.
+
+channel: voice
+display_name: Voice Channel
+
+policy_sections:
+  - name: name_handling_rules
+    label: NAME_HANDLING_RULES
+    required: true
+
+  - name: style_and_vui_rules
+    label: STYLE_AND_VUI_RULES
+    required: true
+
+  - name: natural_voice_style_rules
+    label: NATURAL_VOICE_STYLE_RULES
+    required: false
+
+  - name: interruption_and_barge_in_policy
+    label: INTERRUPTION_AND_BARGE_IN_POLICY
+    required: false
+
+  - name: silence_recovery_policy
+    label: SILENCE_RECOVERY_POLICY
+    required: false
+
+  - name: pause_tolerance_rules
+    label: PAUSE_TOLERANCE_RULES
+    required: false
+
+  - name: tool_waiting_behavior
+    label: TOOL_WAITING_BEHAVIOR
+    required: false
+
+  - name: payment_rules
+    label: PAYMENT_RULES
+    required: false
+
+  - name: pronunciation_rules
+    label: PRONUNCIATION_RULES
+    required: true
+
+  - name: date_resolution_rules
+    label: DATE_RESOLUTION_RULES
+    required: false
+
+  - name: compliance_and_scope_rules
+    label: COMPLIANCE_AND_SCOPE_RULES
+    required: true
+
+  - name: data_and_variable_rules
+    label: DATA_AND_VARIABLE_RULES
+    required: true
