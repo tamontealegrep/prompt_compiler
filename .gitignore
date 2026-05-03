@@ -39,3 +39,7 @@ Thumbs.db
 # Secrets
 .env
 .env.local
+
+# Agent config
+configs/
+shared/
