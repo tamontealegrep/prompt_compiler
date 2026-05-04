@@ -106,8 +106,15 @@ def compile_agent(
 
     # 7. Rendering.
     template_path = _project_root() / spec.manifest.template_path
-    system_prompt = render_prompt(classified, template_path, channel_profile)
-    subflow_documents = render_all_subflow_documents(spec)
+    system_prompt = render_prompt(
+        classified, template_path, channel_profile,
+        embed_subflows=params.embed_subflows,
+    )
+    subflow_documents = (
+        {}
+        if params.embed_subflows
+        else render_all_subflow_documents(spec)
+    )
 
     reference_asset_markdown: str | None = None
     reference_asset_json: dict | None = None

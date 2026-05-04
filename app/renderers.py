@@ -645,13 +645,22 @@ def render_reference_asset_json(classified: ClassifiedSpec) -> dict[str, Any]:
 
 
 def build_render_context(
-    classified: ClassifiedSpec, channel_profile: ChannelProfile
+    classified: ClassifiedSpec,
+    channel_profile: ChannelProfile,
+    *,
+    embed_subflows: bool = False,
 ) -> dict[str, str]:
     """Assemble the dict of named blocks consumed by the Jinja2 template.
 
-    ``states_block`` and ``terminal_states_block`` contain only root-level
-    states (no ``__`` in the ID). Subflow states are rendered separately
-    into per-subflow reference documents by ``render_all_subflow_documents``.
+    When ``embed_subflows`` is False (default), ``states_block`` and
+    ``terminal_states_block`` contain only root-level states (no ``__`` in
+    the ID) and subflow states are rendered separately into per-subflow
+    reference documents by ``render_all_subflow_documents``.
+
+    When ``embed_subflows`` is True, *all* states (root and subflow) are
+    inlined into the system prompt.  The ``subflow_index_block`` is omitted
+    because the navigation table becomes redundant — every state is already
+    present in the single file.
     """
     spec = classified.spec
     return {
@@ -667,9 +676,9 @@ def build_render_context(
         "flow_rules_block": render_flow_rules(spec),
         "handlers_block": render_handlers(spec),
         "faq_policy_block": render_faq_policy(spec),
-        "subflow_index_block": render_subflow_index(spec),
-        "states_block": render_root_states(spec),
-        "terminal_states_block": render_root_terminal_states(spec),
+        "subflow_index_block": "" if embed_subflows else render_subflow_index(spec),
+        "states_block": render_states(spec) if embed_subflows else render_root_states(spec),
+        "terminal_states_block": render_terminal_states(spec) if embed_subflows else render_root_terminal_states(spec),
     }
 
 
@@ -677,6 +686,8 @@ def render_prompt(
     classified: ClassifiedSpec,
     template_path: Path,
     channel_profile: ChannelProfile,
+    *,
+    embed_subflows: bool = False,
 ) -> str:
     """Render the System Prompt using the Jinja2 template at ``template_path``.
 
@@ -684,6 +695,9 @@ def render_prompt(
     instead of the default ``{{`` / ``}}`` to avoid clashing with the
     DSL's runtime-variable notation, which uses double curly braces in
     user-facing text.
+
+    When ``embed_subflows`` is True all subflow states are inlined in the
+    rendered prompt instead of being deferred to separate reference files.
     """
     if not template_path.exists():
         raise FileNotFoundError(f"No existe el template: {template_path}")
@@ -698,5 +712,5 @@ def render_prompt(
     )
 
     template = env.get_template(template_path.name)
-    context = build_render_context(classified, channel_profile)
+    context = build_render_context(classified, channel_profile, embed_subflows=embed_subflows)
     return template.render(**context).strip() + "\n"

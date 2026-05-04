@@ -1,4 +1,4 @@
-"""Pydantic schemas for the modular prompt compiler.
+"""Pydantic v2 schemas for the modular prompt compiler.
 
 This module defines all the typed data models used by the loaders, classifier,
 validator, deduplicator, renderer, and compiler. Schemas are split into:
@@ -152,6 +152,10 @@ class CompilationParams:
         ]
     )
     compliance_profile: str | None = None
+    embed_subflows: bool = True
+    """When True, all subflow states are rendered inline in the system prompt
+    and no separate subflow reference documents are produced.  Use this when
+    the deployment platform expects a single self-contained file."""
 
 
 # ---------------------------------------------------------------------------

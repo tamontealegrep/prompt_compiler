@@ -101,6 +101,15 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Treat validator warnings as build errors.",
     )
     parser.add_argument(
+        "--split-subflows",
+        action="store_true",
+        help=(
+            "Write subflow states as separate subflows/ reference documents "
+            "instead of embedding them inline in system_prompt.md.  By default "
+            "all states are embedded in a single file."
+        ),
+    )
+    parser.add_argument(
         "--dist-dir",
         default="dist",
         help="Output root directory (default: dist).",
@@ -119,6 +128,7 @@ def _params_from_args(args: argparse.Namespace) -> CompilationParams:
             ReferenceAssetFormat(f) for f in args.reference_formats
         ],
         compliance_profile=args.compliance_profile,
+        embed_subflows=not args.split_subflows,
     )
 
 

@@ -237,6 +237,7 @@ _DEFAULT_OPTS: dict = {
     "compliance_profile": None,
     "fail_on_warnings": False,
     "no_reference_asset": False,
+    "embed_subflows": True,
 }
 
 
@@ -324,6 +325,11 @@ def _configure_opts(current: dict | None = None) -> dict:
         default=opts.get("fail_on_warnings", False),
     )
 
+    opts["embed_subflows"] = _ask_yn(
+        "¿Embeber subflows en el system_prompt? (archivo único, sin carpeta subflows/)",
+        default=opts.get("embed_subflows", True),
+    )
+
     return opts
 
 
@@ -348,6 +354,9 @@ def _build_cmd(config_name: str, opts: dict) -> list[str]:
 
     if opts.get("fail_on_warnings"):
         cmd += ["--fail-on-warnings"]
+
+    if not opts.get("embed_subflows", True):
+        cmd += ["--split-subflows"]
 
     return cmd
 
