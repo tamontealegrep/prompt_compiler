@@ -35,7 +35,7 @@ pip install -r requirements.txt
 ### 1. Create your agent config directory
 
 ```bash
-mkdir -p configs/my_agent
+mkdir -p agents/defs/my_agent
 ```
 
 ### 2. Add the required YAML files
@@ -45,7 +45,7 @@ At minimum you need `manifest.yaml` and the core files it references. See [Agent
 ### 3. Compile
 
 ```bash
-python build_prompt.py configs/my_agent --channel voice --verbosity standard
+python build_prompt.py agents/defs/my_agent --channel voice --verbosity standard
 ```
 
 ### 4. Inspect output
@@ -79,14 +79,14 @@ dist/my_agent/
 │   ├── mermaid_parser.py        # Parses Mermaid source → SubflowTemplate scaffolds
 │   └── utils.py                 # Regex helpers for variables, constants, slots, targets
 │
-├── configs/                     # Agent configurations (one directory per agent)
-│
-├── shared/                      # Project-wide reusable YAML fragments
-│   ├── tools/                   # Tool declarations
-│   ├── tool_contracts/          # Full I/O schemas for tools
-│   ├── memory_slots/            # Slot definitions
-│   ├── policies/                # Policy rule fragments
-│   └── subflows/                # SubflowTemplate YAML files
+├── agents/                      # Agent definitions and shared assets
+│   ├── defs/                    # Individual agent YAML definitions (one dir per agent_id)
+│   └── shared/                  # Project-wide reusable YAML fragments
+│       ├── tools/               # Tool declarations
+│       ├── tool_contracts/      # Full I/O schemas for tools
+│       ├── memory_slots/        # Slot definitions
+│       ├── policies/            # Policy rule fragments
+│       └── subflows/            # SubflowTemplate YAML files
 │
 ├── profiles/                    # Channel and compliance profiles
 │   ├── channels/
@@ -116,7 +116,7 @@ python build_prompt.py <config_dir> [options]
 
 | Argument | Default | Description |
 |---|---|---|
-| `config_dir` | *(required)* | Path to the agent's config directory (e.g. `configs/my_agent`) |
+| `config_dir` | *(required)* | Path to the agent's config directory (e.g. `agents/defs/my_agent`) |
 | `--channel` | `voice` | Channel profile: `voice`, `chat`, or `async_text` |
 | `--verbosity` | `standard` | Output detail level: `minimal`, `standard`, or `verbose` |
 | `--reference-formats` | `markdown json` | Reference asset formats to produce |
@@ -175,7 +175,7 @@ A menu-driven terminal interface for:
 
 ## Agent Config Files
 
-Each agent lives in its own directory under `configs/`. The directory must contain the following files:
+Each agent lives in its own directory under `agents/defs/`. The directory must contain the following files:
 
 | File | Purpose |
 |---|---|
@@ -188,7 +188,7 @@ Each agent lives in its own directory under `configs/`. The directory must conta
 | `context.yaml` | Company context, approved services, process steps |
 | `policies.yaml` | Dynamic policy sections (filtered by the active channel profile) |
 
-The manifest additionally references include files (states, handlers, FAQs, rules) and shared assets from `shared/`.
+The manifest additionally references include files (states, handlers, FAQs, rules) and shared assets from `agents/shared/`.
 
 See [Agent Creation Guide](AGENT_CREATION_GUIDE.md) for detailed field documentation and examples.
 
@@ -196,15 +196,15 @@ See [Agent Creation Guide](AGENT_CREATION_GUIDE.md) for detailed field documenta
 
 ## Shared Assets
 
-Files in `shared/` are available to any agent via manifest includes:
+Files in `agents/shared/` are available to any agent via manifest includes:
 
 | Directory | YAML schema | Purpose |
 |---|---|---|
-| `shared/tools/` | Tool declarations | Names and descriptions of callable tools |
-| `shared/tool_contracts/` | Tool contract schemas | Full input/output schemas for tools |
-| `shared/memory_slots/` | Slot definitions | Memory slot declarations reused across agents |
-| `shared/policies/` | Policy fragments | Rule blocks merged into agent policy sections |
-| `shared/subflows/` | SubflowTemplate files | Parametric subflows instantiated per agent |
+| `agents/shared/tools/` | Tool declarations | Names and descriptions of callable tools |
+| `agents/shared/tool_contracts/` | Tool contract schemas | Full input/output schemas for tools |
+| `agents/shared/memory_slots/` | Slot definitions | Memory slot declarations reused across agents |
+| `agents/shared/policies/` | Policy fragments | Rule blocks merged into agent policy sections |
+| `agents/shared/subflows/` | SubflowTemplate files | Parametric subflows instantiated per agent |
 
 ---
 

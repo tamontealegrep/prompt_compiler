@@ -58,10 +58,10 @@ Token conventions used in YAML text fields:
 
 ## Directory layout
 
-Create a directory under `configs/` named after your agent ID (no spaces, use underscores):
+Create a directory under `agents/defs/` named after your agent ID (no spaces, use underscores):
 
 ```
-configs/
+agents/defs/
 └── my_agent/
     ├── manifest.yaml          # Required — root config
     ├── constants.yaml         # Required
@@ -94,7 +94,7 @@ start_at: WELCOME
 # Optional — memory slots that can hold dynamic GO_TO targets
 dynamic_state_slots: []
 
-# Include files — paths relative to configs/my_agent/
+# Include files — paths relative to agents/defs/my_agent/
 includes:
   handlers:
     - handlers.yaml
@@ -109,13 +109,13 @@ includes:
   faq_policy:
     - faq_policy.yaml
   tools:
-    - ../../shared/tools/my_tools.yaml      # shared tools
+    - ../../agents/shared/tools/my_tools.yaml      # shared tools
   tool_contracts:
-    - ../../shared/tool_contracts/my_contracts.yaml
+    - ../../agents/shared/tool_contracts/my_contracts.yaml
   memory_slots:
-    - ../../shared/memory_slots/common.yaml # shared slots
+    - ../../agents/shared/memory_slots/common.yaml # shared slots
   policies:
-    - ../../shared/policies/common_rules.yaml
+    - ../../agents/shared/policies/common_rules.yaml
 
 # Subflow instances — each entry instantiates a SubflowTemplate
 subflow_instances: []
@@ -125,7 +125,7 @@ subflow_instances: []
 - `agent_id` must match the directory name exactly.
 - `start_at` must be a `state_id` that exists in one of the loaded state files.
 - All paths in `includes` are relative to the agent config directory.
-- Use `../../shared/...` to reference project-level shared files.
+- Use `../../agents/shared/...` to reference project-level shared files.
 
 ---
 
@@ -501,11 +501,11 @@ faq_policy:
 
 ## Shared assets
 
-Files in `shared/` are referenced via includes in the manifest using relative paths (`../../shared/...`). They are merged at load time alongside agent-specific files.
+Files in `agents/shared/` are referenced via includes in the manifest using relative paths (`../../agents/shared/...`). They are merged at load time alongside agent-specific files.
 
 ### tools and tool_contracts
 
-**`shared/tools/my_tools.yaml`** — declares callable tools:
+**`agents/shared/tools/my_tools.yaml`** — declares callable tools:
 
 ```yaml
 tools:
@@ -515,7 +515,7 @@ tools:
     description: "Retrieves the current balance for a customer account."
 ```
 
-**`shared/tool_contracts/my_contracts.yaml`** — full I/O schemas for tools:
+**`agents/shared/tool_contracts/my_contracts.yaml`** — full I/O schemas for tools:
 
 ```yaml
 tool_contracts:
@@ -578,7 +578,7 @@ These are merged with the agent-level `memory_slots.yaml`. Duplicate slot names 
 
 Policy rule fragments merged into `policies.yaml`:
 
-**`shared/policies/common_rules.yaml`**:
+**`agents/shared/policies/common_rules.yaml`**:
 
 ```yaml
 policies:
@@ -600,11 +600,11 @@ See the next section for the full SubflowTemplate specification.
 
 ## Subflow templates
 
-A SubflowTemplate is a reusable flow defined in `shared/subflows/`. It is instantiated in the manifest and can receive parameters that customize its behavior.
+A SubflowTemplate is a reusable flow defined in `agents/shared/subflows/`. It is instantiated in the manifest and can receive parameters that customize its behavior.
 
 ### Defining a subflow template
 
-**`shared/subflows/identity_verification.yaml`**:
+**`agents/shared/subflows/identity_verification.yaml`**:
 
 ```yaml
 subflow_id: identity_verification
@@ -754,10 +754,10 @@ Once all YAML files are in place, compile with:
 
 ```bash
 # Basic compilation — voice channel, standard verbosity
-python build_prompt.py configs/my_agent --channel voice
+python build_prompt.py agents/defs/my_agent --channel voice
 
 # Full options
-python build_prompt.py configs/my_agent \
+python build_prompt.py agents/defs/my_agent \
   --channel voice \
   --verbosity verbose \
   --reference-formats markdown json \
@@ -774,11 +774,11 @@ If you have a flowchart, generate YAML stubs first:
 ```bash
 # 1. Write your diagram to a .mmd file
 # 2. Scaffold YAML
-python scaffold_from_mermaid.py diagram.mmd configs/my_agent --agent-id my_agent
+python scaffold_from_mermaid.py diagram.mmd agents/defs/my_agent --agent-id my_agent
 
 # 3. Fill in the stubs (goal, say, capture fields)
 # 4. Compile
-python build_prompt.py configs/my_agent --channel voice
+python build_prompt.py agents/defs/my_agent --channel voice
 ```
 
 The scaffolder pre-fills `state_id`, `type`, and `route` from the diagram. You must add `goal`, `say`, and `capture` manually.
@@ -819,7 +819,7 @@ Common errors and their fixes:
 
 The following is the smallest valid agent — a single-question flow that greets the user and transfers them.
 
-**`configs/minimal_agent/manifest.yaml`**
+**`agents/defs/minimal_agent/manifest.yaml`**
 ```yaml
 agent_id: minimal_agent
 start_at: WELCOME
@@ -833,14 +833,14 @@ includes:
 subflow_instances: []
 ```
 
-**`configs/minimal_agent/constants.yaml`**
+**`agents/defs/minimal_agent/constants.yaml`**
 ```yaml
 constants:
   - name: COMPANY_NAME
     value: "Acme Corp"
 ```
 
-**`configs/minimal_agent/input_variables.yaml`**
+**`agents/defs/minimal_agent/input_variables.yaml`**
 ```yaml
 input_variables:
   - name: customer_name
@@ -848,27 +848,27 @@ input_variables:
     required: true
 ```
 
-**`configs/minimal_agent/memory_slots.yaml`**
+**`agents/defs/minimal_agent/memory_slots.yaml`**
 ```yaml
 memory_slots:
   - name: call_reason
     type: string
 ```
 
-**`configs/minimal_agent/identity.yaml`**
+**`agents/defs/minimal_agent/identity.yaml`**
 ```yaml
 identity:
   - "You are a virtual assistant for <COMPANY_NAME>."
 ```
 
-**`configs/minimal_agent/objectives.yaml`**
+**`agents/defs/minimal_agent/objectives.yaml`**
 ```yaml
 primary_objective: "Greet the customer and transfer them to the right team."
 secondary_objectives: []
 success_alternatives: []
 ```
 
-**`configs/minimal_agent/context.yaml`**
+**`agents/defs/minimal_agent/context.yaml`**
 ```yaml
 company_context: "Acme Corp provides customer service."
 approved_services: []
@@ -877,12 +877,12 @@ approved_process_steps: []
 support_and_trust: []
 ```
 
-**`configs/minimal_agent/policies.yaml`**
+**`agents/defs/minimal_agent/policies.yaml`**
 ```yaml
 policies: {}
 ```
 
-**`configs/minimal_agent/states.yaml`**
+**`agents/defs/minimal_agent/states.yaml`**
 ```yaml
 states:
   - state_id: WELCOME
@@ -907,7 +907,7 @@ states:
       go_to: ASK_REASON
 ```
 
-**`configs/minimal_agent/terminal_states.yaml`**
+**`agents/defs/minimal_agent/terminal_states.yaml`**
 ```yaml
 terminal_states:
   - state_id: TRANSFER
@@ -916,7 +916,7 @@ terminal_states:
     say: "[verbatim] Let me connect you with the right team. Please hold."
 ```
 
-**`configs/minimal_agent/handlers.yaml`**
+**`agents/defs/minimal_agent/handlers.yaml`**
 ```yaml
 handlers:
   - handler_id: HANDLER_CANCEL
@@ -935,5 +935,5 @@ handlers:
 
 **Compile:**
 ```bash
-python build_prompt.py configs/minimal_agent --channel chat --verbosity minimal
+python build_prompt.py agents/defs/minimal_agent --channel chat --verbosity minimal
 ```
