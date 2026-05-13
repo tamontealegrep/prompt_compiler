@@ -434,7 +434,7 @@ class InputVariablesFile(StrictModel):
 
 
 class ToolsFragmentFile(StrictModel):
-    """Schema for fragments of tool declarations (e.g. ``shared/tools/*.yaml``)."""
+    """Schema for fragments of tool declarations (e.g. ``agents/shared/tools/*.yaml``)."""
 
     tools: list[str] = Field(default_factory=list)
 

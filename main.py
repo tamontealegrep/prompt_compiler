@@ -36,7 +36,7 @@ except ImportError:
 
 
 ROOT = Path(__file__).resolve().parent
-CONFIGS_DIR = ROOT / "configs"
+CONFIGS_DIR = ROOT / "agents" / "defs"
 DIST_DIR = ROOT / "dist"
 PROFILES_DIR = ROOT / "profiles"
 
@@ -337,7 +337,7 @@ def _build_cmd(config_name: str, opts: dict) -> list[str]:
     cmd = [
         sys.executable,
         "build_prompt.py",
-        f"configs/{config_name}",
+        f"agents/defs/{config_name}"
     ]
 
     cmd += ["--channel", opts["channel"]]

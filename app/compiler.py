@@ -70,7 +70,7 @@ def compile_agent(
 
     Args:
         agent_dir: Path to the agent's configuration directory
-            (``configs/{agent_id}/``).
+            (``agents/defs/{agent_id}``).
         params: Compilation parameters. When ``None``, the SSOT defaults
             apply: voice channel, both reference asset formats enabled,
             no compliance profile.

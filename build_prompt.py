@@ -2,7 +2,7 @@
 
 Usage:
 
-    python build_prompt.py configs/{agent_id} [options]
+    python build_prompt.py agents/defs/{agent_id} [options]
 
 Writes diagnostic reports unconditionally (so authors can inspect them
 on failure) and writes the System Prompt and Reference Asset artifacts
@@ -58,7 +58,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "agent_dir",
-        help="Agent config directory (e.g. configs/babynova_fertility_voice).",
+        help="Agent definitions directory (e.g. agents/defs/babynova_fertility_voice).",
     )
     parser.add_argument(
         "--channel",

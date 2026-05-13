@@ -129,7 +129,7 @@ def _resolve_path(agent_dir: Path, raw_path: str) -> Path:
     if candidate_local.exists():
         return candidate_local
 
-    # Intenta relativo a la raíz del proyecto (útil para rutas que empiezan con configs/ o shared/)
+    # Intenta relativo a la raíz del proyecto (útil para rutas que empiezan con agents/defs/ o agents/shared/)
     candidate_root = (_project_root() / path).resolve()
     if candidate_root.exists():
         return candidate_root
@@ -643,7 +643,7 @@ def load_agent_spec(
     pass, and verifies no alias survived unresolved.
 
     Args:
-        agent_dir: Path to ``configs/{agent_id}/``.
+        agent_dir: Path to ``agents/defs/{agent_id}/``.
         params: ``CompilationParams`` (currently informational; the channel
             is consumed via the explicit ``channel_profile`` argument).
         channel_profile: Loaded ``ChannelProfile`` matching ``params.channel``.
