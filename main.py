@@ -336,7 +336,7 @@ def _configure_opts(current: dict | None = None) -> dict:
 def _build_cmd(config_name: str, opts: dict) -> list[str]:
     cmd = [
         sys.executable,
-        "build_prompt.py",
+        "app/build_prompt.py",
         f"agents/defs/{config_name}"
     ]
 
@@ -429,7 +429,7 @@ def _show_dist_files(config_name: str) -> None:
 
 def _run_compilation(config_name: str, opts: dict) -> bool:
     """
-    Ejecuta build_prompt.py.
+    Ejecuta app/build_prompt.py
 
     Returns:
         True si compiló correctamente.

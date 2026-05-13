@@ -2,7 +2,7 @@
 
 Usage:
 
-    python build_prompt.py agents/defs/{agent_id} [options]
+    python app/build_prompt.py agents/defs/{agent_id} [options]
 
 Writes diagnostic reports unconditionally (so authors can inspect them
 on failure) and writes the System Prompt and Reference Asset artifacts
@@ -34,6 +34,10 @@ Exit codes:
 """
 
 from __future__ import annotations
+
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))  # project root → app.* imports work
 
 import argparse
 import json
@@ -137,7 +141,7 @@ def _resolve_dist_root(dist_dir_arg: str) -> Path:
     candidate = Path(dist_dir_arg)
     if candidate.is_absolute():
         return candidate
-    return Path(__file__).resolve().parent / candidate
+    return Path(__file__).resolve().parent.parent / candidate
 
 
 def _write_diagnostics(outputs: CompilationOutputs, agent_dist: Path) -> None:

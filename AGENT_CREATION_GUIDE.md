@@ -754,10 +754,10 @@ Once all YAML files are in place, compile with:
 
 ```bash
 # Basic compilation — voice channel, standard verbosity
-python build_prompt.py agents/defs/my_agent --channel voice
+python app/build_prompt.py agents/defs/my_agent --channel voice
 
 # Full options
-python build_prompt.py agents/defs/my_agent \
+python app/build_prompt.py agents/defs/my_agent \
   --channel voice \
   --verbosity verbose \
   --reference-formats markdown json \
@@ -778,7 +778,7 @@ python scaffold_from_mermaid.py diagram.mmd agents/defs/my_agent --agent-id my_a
 
 # 3. Fill in the stubs (goal, say, capture fields)
 # 4. Compile
-python build_prompt.py agents/defs/my_agent --channel voice
+python app/build_prompt.py agents/defs/my_agent --channel voice
 ```
 
 The scaffolder pre-fills `state_id`, `type`, and `route` from the diagram. You must add `goal`, `say`, and `capture` manually.
@@ -935,5 +935,5 @@ handlers:
 
 **Compile:**
 ```bash
-python build_prompt.py agents/defs/minimal_agent --channel chat --verbosity minimal
+python app/build_prompt.py agents/defs/minimal_agent --channel chat --verbosity minimal
 ```

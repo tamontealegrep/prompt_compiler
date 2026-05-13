@@ -45,7 +45,7 @@ At minimum you need `manifest.yaml` and the core files it references. See [Agent
 ### 3. Compile
 
 ```bash
-python build_prompt.py agents/defs/my_agent --channel voice --verbosity standard
+python app/build_prompt.py agents/defs/my_agent --channel voice --verbosity standard
 ```
 
 ### 4. Inspect output

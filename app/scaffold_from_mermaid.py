@@ -2,7 +2,7 @@
 
 Usage:
 
-    python scaffold_from_mermaid.py <mermaid_file> <output_dir> --agent-id ID
+    python app/scaffold_from_mermaid.py <mermaid_file> <output_dir> --agent-id ID
 
 The Mermaid input must be a ``flowchart TD`` or ``flowchart LR`` source.
 For each ``subgraph`` block one YAML scaffold is written; remaining
@@ -14,6 +14,10 @@ manual completion, not finished flows.
 """
 
 from __future__ import annotations
+
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import argparse
 import sys
