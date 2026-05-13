@@ -41,5 +41,5 @@ Thumbs.db
 .env.local
 
 # Agent config
-configs/
-shared/
+agents/defs/
+agents/shared/
