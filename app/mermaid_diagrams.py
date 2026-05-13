@@ -12,7 +12,7 @@ from typing import Any
 
 
 ROOT = Path(__file__).resolve().parent.parent
-CONFIGS_DIR = ROOT / "configs"
+CONFIGS_DIR = ROOT / "agents" / "defs"
 DIST_DIR = ROOT / "dist"
 
 _GO_TO_RE = re.compile(r"\bGO_TO:\s*(\w+)\b")

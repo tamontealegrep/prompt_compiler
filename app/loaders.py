@@ -124,17 +124,25 @@ def _resolve_path(agent_dir: Path, raw_path: str) -> Path:
     if path.is_absolute():
         return path
 
-    # Intenta primero relativo al directorio del agente (comportamiento estándar)
     candidate_local = (agent_dir / path).resolve()
     if candidate_local.exists():
         return candidate_local
 
-    # Intenta relativo a la raíz del proyecto (útil para rutas que empiezan con agents/defs/ o agents/shared/)
     candidate_root = (_project_root() / path).resolve()
     if candidate_root.exists():
         return candidate_root
 
-    # Si ninguno existe, devuelve el local para que el error muestre la ruta esperada
+    # Intenta relativo a agents/ (shared/... → agents/shared/...)
+    candidate_agents = (_project_root() / "agents" / path).resolve()
+    if candidate_agents.exists():
+        return candidate_agents
+
+    # Traduce rutas legadas configs/{id}/... → agents/defs/{id}/...
+    if path.parts[0] == "configs":
+        candidate_defs = (_project_root() / "agents" / "defs" / Path(*path.parts[1:])).resolve()
+        if candidate_defs.exists():
+            return candidate_defs
+
     return candidate_local
 
 
