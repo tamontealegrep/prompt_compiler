@@ -972,6 +972,7 @@ class SubflowTemplate(StrictModel):
     description: str
     params: list[TemplateParamDefinition] = Field(default_factory=list)
     required_tools: list[str] = Field(default_factory=list)
+    required_constants: list[str] = Field(default_factory=list)
 
     # Slots declared here are namespaced per instance during instantiation.
     local_memory_slots: list[MemorySlot] = Field(default_factory=list)
@@ -994,6 +995,13 @@ class SubflowTemplate(StrictModel):
     def validate_required_tools(cls, v: list[str]) -> list[str]:
         for item in v:
             validate_pattern(item, LOWER_SNAKE_RE, "subflow_template.required_tool")
+        return v
+
+    @field_validator("required_constants")
+    @classmethod
+    def validate_required_constants(cls, v: list[str]) -> list[str]:
+        for item in v:
+            validate_pattern(item, UPPER_CONST_RE, "subflow_template.required_constant")
         return v
 
     @field_validator("flow_rules", "faq_policy")

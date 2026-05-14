@@ -438,12 +438,14 @@ def _instantiate_subflow(
     instance: SubflowInstanceRef,
     declared_tools: set[str],
     declared_tool_contracts: set[str],
+    declared_constants: set[str],
 ) -> dict[str, Any]:
     """Materialize a subflow template into namespaced flow objects.
 
     Steps:
     1. Resolve the template path and load it.
     2. Verify every ``required_tool`` is declared and has a contract.
+       Verify every ``required_constant`` is declared in constants.yaml.
     3. Materialize params (validates required, applies defaults).
     4. Build local→namespaced maps for state ids, handler ids, faq ids, slots.
     5. Deep-copy and rewrite every flow object via ``_transform_flow_object``.
@@ -466,6 +468,14 @@ def _instantiate_subflow(
                 f"pero no existe contrato en tool_contracts.yaml."
             )
 
+    for constant_name in template.required_constants:
+        if constant_name not in declared_constants:
+            raise RuntimeError(
+                f"La instancia {instance.instance_id!r} requiere la constante "
+                f"{constant_name!r} declarada en el template {template.template_id!r}, "
+                f"pero no está declarada en constants.yaml."
+            )
+    
     params = _materialize_template_params(instance, template)
 
     local_state_ids = {s.state_id for s in template.states} | {
@@ -757,6 +767,7 @@ def load_agent_spec(
     )
 
     # Instantiate subflows.
+    declared_constants = {c.name for c in constants.constants}
     declared_tools = set(tools.tools)
     declared_tool_contracts = {c.name for c in tool_contracts.tool_contracts}
 
@@ -781,7 +792,7 @@ def load_agent_spec(
         used_namespaces.add(instance.namespace)
 
         instantiated = _instantiate_subflow(
-            base, instance, declared_tools, declared_tool_contracts
+            base, instance, declared_tools, declared_tool_contracts, declared_constants
         )
 
         instance_state_exports[instantiated["instance_id"]] = instantiated["state_exports"]
