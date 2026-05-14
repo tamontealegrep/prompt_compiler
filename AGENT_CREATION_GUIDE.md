@@ -617,6 +617,14 @@ params:
   - name: FAILURE_TARGET
     description: "State to go to after failed verification."
 
+# Tools this template requires — validated at instantiation against tools.yaml and tool_contracts.yaml
+required_tools:
+  - verify_customer_identity
+
+# Constants this template requires — validated at instantiation against constants.yaml
+required_constants:
+  - MAX_VERIFY_RETRIES
+
 # Memory slots scoped to this subflow instance
 memory_slots:
   - name: dob_input
