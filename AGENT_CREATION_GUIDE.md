@@ -410,7 +410,8 @@ Global handlers are interrupts evaluated before state logic on every user uttera
 ```yaml
 handlers:
   - handler_id: HANDLER_CANCEL
-    type: cancel
+    type: message
+    wait: "no"
     trigger:
       - "I want to cancel"
       - "cancel this"
@@ -420,11 +421,11 @@ handlers:
       - "Of course. Is there anything else I can help you with?"
     say_verbatim: false
     route:
-      - condition: "always"
-        go_to: END_SUCCESS
+      - "GO_TO: END_SUCCESS"
 
   - handler_id: HANDLER_OPERATOR
-    type: operator
+    type: message
+    wait: "no"
     trigger:
       - "I want to speak to an agent"
       - "give me a human"
@@ -434,11 +435,11 @@ handlers:
       - "Understood. I will transfer you to one of our agents right away."
     say_verbatim: true
     route:
-      - condition: "always"
-        go_to: TRANSFER_AGENT
+      - "GO_TO: TRANSFER_AGENT"
 
   - handler_id: HANDLER_REPEAT
-    type: repeat
+    type: message
+    wait: "no"
     trigger:
       - "can you repeat that"
       - "say that again"
@@ -447,8 +448,7 @@ handlers:
       - "Of course, let me repeat that."
     say_verbatim: true
     route:
-      - condition: "always"
-        go_to: RESUME_CURRENT
+      - "GO_TO: [current_state]"
 ```
 
 **Execution order:** Handlers are evaluated first on every turn. First match wins. Use specific trigger phrases to avoid accidental matches.
@@ -960,7 +960,8 @@ terminal_states:
 ```yaml
 handlers:
   - handler_id: HANDLER_CANCEL
-    type: cancel
+    type: message
+    wait: "no"
     trigger:
       - "cancel"
       - "never mind"
@@ -969,8 +970,7 @@ handlers:
       - "Thank you for calling. Goodbye."
     say_verbatim: true
     route:
-      - condition: "always"
-        go_to: END_GOODBYE
+      - "GO_TO: END_GOODBYE"
 ```
 
 > Add a `END_GOODBYE` terminal state or adjust the handler to route to `TRANSFER`.
