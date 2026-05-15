@@ -311,7 +311,9 @@ states:
   - state_id: WELCOME
     type: message
     goal: "Greet the customer and introduce the agent."
-    say: "[verbatim] Welcome to <COMPANY_NAME>. My name is Alex."
+    say:
+      - "Welcome to <COMPANY_NAME>. My name is Alex."
+    say_verbatim: true
     route:
       - condition: "always"
         go_to: ASK_DOB
@@ -319,7 +321,9 @@ states:
   - state_id: ASK_DOB
     type: question
     goal: "Ask the customer for their date of birth."
-    say: "[flexible] To verify your identity, could you please provide your date of birth?"
+    say:
+      - "To verify your identity, could you please provide your date of birth?"
+    say_verbatim: false
     capture:
       slot: collected_dob
       type: string
@@ -332,7 +336,9 @@ states:
   - state_id: ASK_DOB_RETRY
     type: question
     goal: "Re-ask for date of birth after a failed attempt."
-    say: "[verbatim] I'm sorry, I didn't catch that. Could you please repeat your date of birth?"
+    say:
+      - "I'm sorry, I didn't catch that. Could you please repeat your date of birth?"
+    say_verbatim: true
     capture:
       slot: collected_dob
       type: string
@@ -368,9 +374,9 @@ states:
 | `subflow_change` | no | no | no | no | (handled by subflow) |
 | `terminal` | optional | no | no | no | no |
 
-**`say` field annotations:**
-- `[verbatim]` — must be spoken exactly as written
-- `[flexible]` — agent may paraphrase while preserving intent
+**`say_verbatim` flag:**
+- `true` → rendered as `[verbatim]` — must be spoken exactly as written
+- `false` (default) → rendered as `[flexible]` — agent may paraphrase while preserving intent
 
 ---
 
@@ -383,12 +389,16 @@ terminal_states:
   - state_id: END_SUCCESS
     type: terminal
     final: true
-    say: "[verbatim] Thank you for calling <COMPANY_NAME>. Have a great day."
+    say:
+      - "Thank you for calling <COMPANY_NAME>. Have a great day."
+    say_verbatim: true
 
   - state_id: END_TRANSFER
     type: terminal
     final: true
-    say: "[flexible] I will connect you with one of our agents now. Please hold."
+    say:
+      - "I will connect you with one of our agents now. Please hold."
+    say_verbatim: false
 ```
 
 ---
@@ -406,7 +416,9 @@ handlers:
       - "cancel this"
       - "never mind"
       - "forget it"
-    say: "[flexible] Of course. Is there anything else I can help you with?"
+    say:
+      - "Of course. Is there anything else I can help you with?"
+    say_verbatim: false
     route:
       - condition: "always"
         go_to: END_SUCCESS
@@ -418,7 +430,9 @@ handlers:
       - "give me a human"
       - "talk to a person"
       - "operator"
-    say: "[verbatim] Understood. I will transfer you to one of our agents right away."
+    say:
+      - "Understood. I will transfer you to one of our agents right away."
+    say_verbatim: true
     route:
       - condition: "always"
         go_to: TRANSFER_AGENT
@@ -429,7 +443,9 @@ handlers:
       - "can you repeat that"
       - "say that again"
       - "what did you say"
-    say: "[verbatim] Of course, let me repeat that."
+    say:
+      - "Of course, let me repeat that."
+    say_verbatim: true
     route:
       - condition: "always"
         go_to: RESUME_CURRENT
@@ -446,27 +462,33 @@ FAQ cards are semantic intent-matching entries evaluated after handlers.
 ```yaml
 faqs:
   - faq_id: FAQ_HOURS
+    type: message
     match:
       - "what are your hours"
       - "when are you open"
       - "what time do you close"
       - "are you open on weekends"
-    answer:
-      - "[verbatim] Our customer service line is available Monday through Friday, 8 AM to 8 PM Eastern time."
-    faq_resume_to: RESUME_CURRENT
+    say:
+      - "Our customer service line is available Monday through Friday, 8 AM to 8 PM Eastern time."
+    say_verbatim: true
+    resume_to: "[current_state]"
 
   - faq_id: FAQ_PRIVACY
+    type: message
     match:
       - "what do you do with my data"
       - "how is my information used"
       - "is my data safe"
-    answer:
-      - "[flexible] Your privacy is very important to us. All information collected is stored securely and used only for account management purposes."
-    faq_resume_to: RESUME_CURRENT
+    say:
+      - "Your privacy is very important to us. All information collected is stored securely and used only for account management purposes."
+    say_verbatim: false
+    resume_to: "[current_state]"
 ```
 
 - `match` phrases define what the customer might say — the agent uses semantic matching, not exact string comparison.
-- `faq_resume_to` sends the agent back to the state it was in before the FAQ was triggered.
+- `say` contains the response lines the agent should deliver, mirroring the same field used on handlers and states.
+- `say_verbatim` controls how the renderer annotates the SAY block: `true` → `[verbatim]` (literal, must not be paraphrased), `false` → `[flexible]` (paraphrasable). Defaults to `false`.
+- `resume_to` is an optional routing hint telling the agent where to return after answering the FAQ (e.g. `"[current_state]"` to resume where it left off). Omit if no resume routing is needed.
 - The validator checks for semantic duplicate match phrases across FAQs.
 
 ---
@@ -638,7 +660,9 @@ states:
   - state_id: ASK_DOB
     type: question
     goal: "Collect date of birth."
-    say: "[flexible] Please provide your date of birth."
+    say:
+      - "Please provide your date of birth."
+    say_verbatim: false
     capture:
       slot: dob_input
       type: string
@@ -741,7 +765,9 @@ When a question state routes back to itself (retry), the validator requires a re
 ```yaml
 - state_id: ASK_PHONE
   type: question
-  say: "[flexible] What is your phone number?"
+  say:
+    - "What is your phone number?"
+  say_verbatim: false
   capture:
     slot: phone_number
     type: string
@@ -896,7 +922,9 @@ states:
   - state_id: WELCOME
     type: message
     goal: "Greet the customer."
-    say: "[verbatim] Welcome to <COMPANY_NAME>, {{customer_name}}. How can I help you today?"
+    say:
+      - "Welcome to <COMPANY_NAME>, {{customer_name}}. How can I help you today?"
+    say_verbatim: true
     route:
       - condition: "always"
         go_to: ASK_REASON
@@ -904,7 +932,9 @@ states:
   - state_id: ASK_REASON
     type: question
     goal: "Find out why the customer called."
-    say: "[flexible] What can I help you with today?"
+    say:
+      - "What can I help you with today?"
+    say_verbatim: false
     capture:
       slot: call_reason
       type: string
@@ -921,7 +951,9 @@ terminal_states:
   - state_id: TRANSFER
     type: terminal
     final: true
-    say: "[verbatim] Let me connect you with the right team. Please hold."
+    say:
+      - "Let me connect you with the right team. Please hold."
+    say_verbatim: true
 ```
 
 **`agents/defs/minimal_agent/handlers.yaml`**
@@ -933,7 +965,9 @@ handlers:
       - "cancel"
       - "never mind"
       - "goodbye"
-    say: "[verbatim] Thank you for calling. Goodbye."
+    say:
+      - "Thank you for calling. Goodbye."
+    say_verbatim: true
     route:
       - condition: "always"
         go_to: END_GOODBYE

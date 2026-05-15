@@ -59,6 +59,18 @@ Fields:
 - `FALLBACK`: default transition if capture, classification, or routing cannot be resolved safely.
 - `FINAL`: if `yes`, end the interaction after completion.
 
+#### FAQ
+A pre-approved answer card evaluated when the user's question semantically matches one of its `MATCH` phrases.
+
+Fields:
+- `FAQ_ID`: unique internal identifier.
+- `TYPE`: always `message`.
+- `MATCH`: semantic phrases that activate this FAQ.
+- `SAY`:
+  - Marked `[verbatim]` or `[flexible]` (see CONVENTIONS).
+  - The approved spoken answer for this FAQ.
+- `RESUME_TO`: state to return to after delivering the answer. `[current_state]` means resume the state that was active when the FAQ was triggered.
+
 #### STATE
 A node in the main conversational state machine.
 

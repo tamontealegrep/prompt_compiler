@@ -846,12 +846,23 @@ class HandlersFile(StrictModel):
 
 
 class FAQModel(StrictModel):
-    """An approved FAQ card — semantic match phrases plus an answer payload."""
+    """An approved FAQ card — semantic match phrases plus a SAY payload.
+
+    The ``say_verbatim`` flag mirrors the same field on ``FlowObjectBase``:
+    ``False`` → ``[flexible]`` (paraphrasable), ``True`` → ``[verbatim]``
+    (literal). Consumed by ``app/renderers.py``.
+
+    ``resume_to`` is an optional routing hint rendered verbatim in the system
+    prompt (e.g. ``[current_state]``). Unlike ``faq_resume_to`` on flow objects
+    it is not validated against UPPER_ID_RE so it can hold slot-style values.
+    """
 
     faq_id: str
     type: Literal["message"]
     match: list[str]
-    answer: list[str]
+    say: list[str]
+    say_verbatim: bool = False
+    resume_to: Optional[str] = None
 
     @field_validator("faq_id")
     @classmethod
@@ -863,10 +874,17 @@ class FAQModel(StrictModel):
     def validate_match(cls, v: list[str]) -> list[str]:
         return validate_non_empty_lines(v, "faq.match", allow_empty=False)
 
-    @field_validator("answer")
+    @field_validator("say")
     @classmethod
-    def validate_answer(cls, v: list[str]) -> list[str]:
-        return validate_non_empty_lines(v, "faq.answer", allow_empty=False)
+    def validate_say(cls, v: list[str]) -> list[str]:
+        return validate_non_empty_lines(v, "faq.say", allow_empty=False)
+
+    @field_validator("resume_to")
+    @classmethod
+    def validate_resume_to(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and not v.strip():
+            raise ValueError("faq.resume_to no puede ser una cadena vacía.")
+        return v
 
 
 class FAQsFile(StrictModel):

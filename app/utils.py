@@ -411,5 +411,5 @@ def iter_text_fields(spec: "AgentSpec") -> Iterator[tuple[str, str]]:
     for faq in spec.faqs:
         for idx, line in enumerate(faq.match, start=1):
             yield (f"faq.{faq.faq_id}.match[{idx}]", line)
-        for idx, line in enumerate(faq.answer, start=1):
-            yield (f"faq.{faq.faq_id}.answer[{idx}]", line)
+        for idx, line in enumerate(faq.say, start=1):
+            yield (f"faq.{faq.faq_id}.say[{idx}]", line)

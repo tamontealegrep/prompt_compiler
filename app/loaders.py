@@ -426,10 +426,14 @@ def _transform_faq(
         rewrite_local_slots_in_text(substitute_params(x, params), local_slot_map)
         for x in new_obj.match
     ]
-    new_obj.answer = [
+    new_obj.say = [
         rewrite_local_slots_in_text(substitute_params(x, params), local_slot_map)
-        for x in new_obj.answer
+        for x in new_obj.say
     ]
+    if new_obj.resume_to is not None:
+        new_obj.resume_to = rewrite_local_slots_in_text(
+            substitute_params(new_obj.resume_to, params), local_slot_map
+        )
     return new_obj
 
 
@@ -872,9 +876,14 @@ def load_agent_spec(
         faq.match = _resolve_aliases_in_lines(
             faq.match, flat_state_export_map, flat_slot_export_map
         )
-        faq.answer = _resolve_aliases_in_lines(
-            faq.answer, flat_state_export_map, flat_slot_export_map
+        faq.say = _resolve_aliases_in_lines(
+            faq.say, flat_state_export_map, flat_slot_export_map
         )
+        if faq.resume_to is not None:
+            resolved = _resolve_aliases_in_lines(
+                [faq.resume_to], flat_state_export_map, flat_slot_export_map
+            )
+            faq.resume_to = resolved[0]
 
     # Hard guards: every alias must be resolved by now.
     _validate_no_unresolved_aliases(flow_rules, "flow_rules")

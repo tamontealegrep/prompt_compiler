@@ -539,6 +539,7 @@ def _render_reference_faqs(faqs: list[FAQModel]) -> str:
 
     lines = ["## FAQs", ""]
     for faq in faqs:
+        verbatim_label = _verbatim_label(faq.say_verbatim)
         lines.extend(
             [
                 f"### FAQ: {faq.faq_id}",
@@ -547,9 +548,11 @@ def _render_reference_faqs(faqs: list[FAQModel]) -> str:
         )
         for phrase in faq.match:
             lines.append(f'- "{phrase}"')
-        lines.extend(["", "**Answer:**"])
-        for line in faq.answer:
+        lines.extend(["", f"**SAY {verbatim_label}:**"])
+        for line in faq.say:
             lines.append(f'- "{line}"')
+        if faq.resume_to is not None:
+            lines.append(f"\n**RESUME_TO:** `{faq.resume_to}`")
         lines.append("")
 
     return "\n".join(lines).rstrip()
@@ -632,7 +635,9 @@ def render_reference_asset_json(classified: ClassifiedSpec) -> dict[str, Any]:
                 "faq_id": faq.faq_id,
                 "type": faq.type,
                 "match": list(faq.match),
-                "answer": list(faq.answer),
+                "say": list(faq.say),
+                "say_verbatim": faq.say_verbatim,
+                "resume_to": faq.resume_to,
             }
             for faq in classified.reference_faqs
         ],
