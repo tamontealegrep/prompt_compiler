@@ -279,6 +279,25 @@ def render_handlers(spec: AgentSpec) -> str:
     return "\n\n".join(render_handler(h) for h in spec.handlers)
 
 
+def render_faq(faq: FAQModel) -> str:
+    """Render a single FAQ block in system-prompt DSL format."""
+    parts = [
+        f"### FAQ {faq.faq_id}",
+        _render_scalar("FAQ_ID", faq.faq_id),
+        _render_scalar("TYPE", faq.type),
+        _render_labeled_block("MATCH", faq.match, quote_items=True),
+        _render_say_block(faq.say, verbatim_label=_verbatim_label(faq.say_verbatim)),
+    ]
+    if faq.resume_to is not None:
+        parts.append(_render_scalar("RESUME_TO", faq.resume_to))
+    return _join_blocks(parts)
+
+
+def render_faqs(spec: AgentSpec) -> str:
+    """Render every FAQ separated by blank lines."""
+    return "\n\n".join(render_faq(f) for f in spec.faqs)
+
+
 def render_state(state: StateModel) -> str:
     """Render a single state including ``[verbatim]`` / ``[flexible]``."""
     parts = [
@@ -680,6 +699,7 @@ def build_render_context(
         "flow_entry_block": render_flow_entry(spec),
         "flow_rules_block": render_flow_rules(spec),
         "handlers_block": render_handlers(spec),
+        "faqs_block": render_faqs(spec),
         "faq_policy_block": render_faq_policy(spec),
         "subflow_index_block": "" if embed_subflows else render_subflow_index(spec),
         "states_block": render_states(spec) if embed_subflows else render_root_states(spec),

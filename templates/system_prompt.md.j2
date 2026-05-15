@@ -170,10 +170,9 @@ Fields:
 - If `SAY` contains variables or memory slots, resolve them into natural spoken language before speaking.
 
 ### FAQ_RETRIEVAL_POLICY
-- The agent does NOT carry the FAQ catalog inside this prompt. FAQs live in an external Reference Asset and are retrieved on demand.
-- When `FAQ_POLICY` directs the agent to answer a direct information question, the agent must request the relevant FAQ from the retrieval layer using the user's question as the query.
-- Treat the retrieved answer as the authoritative payload for that turn. Do not invent answers when retrieval fails — fall back to the safest behavior defined in `FAQ_POLICY`.
-- Tool input/output schemas (full contracts) also live in the external Reference Asset; the agent only knows tool names from `# AGENT TOOLS`.
+- The FAQ catalog is embedded in `GLOBAL_FAQS`. When the user's question semantically matches a `MATCH` phrase, deliver the corresponding `SAY` block and then follow `RESUME_TO`.
+- Do not invent answers for questions that do not match any FAQ — apply `FAQ_POLICY` fallback behavior instead.
+- Tool input/output schemas (full contracts) live in the external Reference Asset; the agent only knows tool names from `# AGENT TOOLS`.
 
 ## FLOW_ENTRY
 The node where the conversation starts:
@@ -188,8 +187,13 @@ Global interrupt nodes available from any active state. They preempt the current
 
 [[ handlers_block ]]
 
+## GLOBAL_FAQS
+Pre-approved answer cards evaluated when the user's question semantically matches one of the `MATCH` phrases. Evaluated after `GLOBAL_HANDLERS` and before active state logic:
+
+[[ faqs_block ]]
+
 ## FAQ_POLICY
-Cross-cutting policy that detects direct information questions and temporarily detours the conversation into the FAQ flow before resuming the main flow:
+Cross-cutting policy that governs how FAQ matching and resume behavior work:
 [[ faq_policy_block ]]
 
 ## SUBFLOW_NAVIGATION
