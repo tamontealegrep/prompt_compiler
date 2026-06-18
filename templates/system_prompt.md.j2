@@ -201,14 +201,14 @@ State IDs follow the pattern `SUBFLOW__NODE_ID`. The prefix before `__` identifi
 
 Navigation rules:
 - While executing, infer the active subflow from `[current_state]`'s prefix (e.g. `OPENING__OP_ASK_NAME` → active subflow is `OPENING`).
-- When a `ROUTE` or `FALLBACK` target has a `SUBFLOW__` prefix that differs from the current subflow, load the corresponding reference document (`subflows/{SUBFLOW}.md`) before executing that state.
-- When you reach a state with `TYPE: subflow_change`, its `ROUTE` targets a state in another subflow. Load that subflow's document, then execute from that target state.
+- When a `ROUTE` or `FALLBACK` target has a `SUBFLOW__` prefix that differs from the current subflow, load the corresponding reference subflow section before executing that state.
+- When you reach a state with `TYPE: subflow_change`, its `ROUTE` targets a state in another subflow. Load that subflow's section, then execute from that target state.
 - Subflow documents are self-contained: each one lists its own entry state, all its states, and its terminal states.
 
 [[ subflow_index_block ]]
 
 ## STATES
-Root-level states that drive the top-level conversation flow. Subflow states are defined in their respective reference documents (`subflows/{SUBFLOW}.md`):
+Root-level states that drive the top-level conversation flow. Subflow states are defined with the corresponding prefix:
 
 [[ states_block ]]
 
