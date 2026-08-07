@@ -62,7 +62,7 @@ def _build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "agent_dir",
-        help="Agent definitions directory (e.g. agents/defs/babynova_fertility_voice).",
+        help="Agent definitions directory (e.g. agents/defs/bot_voice).",
     )
     parser.add_argument(
         "--channel",

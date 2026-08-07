@@ -121,8 +121,11 @@ def _render_execute_block(execute: str | None, *, indent: int = 0) -> str:
     pad = " " * indent
     return "\n".join(
         [
-            f"{pad}- `EXECUTE`:",
-            f"{pad}  - `{execute}`",
+            f"{pad}- `EXECUTE` [mandatory tool call]:",
+            f"{pad}  - `TOOL`: `{execute}`",
+            f"{pad}  - `NEXT_ASSISTANT_ACTION`: `CALL_TOOL:{execute}`",
+            f"{pad}  - `SPEECH_BEFORE_TOOL`: `FORBIDDEN`",
+            f"{pad}  - `ROUTE_BEFORE_TOOL_RESULT`: `FORBIDDEN`",
         ]
     )
 

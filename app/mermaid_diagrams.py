@@ -309,7 +309,7 @@ def _try_mermaid_ink(mermaid_code: str, output_png: Path) -> bool:
 
 
 def _human_friendly(name: str) -> str:
-    """'babynova_fertility_voice' → 'Babynova fertility voice'"""
+    """'Fertility_voice' → 'fertility voice'"""
     s = name.replace("_", " ")
     return s[:1].upper() + s[1:] if s else s
 
