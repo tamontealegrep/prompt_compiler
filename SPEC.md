@@ -143,7 +143,7 @@ A full read of every `app/` module plus both Jinja templates (see decision log e
 | B7 | **Low-Medium** | `app/loaders.py::_merge_tool_fragments` vs `_merge_tool_contract_fragments` | The same authoring mistake (declaring the same name in two shared fragment files) is handled inconsistently: tool names are silently deduplicated, tool contract names raise `RuntimeError`. |
 | B8 | **Low** | `app/validators.py` (missing validator) | No check for phrase collisions between global `HANDLER.trigger` and `FAQ.match` (only FAQ-vs-FAQ collisions are checked). Since `GLOBAL_HANDLERS` are evaluated before `FAQ_POLICY` per the template's `EXECUTION_ORDER`, an overlapping phrase can make an FAQ permanently unreachable with no diagnostic. |
 | B9 | **Low** | `app/schemas.py` (missing validator) | No warning when a `question`/`registration` node declares no `capture`/`store` at all — schema allows a "question" that captures nothing, likely an authoring mistake given `PATTERN_GUIDE.md`'s documented question→decision pattern. |
-| B10 | **Low** | `app/validators.py::_validate_question_self_loops` | Retry-counter detection is a fixed substring match on `"_retry_count"` across `do+store+route+fallback` text, not a check for an actual declared/incremented/compared slot. An author using a different name gets a false "safe" pass with no real retry protection. |
+| B10 | **Low — partially addressed 2026-08-06** | `app/validators.py::_validate_question_self_loops` | Retry-counter detection is a fixed substring match, not a check for an actual declared/incremented/compared slot — that structural gap is unchanged. What changed: the accepted substrings were updated from the single hardcoded `"_retry_count"` to `"_try"` / `"_counter"` (repo owner decision, matching `PATTERN_GUIDE.md`'s token-conscious naming convention). Still a heuristic — an author using neither suffix still gets a false "safe" pass. |
 | B11 | **Medium** | `app/validators.py::_validate_question_self_loops` | Found by reading a real production-style agent while updating `PATTERN_GUIDE.md` (2026-08-06). The check only fires when a `question` node's own `route`/`fallback` targets itself. But the compact, PATTERN_GUIDE.md-recommended pattern (`question` → `decision` → back to the *question*) has the **decision** node routing back to the question, not the question routing to itself — so this validator structurally never fires for the exact pattern the project's own authoring guide recommends. It provides no protection against a genuinely missing retry counter in the common case; only the rare direct question-to-self loop is covered. |
 
 ---
@@ -336,7 +336,7 @@ The following invariants apply to all changes, without exception. They are the r
 
 ### Findings not yet scheduled (need a product decision first)
 
-B6 (disclaimer checker should scan `say`, not `goal`/`do`), B7 (tool vs. tool-contract duplicate-handling asymmetry), B9 (missing capture/store warning for question/registration), B10 (retry-counter heuristic is a text-substring match), and B11 (the self-loop check never fires for the recommended question→decision→question pattern, only for a direct question-to-self loop) are logged in §5.1 but intentionally left unscheduled — each implies a small behavior change to what currently validates cleanly, which per CLAUDE.md §5.1.6 ("propose and wait") needs an explicit go-ahead rather than being bundled into the test-suite work. B10 and B11 together mean `_validate_question_self_loops` currently provides close to no real protection in practice — worth prioritizing once a decision is made.
+B6 (disclaimer checker should scan `say`, not `goal`/`do`), B7 (tool vs. tool-contract duplicate-handling asymmetry), B9 (missing capture/store warning for question/registration), and B11 (the self-loop check never fires for the recommended question→decision→question pattern, only for a direct question-to-self loop) are logged in §5.1 but intentionally left unscheduled — each implies a small behavior change to what currently validates cleanly, which per CLAUDE.md §5.1.6 ("propose and wait") needs an explicit go-ahead rather than being bundled into the test-suite work. B10's accepted-suffix list was updated 2026-08-06 (see §13), but its structural gap (heuristic substring match, not a real slot check) is still open. B10 and B11 together mean `_validate_question_self_loops` still provides limited real protection in practice — B11 is worth prioritizing next.
 
 ### Discarded phases (and why)
 
@@ -373,6 +373,17 @@ B6 (disclaimer checker should scan `say`, not `goal`/`do`), B7 (tool vs. tool-co
 ---
 
 ## 13. Decision log
+
+### 2026-08-06 — Retry-counter naming convention set to `_try`; B10's heuristic updated to match
+
+**Context:** While updating `PATTERN_GUIDE.md`, the repo owner decided the project's retry-counter suffix convention should be the short `_try` (not `_retry_count`) to save tokens in the compiled prompt — a counter's name is repeated in `do`, in every `route` condition, and in the increment line, so a shorter suffix adds up across a flow. `PATTERN_GUIDE.md` was rewritten accordingly (all 19 examples). That created a direct mismatch with `app/validators.py::_validate_question_self_loops` (B10), which only recognized the literal substring `"_retry_count"` — every flow following the new convention would get a false `QUESTION_SELF_LOOP_WITHOUT_RETRY_COUNTER` warning.
+
+**Decision:** Updated `_validate_question_self_loops` to accept `"_try"` or `"_counter"` (repo owner's explicit choice) instead of `"_retry_count"`. `"_retry_count"` is no longer recognized — an author still using the old suffix now gets the warning instead of a silent pass.
+
+**Alternatives considered:**
+- Recognizing all three suffixes (`_try`, `_counter`, `_retry_count`) for backward compatibility — not chosen; the repo owner asked specifically for `_try`/`_counter`, and the whole point of the naming change was to move off `_retry_count`.
+
+**Consequences:** Verified against the real reference agent under `agents/defs/` (read-only): it already uses `_try`-suffixed counters, so the false-positive warning it was previously generating is now gone, and it still compiles with zero errors. B10's underlying structural gap — this is still a text-substring heuristic, not a check that a slot is actually declared/incremented/compared — remains open and unscheduled (§10). B11 (the check never fires for the question→decision→question pattern at all) is untouched by this change and still the more significant gap.
 
 ### 2026-08-06 — B1 reclassified as intentional (not a bug); B2 invariant matrix decided and implemented
 

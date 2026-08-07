@@ -780,7 +780,7 @@ def _validate_question_self_loops(spec: AgentSpec, report: ValidationReport) -> 
 
         if state.state_id in targets:
             blob = " ".join(state.do + state.store + state.route + state.fallback).lower()
-            if "_retry_count" not in blob:
+            if not any(suffix in blob for suffix in ("_try", "_counter")):
                 report.add_warning(
                     "QUESTION_SELF_LOOP_WITHOUT_RETRY_COUNTER",
                     state.state_id,

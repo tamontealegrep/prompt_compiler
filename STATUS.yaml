@@ -241,7 +241,7 @@ technical_debt:
     impact: "low"
     plan: "Revisit once confirmed no live agent definition still relies on the old path shape."
 
-  - description: "Automated test suite exists (198 tests) but doesn't yet cover mermaid_parser.py, mermaid_diagrams.py, scaffold_from_mermaid.py, build_prompt.py (CLI), or main.py (TUI)."
+  - description: "Automated test suite exists (212 tests) but doesn't yet cover mermaid_parser.py, mermaid_diagrams.py, scaffold_from_mermaid.py, build_prompt.py (CLI), or main.py (TUI)."
     identified: "2026-08-06"
     impact: "medium"
     plan: "Extend tests/unit/app/ to the Mermaid round-trip tooling and CLI entry points once the DSL-focused suite (this session's scope) is reviewed."
@@ -251,10 +251,10 @@ technical_debt:
     impact: "medium"
     plan: "SPEC.md §10 roadmap phase 17, gated on phases 15-16 (now largely complete) landing first."
 
-  - description: "11 DSL/compiler bugs and gaps found by code audit (B1-B11, SPEC.md §5.1), none fixed yet. B11 added after reading a real production-style agent while updating PATTERN_GUIDE.md: the self-loop retry-counter validator never fires for the project's own recommended question-decision-question pattern."
+  - description: "DSL/compiler bugs and gaps found by code audit (B1-B11, SPEC.md §5.1). Status as of 2026-08-06: B1 not a bug (by design, confirmed by repo owner). B2 fixed (per-type schema invariants). B10 partially addressed (accepted retry-counter suffixes updated from _retry_count to _try/_counter; the underlying heuristic-vs-real-check gap remains). B3-B9, B11 still open."
     identified: "2026-08-06"
-    impact: "high (B1, B2), medium (B3, B4, B5, B6), low (B7, B8, B9, B10)"
-    plan: "SPEC.md §10 roadmap phases 19-24 schedule fixes for B1/B3/B4/B5/B8; B2/B6/B7/B9/B10 need an explicit human decision first (see open_points 3-4) before implementation, per CLAUDE.md §5.1.6."
+    impact: "medium (B3, B4, B5, B6, B11), low (B7, B8, B9, B10)"
+    plan: "SPEC.md §10 roadmap phases 21-24 schedule fixes for B3/B4/B5/B8; B6/B7/B9/B11 need an explicit human decision first before implementation, per CLAUDE.md §5.1.6."
 
 # ---------------------------------------------------------------------------
 # TEST SUITE STATUS
@@ -262,10 +262,10 @@ technical_debt:
 
 tests:
   last_run: "2026-08-06"
-  total_tests: 210
+  total_tests: 212
   status: "passing"  # passing | failing | not_run
   failing_tests: []
-  passing_count: 204
+  passing_count: 206
   strict_xfail_count: 6
   strict_xfail_note: "Each strict-xfail test documents one known open bug (B3, B4 x2, B5 x2, SPEC.md §5.1) via the INTENDED behavior — it will flip to an unexpected pass (and fail the run) once the corresponding fix lands, forcing removal of the marker. B2's two xfail tests were flipped to normal passing assertions when B2 was fixed this session."
   coverage_percentage: null  # pytest-cov not run this session; no coverage tool wired into pyproject.toml yet
@@ -352,6 +352,8 @@ next_session:
 # ---------------------------------------------------------------------------
 
 changelog:
+  - date: "2026-08-06"
+    description: "Repo owner set the project's retry-counter naming convention to the short _try suffix (token economy) instead of _retry_count, and asked to update the compiler's own heuristic to match. Updated app/validators.py::_validate_question_self_loops (B10) to recognize _try or _counter instead of the hardcoded _retry_count, via TDD (4 tests updated/added in tests/unit/app/test_validators.py, confirmed RED then GREEN). Verified against the real reference agent: its _try-suffixed counters no longer trigger a false QUESTION_SELF_LOOP_WITHOUT_RETRY_COUNTER warning, still 0 validation errors. B10's underlying heuristic-vs-real-check gap remains open; B11 (the check never fires for the recommended question-decision-question pattern) is untouched. Full suite: 212 tests, 206 passing + 6 strict-xfail."
   - date: "2026-08-06"
     description: "Repo owner corrected B1: the duplicated [[ input_variables_block ]] render is intentional, not a bug — reclassified in SPEC.md/STATUS.yaml, roadmap phase 19 cancelled, templates left untouched. Implemented B2 (SPEC.md §5.1) via TDD: added/updated 13 tests in tests/unit/app/test_schemas.py (confirmed RED against pre-fix code), then completed FlowObjectBase.validate_semantics()'s per-type invariant matrix in app/schemas.py — execute/final/say now restricted to the node types templates/system_prompt.md.j2's TYPE_SEMANTICS documents them for, and decision now requires an explicit wait: \"no\". Verified non-breaking against all real content under agents/ (raw-YAML scan pre-fix, full compile_agent() run post-fix, zero violations either way). Full suite: 210 tests, 204 passing + 6 strict-xfail (B3, B4 x2, B5 x2)."
   - date: "2026-08-06"

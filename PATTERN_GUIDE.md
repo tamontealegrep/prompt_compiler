@@ -98,7 +98,7 @@ move the increment into the `decision` node.
 The decision should contain a line like:
 
 ```yaml
-- "[foo_retry_count] = [foo_retry_count] + 1"
+- "[foo_try] = [foo_try] + 1"
 ```
 
 Always use an explicit assignment (`[slot] = [slot] + 1`) rather than a bare expression like `[slot] + 1` — the latter has no assignment operator and won't be recognized as a real increment by anything that scans the flow for slot assignments.
@@ -177,8 +177,8 @@ Example:
 - state_id: FLOW_INIT_RETRY_COUNTS
   type: registration
   do:
-    - "[a_retry_count] = 0"
-    - "[b_retry_count] = 0"
+    - "[a_try] = 0"
+    - "[b_try] = 0"
 ```
 
 ### C. `question`
@@ -213,9 +213,9 @@ General example:
   type: decision
   do:
     - "Evaluate the value of [foo]."
-    - "[foo_retry_count] = [foo_retry_count] + 1"
+    - "[foo_try] = [foo_try] + 1"
   route:
-    - "IF [foo_retry_count] >= <MAX_RETRY_ATTEMPTS> -> GO_TO: FLOW_EXIT"
+    - "IF [foo_try] >= <MAX_RETRY_ATTEMPTS> -> GO_TO: FLOW_EXIT"
     - "IF [foo] IS NULL -> GO_TO: FLOW_ASK_FOO"
     - "IF [foo] == 'yes' -> GO_TO: FLOW_NEXT"
     - "GO_TO: FLOW_ASK_FOO"
@@ -283,9 +283,9 @@ A decision isn't limited to a binary valid/invalid split. When a captured value 
   type: decision
   do:
     - "Evaluate the value of [status]."
-    - "[status_retry_count] = [status_retry_count] + 1"
+    - "[status_try] = [status_try] + 1"
   route:
-    - "IF [status_retry_count] >= <MAX_RETRY_ATTEMPTS> -> GO_TO: FLOW_EXIT"
+    - "IF [status_try] >= <MAX_RETRY_ATTEMPTS> -> GO_TO: FLOW_EXIT"
     - "IF [status] IS NULL -> GO_TO: FLOW_ASK_STATUS"
     - "IF [status] == 'confirmed' -> GO_TO: FLOW_CONFIRMED"
     - "IF [status] == 'declined' -> GO_TO: FLOW_DECLINED"
@@ -471,16 +471,16 @@ Examples:
 Follow the pattern:
 
 ```text
-<slot_name>_retry_count
+<slot_name>_try
 ```
 
 Examples:
 
-- `eligibility_confirmed_retry_count`
-- `identity_retry_count`
-- `callback_day_retry_count`
+- `eligibility_confirmed_try`
+- `identity_try`
+- `callback_day_try`
 
-Use the full `_retry_count` suffix rather than a shortened form (`_try`, `_attempts`, etc.), even though it's a few extra characters. Some validators identify a state's retry safeguard by looking for that exact suffix in its text — a shorter, non-standard suffix works at the DSL level but silently loses that automated check.
+Use the short `_try` suffix, not a longer form like `_retry_count`. A counter's name is repeated constantly — in `do`, in every `route` condition that checks it, in the increment line — and a longer suffix means paying that extra length every single time it's referenced, across every retry-guarded question in the flow. That adds up in the compiled prompt for no benefit `_try` doesn't already provide.
 
 ### States
 
@@ -512,7 +512,7 @@ The `do` block should be operative, not narrative.
 ```yaml
 do:
   - "Evaluate the value of [foo]."
-  - "[foo_retry_count] = [foo_retry_count] + 1"
+  - "[foo_try] = [foo_try] + 1"
 ```
 
 ### Less ideal
@@ -520,7 +520,7 @@ do:
 ```yaml
 do:
   - "Evaluate the value of [foo]."
-  - "If [foo] is invalid or couldn't be parsed, increment [foo_retry_count]."
+  - "If [foo] is invalid or couldn't be parsed, increment [foo_try]."
   - "Ask the user again."
 ```
 
@@ -572,7 +572,7 @@ If the question can fail or needs validation, create:
 Example:
 
 - `employment_status`
-- `employment_status_retry_count`
+- `employment_status_try`
 
 ### Step 2: create the `question` node
 
@@ -661,7 +661,7 @@ states:
   - state_id: FLOW_INIT_RETRY_COUNTS
     type: registration
     do:
-      - "[foo_retry_count] = 0"
+      - "[foo_try] = 0"
     route:
       - "GO_TO: FLOW_ASK_FOO"
 
@@ -682,9 +682,9 @@ states:
     type: decision
     do:
       - "Evaluate the value of [foo]."
-      - "[foo_retry_count] = [foo_retry_count] + 1"
+      - "[foo_try] = [foo_try] + 1"
     route:
-      - "IF [foo_retry_count] >= <MAX_RETRY_ATTEMPTS> -> GO_TO: FLOW_END"
+      - "IF [foo_try] >= <MAX_RETRY_ATTEMPTS> -> GO_TO: FLOW_END"
       - "IF [foo] IS NULL -> GO_TO: FLOW_ASK_FOO"
       - "IF [foo] == 'yes' -> GO_TO: FLOW_NEXT"
       - "IF [foo] == 'no' -> GO_TO: FLOW_END"

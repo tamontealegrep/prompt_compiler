@@ -390,7 +390,35 @@ def test_question_self_loop_without_retry_counter_warns():
     assert "QUESTION_SELF_LOOP_WITHOUT_RETRY_COUNTER" in _codes(report.warnings)
 
 
-def test_question_self_loop_with_retry_counter_does_not_warn():
+def test_question_self_loop_with_try_suffix_does_not_warn():
+    """PATTERN_GUIDE.md's recommended counter suffix (short form, saves tokens)."""
+    state = build_message_state(
+        type="question",
+        wait="yes",
+        say=["What is your name?"],
+        do=["Check [name_try] before asking again."],
+        route=["GO_TO: GREETING"],
+    )
+    spec = build_minimal_agent_spec(states=[state])
+    report = validate_agent_spec(spec)
+    assert "QUESTION_SELF_LOOP_WITHOUT_RETRY_COUNTER" not in _codes(report.warnings)
+
+
+def test_question_self_loop_with_counter_suffix_does_not_warn():
+    state = build_message_state(
+        type="question",
+        wait="yes",
+        say=["What is your name?"],
+        do=["Check [name_counter] before asking again."],
+        route=["GO_TO: GREETING"],
+    )
+    spec = build_minimal_agent_spec(states=[state])
+    report = validate_agent_spec(spec)
+    assert "QUESTION_SELF_LOOP_WITHOUT_RETRY_COUNTER" not in _codes(report.warnings)
+
+
+def test_question_self_loop_with_old_retry_count_suffix_now_warns():
+    """The old `_retry_count` suffix is no longer recognized — only `_try`/`_counter` are."""
     state = build_message_state(
         type="question",
         wait="yes",
@@ -400,7 +428,7 @@ def test_question_self_loop_with_retry_counter_does_not_warn():
     )
     spec = build_minimal_agent_spec(states=[state])
     report = validate_agent_spec(spec)
-    assert "QUESTION_SELF_LOOP_WITHOUT_RETRY_COUNTER" not in _codes(report.warnings)
+    assert "QUESTION_SELF_LOOP_WITHOUT_RETRY_COUNTER" in _codes(report.warnings)
 
 
 # ---------------------------------------------------------------------------
