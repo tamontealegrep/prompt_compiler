@@ -736,6 +736,8 @@ fallback:
 - `route` is a list of conditions evaluated top-to-bottom; first match wins.
 - `fallback` is the default when no route condition matches.
 - A state should have either `route` or `fallback` (or both), but the validator will warn about redundant configurations.
+- Style rule: when a state has one or more conditional `route` entries plus one default transition, keep the conditional branches in `route` and place the default unconditional `GO_TO` in `fallback` instead of as the last `route` item.
+- Prefer a final unconditional `GO_TO` inside `route` only when the state truly has no conditional routing and the whole state is a single direct transition.
 
 ### Dynamic routing
 
