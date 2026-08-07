@@ -89,7 +89,7 @@ def test_decision_state_forbids_say():
 
 
 def test_decision_state_forbids_wait_yes():
-    with pytest.raises(ValidationError, match="wait='yes'"):
+    with pytest.raises(ValidationError, match="wait='no'"):
         StateModel.model_validate(_base_state(type="decision", wait="yes", say=[]))
 
 
@@ -98,11 +98,30 @@ def test_decision_state_valid_construction_with_explicit_wait_no():
     assert state.type == "decision"
 
 
-def test_decision_state_valid_construction_with_wait_omitted():
+def test_decision_state_requires_explicit_wait_no():
+    """SPEC.md B2: decision no longer accepts an omitted/None wait — every
+    non-question type must now spell out wait: no explicitly, closing the
+    asymmetry where decision alone tolerated a missing wait field."""
     data = _base_state(type="decision", say=[])
     del data["wait"]
-    state = StateModel.model_validate(data)
-    assert state.wait is None
+    with pytest.raises(ValidationError, match="wait='no'"):
+        StateModel.model_validate(data)
+
+
+def test_decision_state_forbids_execute():
+    """SPEC.md B2: only action/terminal are documented as tool-executing types."""
+    with pytest.raises(ValidationError, match="EXECUTE"):
+        StateModel.model_validate(
+            _base_state(type="decision", wait="no", say=[], execute="some_tool")
+        )
+
+
+def test_decision_state_forbids_final_yes():
+    """SPEC.md B2: decision is not documented as a closing node type."""
+    with pytest.raises(ValidationError, match="final='yes'"):
+        StateModel.model_validate(
+            _base_state(type="decision", wait="no", say=[], final="yes")
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -122,6 +141,25 @@ def test_action_state_valid_construction_succeeds():
     assert state.execute == "book_appointment"
 
 
+def test_action_state_forbids_say():
+    """SPEC.md B2: TYPE_SEMANTICS documents action as non-conversational —
+    its only valid output is the tool call declared in EXECUTE."""
+    with pytest.raises(ValidationError, match="SAY"):
+        StateModel.model_validate(
+            _base_state(
+                type="action", wait="no", say=["Should not be here."], execute="some_tool"
+            )
+        )
+
+
+def test_action_state_forbids_final_yes():
+    """SPEC.md B2: action is not documented as a closing node type."""
+    with pytest.raises(ValidationError, match="final='yes'"):
+        StateModel.model_validate(
+            _base_state(type="action", wait="no", say=[], execute="some_tool", final="yes")
+        )
+
+
 # ---------------------------------------------------------------------------
 # type=registration
 # ---------------------------------------------------------------------------
@@ -137,6 +175,14 @@ def test_registration_state_forbids_execute():
 def test_registration_state_valid_construction_succeeds():
     state = StateModel.model_validate(_base_state(type="registration", wait="no", say=[]))
     assert state.type == "registration"
+
+
+def test_registration_state_forbids_final_yes():
+    """SPEC.md B2: registration is not documented as a closing node type."""
+    with pytest.raises(ValidationError, match="final='yes'"):
+        StateModel.model_validate(
+            _base_state(type="registration", wait="no", say=[], final="yes")
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -182,11 +228,52 @@ def test_start_state_forbids_final_yes():
         )
 
 
+def test_start_state_forbids_say():
+    """SPEC.md B2: TYPE_SEMANTICS documents start as producing no user output."""
+    with pytest.raises(ValidationError, match="SAY"):
+        StateModel.model_validate(
+            _base_state(type="start", wait="no", say=["Should not be here."])
+        )
+
+
+def test_start_state_forbids_execute():
+    """SPEC.md B2: start is a pure entry point, not documented as tool-executing."""
+    with pytest.raises(ValidationError, match="EXECUTE"):
+        StateModel.model_validate(
+            _base_state(type="start", wait="no", say=[], execute="some_tool")
+        )
+
+
+def test_start_state_valid_construction_succeeds():
+    state = StateModel.model_validate(_base_state(type="start", wait="no", say=[]))
+    assert state.type == "start"
+
+
 def test_subflow_change_state_forbids_final_yes():
     with pytest.raises(ValidationError, match="final='yes'"):
         StateModel.model_validate(
             _base_state(type="subflow_change", wait="no", say=[], final="yes")
         )
+
+
+def test_subflow_change_state_forbids_say():
+    """SPEC.md B2: subflow_change is documented purely as a control transfer."""
+    with pytest.raises(ValidationError, match="SAY"):
+        StateModel.model_validate(
+            _base_state(type="subflow_change", wait="no", say=["Should not be here."])
+        )
+
+
+def test_subflow_change_state_forbids_execute():
+    with pytest.raises(ValidationError, match="EXECUTE"):
+        StateModel.model_validate(
+            _base_state(type="subflow_change", wait="no", say=[], execute="some_tool")
+        )
+
+
+def test_subflow_change_state_valid_construction_succeeds():
+    state = StateModel.model_validate(_base_state(type="subflow_change", wait="no", say=[]))
+    assert state.type == "subflow_change"
 
 
 # ---------------------------------------------------------------------------
@@ -205,20 +292,13 @@ def test_non_terminal_state_with_only_fallback_is_valid():
 
 
 # ---------------------------------------------------------------------------
-# Known DSL grammar gaps (SPEC.md B2) — documented via strict xfail so a
-# future fix (SPEC.md roadmap phase 20) flips these to passing and the
-# marker must be removed.
+# Fixed in SPEC.md B2 (2026-08-06): execute and final='yes' are now
+# restricted to the node types TYPE_SEMANTICS documents them for.
 # ---------------------------------------------------------------------------
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="Known gap (SPEC.md B2): only message/registration forbid EXECUTE and "
-    "action requires it — question/decision/terminal/start/subflow_change have no "
-    "constraint, so a question node can carry an EXECUTE block.",
-)
 def test_question_state_forbids_execute():
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError, match="EXECUTE"):
         StateModel.model_validate(
             _base_state(
                 type="question", wait="yes", say=["Q?"], execute="some_tool"
@@ -226,14 +306,15 @@ def test_question_state_forbids_execute():
         )
 
 
-@pytest.mark.xfail(
-    strict=True,
-    reason="Known gap (SPEC.md B2): final='yes' is only constrained for "
-    "terminal/start/subflow_change — a message node can set final='yes' without "
-    "type=terminal, and app.utils.terminal_state_ids() will treat it as terminal.",
-)
+def test_question_state_forbids_final_yes():
+    with pytest.raises(ValidationError, match="final='yes'"):
+        StateModel.model_validate(
+            _base_state(type="question", wait="yes", say=["Q?"], final="yes")
+        )
+
+
 def test_message_state_forbids_final_yes():
-    with pytest.raises(ValidationError):
+    with pytest.raises(ValidationError, match="final='yes'"):
         StateModel.model_validate(_base_state(type="message", final="yes"))
 
 

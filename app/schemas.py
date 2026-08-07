@@ -771,26 +771,42 @@ class FlowObjectBase(StrictModel):
                 raise ValueError("Los objetos de type=message deben tener SAY.")
             if self.execute is not None:
                 raise ValueError("Los objetos de type=message no deben tener EXECUTE.")
+            if self.final == "yes":
+                raise ValueError("Los objetos de type=message no deben tener final='yes'.")
         elif self.type == "question":
             if self.wait != "yes":
                 raise ValueError("Los objetos de type=question deben tener wait='yes'.")
             if not self.say:
                 raise ValueError("Los objetos de type=question deben tener SAY.")
+            if self.execute is not None:
+                raise ValueError("Los objetos de type=question no deben tener EXECUTE.")
+            if self.final == "yes":
+                raise ValueError("Los objetos de type=question no deben tener final='yes'.")
         elif self.type == "decision":
-            if self.wait not in (None, "no"):
-                raise ValueError("Los objetos de type=decision no deben usar wait='yes'.")
+            if self.wait != "no":
+                raise ValueError("Los objetos de type=decision deben tener wait='no'.")
             if self.say:
                 raise ValueError("Los objetos de type=decision no deben tener SAY.")
+            if self.execute is not None:
+                raise ValueError("Los objetos de type=decision no deben tener EXECUTE.")
+            if self.final == "yes":
+                raise ValueError("Los objetos de type=decision no deben tener final='yes'.")
         elif self.type == "action":
             if self.wait != "no":
                 raise ValueError("Los objetos de type=action deben tener wait='no'.")
             if not self.execute:
                 raise ValueError("Los objetos de type=action deben declarar EXECUTE.")
+            if self.say:
+                raise ValueError("Los objetos de type=action no deben tener SAY.")
+            if self.final == "yes":
+                raise ValueError("Los objetos de type=action no deben tener final='yes'.")
         elif self.type == "registration":
             if self.wait != "no":
                 raise ValueError("Los objetos de type=registration deben tener wait='no'.")
             if self.execute is not None:
                 raise ValueError("Los objetos de type=registration no deben tener EXECUTE.")
+            if self.final == "yes":
+                raise ValueError("Los objetos de type=registration no deben tener final='yes'.")
         elif self.type == "terminal":
             if self.wait != "no":
                 raise ValueError("Los objetos de type=terminal deben tener wait='no'.")
@@ -801,11 +817,19 @@ class FlowObjectBase(StrictModel):
                 raise ValueError("Los objetos de type=start deben tener wait='no'.")
             if self.final == "yes":
                 raise ValueError("Los objetos de type=start no deben tener final='yes'.")
+            if self.say:
+                raise ValueError("Los objetos de type=start no deben tener SAY.")
+            if self.execute is not None:
+                raise ValueError("Los objetos de type=start no deben tener EXECUTE.")
         elif self.type == "subflow_change":
             if self.wait != "no":
                 raise ValueError("Los objetos de type=subflow_change deben tener wait='no'.")
             if self.final == "yes":
                 raise ValueError("Los objetos de type=subflow_change no deben tener final='yes'.")
+            if self.say:
+                raise ValueError("Los objetos de type=subflow_change no deben tener SAY.")
+            if self.execute is not None:
+                raise ValueError("Los objetos de type=subflow_change no deben tener EXECUTE.")
 
         if self.type not in ("terminal",) and not self.route and not self.fallback:
             raise ValueError(

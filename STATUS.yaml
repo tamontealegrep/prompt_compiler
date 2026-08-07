@@ -65,6 +65,9 @@ phases:
     - id: 16
       description: "Integration test compiling a minimal synthetic agent end-to-end"
       completion_date: "2026-08-06"
+    - id: 20
+      description: "Fix B2 — completed FlowObjectBase.validate_semantics()'s per-type invariant matrix (execute/final/say restricted to documented types; decision requires explicit wait: no)"
+      completion_date: "2026-08-06"
 
   in_progress:
     - id: 14
@@ -79,6 +82,11 @@ phases:
       blocked_by: null
       note: "Core app/ modules covered (198 tests). mermaid_parser.py / mermaid_diagrams.py / build_prompt.py CLI / main.py TUI still untested — not part of the DSL/state-machine audit scope this session."
 
+  cancelled:
+    - id: 19
+      description: "Fix B1 — remove the duplicated trailing [[ input_variables_block ]] in both templates/*.j2"
+      reason: "Repo owner confirmed 2026-08-06 that the duplication is intentional, not a bug. Do not implement."
+
   pending:
     - id: 17
       description: "CI workflow (.github/workflows/ci.yml) running ruff + pytest"
@@ -88,15 +96,6 @@ phases:
       description: "Regression test for the say/say_verbatim FAQ split and subflow-navigation template change (d4c3557)"
       priority: "medium"
       dependencies: [15]
-    - id: 19
-      description: "Fix B1 — remove the duplicated trailing [[ input_variables_block ]] in both templates/*.j2"
-      priority: "high"
-      dependencies: []
-    - id: 20
-      description: "Fix B2 — complete FlowObjectBase.validate_semantics()'s per-type invariants (execute/final/capture/store/wait)"
-      priority: "high"
-      dependencies: []
-      blocked_by: "open_point 3 — needs the intended invariant matrix decided first"
     - id: 21
       description: "Fix B3 — wrap alias/param resolution failures into RuntimeError to match the documented contract"
       priority: "medium"
@@ -170,6 +169,34 @@ tasks:
       - "app/*, templates/*.j2 — read-only audit this session; no bug fixes applied (CLAUDE.md §5.1.6 propose-and-wait)"
     notes: "198 tests collected: 190 passing, 8 strict-xfail documenting known bugs B1/B2/B3/B4/B5 (see SPEC.md §5.1). No source code under app/ or templates/ was modified — every finding is logged for a follow-up, human-confirmed fix pass."
 
+  - id: "2026-08-06-003"
+    title: "Translate/regenericize PATTERN_GUIDE.md; correct B1; fix B2 schema invariants"
+    status: "complete"
+    phase: 20
+    experts: ["@guardian", "@dsl-expert", "@qa"]
+    criteria:
+      - description: "PATTERN_GUIDE.md translated to English with zero references to any specific agent_id, updated with patterns observed in a real production-style agent (read-only)"
+        fulfilled: true
+      - description: "B1 reclassified as by-design per repo owner; SPEC.md/STATUS.yaml corrected, roadmap phase 19 cancelled, templates left untouched"
+        fulfilled: true
+      - description: "B2's per-type invariant matrix implemented in FlowObjectBase.validate_semantics(), grounded in TYPE_SEMANTICS prose, not speculative"
+        fulfilled: true
+      - description: "TDD followed: tests updated/added first (RED confirmed — 13 failures against pre-fix code), then schemas.py changed (GREEN)"
+        fulfilled: true
+      - description: "Change verified non-breaking against all real YAML under agents/ (raw-structure scan before the fix, full compile_agent() run after)"
+        fulfilled: true
+    files_to_touch:
+      - "PATTERN_GUIDE.md — full rewrite (English, generic)"
+      - "CLAUDE.md — corrected the PATTERN_GUIDE.md language-exception note"
+      - "app/schemas.py::FlowObjectBase.validate_semantics() — B2 invariant matrix"
+      - "tests/unit/app/test_schemas.py — 13 new/updated tests for the B2 matrix"
+      - "SPEC.md §5.1/§10/§11/§12/§13 — B1 correction, B2 closure, B11 addition"
+      - "STATUS.yaml — this file"
+    files_not_to_touch:
+      - "agents/* — read-only reference reading, nothing committed there"
+      - "templates/*.j2 — B1 confirmed by-design, left untouched"
+    notes: "Full suite after the B2 fix: 210 tests, 204 passing + 6 strict-xfail (B3, B4 x2, B5 x2). ruff check tests/ and the edited region of app/schemas.py both clean (pre-existing, unrelated ruff findings elsewhere in schemas.py were left alone per CLAUDE.md §3 surgical-changes rule). Also found B11 while reading the reference agent for PATTERN_GUIDE.md — logged in SPEC.md §5.1, not yet scheduled."
+
 # ---------------------------------------------------------------------------
 # OPEN POINTS
 # Unanswered questions, pending decisions, missing data.
@@ -187,12 +214,6 @@ open_points:
     open_since: "2026-08-06"
     blocks: "Whether new DSL features can proceed without tests in the interim"
     who_decides: "Repo owner"
-
-  - id: 3
-    description: "For B2 (phase 20): what is the intended full per-type invariant matrix for execute/final/capture/store/wait? (e.g. should question require capture? should decision require an explicit wait: no?)"
-    open_since: "2026-08-06"
-    blocks: "Implementing the schema fix for B2"
-    who_decides: "Repo owner / @dsl-expert"
 
   - id: 4
     description: "Should GO_TO: matching stay strictly case-sensitive by design, or become case-insensitive/whitespace-tolerant? (B4)"
@@ -241,12 +262,12 @@ technical_debt:
 
 tests:
   last_run: "2026-08-06"
-  total_tests: 198
+  total_tests: 210
   status: "passing"  # passing | failing | not_run
   failing_tests: []
-  passing_count: 190
-  strict_xfail_count: 8
-  strict_xfail_note: "Each strict-xfail test documents one known bug (B1-B5, SPEC.md §5.1) via the INTENDED behavior — it will flip to an unexpected pass (and fail the run) once the corresponding fix lands, forcing removal of the marker."
+  passing_count: 204
+  strict_xfail_count: 6
+  strict_xfail_note: "Each strict-xfail test documents one known open bug (B3, B4 x2, B5 x2, SPEC.md §5.1) via the INTENDED behavior — it will flip to an unexpected pass (and fail the run) once the corresponding fix lands, forcing removal of the marker. B2's two xfail tests were flipped to normal passing assertions when B2 was fixed this session."
   coverage_percentage: null  # pytest-cov not run this session; no coverage tool wired into pyproject.toml yet
   modules_covered: ["schemas.py", "utils.py", "loaders.py", "validators.py", "classifier.py", "deduplicator.py", "renderers.py", "compiler.py (via integration tests)"]
   modules_not_yet_covered: ["mermaid_parser.py", "mermaid_diagrams.py", "scaffold_from_mermaid.py", "build_prompt.py", "main.py"]
@@ -261,7 +282,9 @@ metrics:
   validators_count: 11
   compliance_profiles_count: 1  # medical_es
   channel_profiles_count: 3     # voice, chat, async_text
-  known_bugs_open: 11  # B1-B11, SPEC.md §5.1
+  known_bugs_open: 9  # B3-B11 minus B2 (fixed); B1 reclassified as by-design, not counted. SPEC.md §5.1
+  known_bugs_fixed: 1  # B2
+  known_bugs_not_bugs: 1  # B1
   last_evaluation: "2026-08-06"
 
 # ---------------------------------------------------------------------------
@@ -269,26 +292,34 @@ metrics:
 # ---------------------------------------------------------------------------
 
 next_session:
-  continue_with: "Get human sign-off on open_points 3-4 (SPEC.md §12), then implement the scheduled bug fixes in priority order: B1 (roadmap phase 19, trivial — delete the duplicated template line) first since it's the highest-confidence, lowest-risk fix; then B3 (phase 21) and B5 (phase 23); B2 and B4 need the open-point decisions first."
+  continue_with: "B4 still needs open_point 4 decided (case-sensitivity of GO_TO) before phase 22 can start. B3 (phase 21, wrap ValueError into RuntimeError) and B5 (phase 23, reuse app.utils.extract_goto_targets in renderers.py) are both low-risk and could proceed without further sign-off if the owner wants to keep going down the fix list. B6/B7/B9/B10/B11 still need an explicit go-ahead before scheduling (CLAUDE.md §5.1.6)."
   important_context: |
-    This session did two things in sequence:
+    This session had three phases so far:
     1. Adapted the generic framework_example/ (7 template docs) into
-       project-specific root-level files (prior session, see the 2026-08-06
-       changelog entry below).
-    2. Audited every app/ module that participates in the DSL/state-machine
-       pipeline (schemas, utils, loaders, validators, classifier,
-       deduplicator, renderers, compiler) plus both Jinja templates, logged
-       10 findings (B1-B10) in SPEC.md §5.1, and built the tests/ suite the
-       project was missing (198 tests: 190 passing, 8 strict-xfail documenting
-       the known bugs). No source code under app/ or templates/ was changed —
-       this was audit + test-infrastructure only, per the user's explicit ask
-       and CLAUDE.md §5.1.6 (propose and wait before landing a behavior fix).
+       project-specific root-level files (2026-08-06, see changelog below).
+    2. Audited every app/ module in the DSL/state-machine pipeline plus both
+       Jinja templates, logged findings B1-B10 in SPEC.md §5.1, and built the
+       tests/ suite the project was missing.
+    3. The repo owner corrected B1 (the duplicated
+       [[ input_variables_block ]] render is INTENTIONAL, not a bug — do not
+       "fix" it; roadmap phase 19 is cancelled) and asked to implement B2.
+       B2 is now fixed: FlowObjectBase.validate_semantics() in app/schemas.py
+       has a complete per-type invariant matrix (see SPEC.md §13's 2026-08-06
+       decision log entry for the exact table and the textual basis for each
+       constraint). Also found B11 while reading a real agent for the
+       PATTERN_GUIDE.md rewrite — logged, not yet scheduled.
 
-    The single most valuable finding: both templates/*.j2 render
-    [[ input_variables_block ]] twice (B1) — confirmed via a real compile of
-    the on-disk minimal_agent fixture through the actual compile_agent()
-    pipeline, not just template inspection. Every currently-compiled agent
-    ships a duplicated INPUT VARIABLES section today.
+    IMPORTANT: B1 is by design. If a future audit or a fresh read of the
+    templates flags the duplicated input_variables_block again, check SPEC.md
+    §5.1 first — it's already resolved, don't re-report it as a bug.
+
+    B2 is a breaking schema change for any agent YAML that relied on the
+    now-forbidden combinations (e.g. a decision node omitting wait, or a
+    start/subflow_change/action node with non-empty say). It was verified
+    non-breaking against everything currently in this repo's local agents/
+    tree (zero violations, both via a raw-YAML scan before the fix and a
+    full compile_agent() run after) — but content in other checkouts of the
+    separate agents/ repo was not checked and could still break.
 
     Test suite design notes for whoever continues this:
     - tests/conftest.py has in-memory AgentSpec/StateModel/etc. builders
@@ -310,8 +341,10 @@ next_session:
     - "Never invent legal/compliance content (Colombian data-privacy law citations, medical claims) — source from existing repo material or ask."
     - "gestantes_old.md is historical (pre-dates the HARD_TOOL_EXECUTION_CONTRACT section) — do not treat it as current spec."
     - "A DSL grammar change is incomplete if it only touches schemas.py — renderers.py/templates/*.j2 and AGENT_CREATION_GUIDE.md/PATTERN_GUIDE.md must move together (CLAUDE.md §5.2.7)."
-    - "Before fixing any of B1-B11, re-run pytest tests/ -q first to confirm the baseline (190 passed, 8 xfailed) still holds — then flip the relevant xfail test(s) to normal assertions as part of the same fix commit."
+    - "Before fixing any of B3-B11, re-run pytest tests/ -q first to confirm the baseline (204 passed, 6 xfailed) still holds — then flip the relevant xfail test(s) to normal assertions as part of the same fix commit."
     - "PATTERN_GUIDE.md is now English and intentionally agent-agnostic — never reintroduce a reference to a specific agent_id or file path from agents/defs/ into it; keep examples generic (FLOW_*, X_*, generic slot names)."
+    - "B1 is confirmed by-design (repo owner, 2026-08-06) — never re-flag the duplicated [[ input_variables_block ]] render as a bug or 'fix' it."
+    - "B2 is fixed — FlowObjectBase.validate_semantics() now has a complete per-type invariant matrix. Any NEW node type or field added to the DSL should extend that matrix deliberately, not leave it implicitly unconstrained again."
 
 # ---------------------------------------------------------------------------
 # CHANGELOG
@@ -319,6 +352,8 @@ next_session:
 # ---------------------------------------------------------------------------
 
 changelog:
+  - date: "2026-08-06"
+    description: "Repo owner corrected B1: the duplicated [[ input_variables_block ]] render is intentional, not a bug — reclassified in SPEC.md/STATUS.yaml, roadmap phase 19 cancelled, templates left untouched. Implemented B2 (SPEC.md §5.1) via TDD: added/updated 13 tests in tests/unit/app/test_schemas.py (confirmed RED against pre-fix code), then completed FlowObjectBase.validate_semantics()'s per-type invariant matrix in app/schemas.py — execute/final/say now restricted to the node types templates/system_prompt.md.j2's TYPE_SEMANTICS documents them for, and decision now requires an explicit wait: \"no\". Verified non-breaking against all real content under agents/ (raw-YAML scan pre-fix, full compile_agent() run post-fix, zero violations either way). Full suite: 210 tests, 204 passing + 6 strict-xfail (B3, B4 x2, B5 x2)."
   - date: "2026-08-06"
     description: "Translated PATTERN_GUIDE.md to English and rewrote it as a domain-agnostic authoring guide (no references to any specific agent_id). Incorporated patterns observed while reading a real production-style agent in agents/defs/ (read-only, not committed to this repo): conditional-skip decisions, multi-branch decision routing, a farewell-message-plus-silent-terminal closing pattern, flow_rules-backed anti-hallucination guardrails for tool-fetching action nodes, and a handler-level repeat/no-input retry pattern. Found and logged B11 in SPEC.md §5.1 in the process: the self-loop retry-counter validator never fires for the guide's own recommended question-decision-question pattern. Updated CLAUDE.md's language-exception note to reflect PATTERN_GUIDE.md now being English."
   - date: "2026-08-06"
