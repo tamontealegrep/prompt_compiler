@@ -16,7 +16,7 @@ This applies to:
 - Commit messages and PR descriptions
 - Error messages raised by the code (validator/loader error strings)
 
-Does NOT apply to: content authored *inside* agent YAML (`say`, `say_verbatim`, FAQ answers, handler copy) and Spanish-language project docs (`PATTERN_GUIDE.md`, `faq.md`, `handlers.md`) — those follow the target agent's or the doc's own language, since they are consulting/domain material, not compiler code.
+Does NOT apply to: content authored *inside* agent YAML (`say`, `say_verbatim`, FAQ answers, handler copy) and the Spanish-language consulting-style docs (`faq.md`, `handlers.md`) — those follow the target agent's or the doc's own language, since they are domain material, not compiler code. `PATTERN_GUIDE.md` is an authoring-pattern reference (like `AGENT_CREATION_GUIDE.md`) and is written in English.
 
 ---
 

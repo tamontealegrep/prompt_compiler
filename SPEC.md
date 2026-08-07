@@ -144,6 +144,7 @@ A full read of every `app/` module plus both Jinja templates (see decision log e
 | B8 | **Low** | `app/validators.py` (missing validator) | No check for phrase collisions between global `HANDLER.trigger` and `FAQ.match` (only FAQ-vs-FAQ collisions are checked). Since `GLOBAL_HANDLERS` are evaluated before `FAQ_POLICY` per the template's `EXECUTION_ORDER`, an overlapping phrase can make an FAQ permanently unreachable with no diagnostic. |
 | B9 | **Low** | `app/schemas.py` (missing validator) | No warning when a `question`/`registration` node declares no `capture`/`store` at all — schema allows a "question" that captures nothing, likely an authoring mistake given `PATTERN_GUIDE.md`'s documented question→decision pattern. |
 | B10 | **Low** | `app/validators.py::_validate_question_self_loops` | Retry-counter detection is a fixed substring match on `"_retry_count"` across `do+store+route+fallback` text, not a check for an actual declared/incremented/compared slot. An author using a different name gets a false "safe" pass with no real retry protection. |
+| B11 | **Medium** | `app/validators.py::_validate_question_self_loops` | Found by reading a real production-style agent while updating `PATTERN_GUIDE.md` (2026-08-06). The check only fires when a `question` node's own `route`/`fallback` targets itself. But the compact, PATTERN_GUIDE.md-recommended pattern (`question` → `decision` → back to the *question*) has the **decision** node routing back to the question, not the question routing to itself — so this validator structurally never fires for the exact pattern the project's own authoring guide recommends. It provides no protection against a genuinely missing retry counter in the common case; only the rare direct question-to-self loop is covered. |
 
 ---
 
@@ -335,7 +336,7 @@ The following invariants apply to all changes, without exception. They are the r
 
 ### Findings not yet scheduled (need a product decision first)
 
-B6 (disclaimer checker should scan `say`, not `goal`/`do`), B7 (tool vs. tool-contract duplicate-handling asymmetry), B9 (missing capture/store warning for question/registration), and B10 (retry-counter heuristic) are logged in §5.1 but intentionally left unscheduled — each implies a small behavior change to what currently validates cleanly, which per CLAUDE.md §5.1.6 ("propose and wait") needs an explicit go-ahead rather than being bundled into the test-suite work.
+B6 (disclaimer checker should scan `say`, not `goal`/`do`), B7 (tool vs. tool-contract duplicate-handling asymmetry), B9 (missing capture/store warning for question/registration), B10 (retry-counter heuristic is a text-substring match), and B11 (the self-loop check never fires for the recommended question→decision→question pattern, only for a direct question-to-self loop) are logged in §5.1 but intentionally left unscheduled — each implies a small behavior change to what currently validates cleanly, which per CLAUDE.md §5.1.6 ("propose and wait") needs an explicit go-ahead rather than being bundled into the test-suite work. B10 and B11 together mean `_validate_question_self_loops` currently provides close to no real protection in practice — worth prioritizing once a decision is made.
 
 ### Discarded phases (and why)
 

@@ -230,7 +230,7 @@ technical_debt:
     impact: "medium"
     plan: "SPEC.md §10 roadmap phase 17, gated on phases 15-16 (now largely complete) landing first."
 
-  - description: "10 DSL/compiler bugs and gaps found by code audit (B1-B10, SPEC.md §5.1), none fixed yet."
+  - description: "11 DSL/compiler bugs and gaps found by code audit (B1-B11, SPEC.md §5.1), none fixed yet. B11 added after reading a real production-style agent while updating PATTERN_GUIDE.md: the self-loop retry-counter validator never fires for the project's own recommended question-decision-question pattern."
     identified: "2026-08-06"
     impact: "high (B1, B2), medium (B3, B4, B5, B6), low (B7, B8, B9, B10)"
     plan: "SPEC.md §10 roadmap phases 19-24 schedule fixes for B1/B3/B4/B5/B8; B2/B6/B7/B9/B10 need an explicit human decision first (see open_points 3-4) before implementation, per CLAUDE.md §5.1.6."
@@ -261,7 +261,7 @@ metrics:
   validators_count: 11
   compliance_profiles_count: 1  # medical_es
   channel_profiles_count: 3     # voice, chat, async_text
-  known_bugs_open: 10  # B1-B10, SPEC.md §5.1
+  known_bugs_open: 11  # B1-B11, SPEC.md §5.1
   last_evaluation: "2026-08-06"
 
 # ---------------------------------------------------------------------------
@@ -310,7 +310,8 @@ next_session:
     - "Never invent legal/compliance content (Colombian data-privacy law citations, medical claims) — source from existing repo material or ask."
     - "gestantes_old.md is historical (pre-dates the HARD_TOOL_EXECUTION_CONTRACT section) — do not treat it as current spec."
     - "A DSL grammar change is incomplete if it only touches schemas.py — renderers.py/templates/*.j2 and AGENT_CREATION_GUIDE.md/PATTERN_GUIDE.md must move together (CLAUDE.md §5.2.7)."
-    - "Before fixing any of B1-B10, re-run pytest tests/ -q first to confirm the baseline (190 passed, 8 xfailed) still holds — then flip the relevant xfail test(s) to normal assertions as part of the same fix commit."
+    - "Before fixing any of B1-B11, re-run pytest tests/ -q first to confirm the baseline (190 passed, 8 xfailed) still holds — then flip the relevant xfail test(s) to normal assertions as part of the same fix commit."
+    - "PATTERN_GUIDE.md is now English and intentionally agent-agnostic — never reintroduce a reference to a specific agent_id or file path from agents/defs/ into it; keep examples generic (FLOW_*, X_*, generic slot names)."
 
 # ---------------------------------------------------------------------------
 # CHANGELOG
@@ -318,6 +319,8 @@ next_session:
 # ---------------------------------------------------------------------------
 
 changelog:
+  - date: "2026-08-06"
+    description: "Translated PATTERN_GUIDE.md to English and rewrote it as a domain-agnostic authoring guide (no references to any specific agent_id). Incorporated patterns observed while reading a real production-style agent in agents/defs/ (read-only, not committed to this repo): conditional-skip decisions, multi-branch decision routing, a farewell-message-plus-silent-terminal closing pattern, flow_rules-backed anti-hallucination guardrails for tool-fetching action nodes, and a handler-level repeat/no-input retry pattern. Found and logged B11 in SPEC.md §5.1 in the process: the self-loop retry-counter validator never fires for the guide's own recommended question-decision-question pattern. Updated CLAUDE.md's language-exception note to reflect PATTERN_GUIDE.md now being English."
   - date: "2026-08-06"
     description: "Audited app/schemas.py, utils.py, loaders.py, validators.py, classifier.py, deduplicator.py, renderers.py, compiler.py, and both Jinja templates for DSL/state-machine bugs and gaps. Logged 10 findings (B1-B10) in SPEC.md §5.1, most notably B1: both templates render [[ input_variables_block ]] twice. Built tests/ from scratch (conftest.py, tests/fixtures/minimal_agent/, 7 unit test modules, 2 integration test modules) — 198 tests, 190 passing + 8 strict-xfail documenting the known bugs. No source code changed; ruff check tests/ clean."
   - date: "2026-08-06"
