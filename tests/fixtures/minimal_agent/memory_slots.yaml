@@ -1,0 +1,7 @@
+memory_slots:
+  - name: current_state
+    description: The state id currently active in the conversation.
+    kind: dynamic_state
+  - name: resume_state
+    description: The state id to resume after an FAQ or handler detour.
+    kind: dynamic_state

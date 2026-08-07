@@ -1,0 +1,15 @@
+terminal_states:
+  - state_id: CLOSE
+    type: terminal
+    goal:
+      - Close the interaction.
+    do: []
+    say:
+      - "Goodbye, this was a test call."
+    say_verbatim: false
+    wait: "no"
+    capture: []
+    store: []
+    route: []
+    fallback: []
+    final: "yes"

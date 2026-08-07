@@ -1,0 +1,15 @@
+states:
+  - state_id: GREETING
+    type: message
+    goal:
+      - Greet the caller and immediately move to closing.
+    do: []
+    say:
+      - "Hello, this is a test greeting."
+    say_verbatim: false
+    wait: "no"
+    capture: []
+    store: []
+    route:
+      - "GO_TO: CLOSE"
+    fallback: []

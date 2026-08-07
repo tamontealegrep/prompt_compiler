@@ -1,0 +1,4 @@
+constants:
+  - name: MAX_RETRY_ATTEMPTS
+    description: Maximum number of times a question can be re-asked before falling back.
+    value: "3"

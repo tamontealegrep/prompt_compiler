@@ -1,0 +1,13 @@
+agent_id: minimal_agent
+version: "1.0.0"
+language: es
+start_at: GREETING
+dynamic_state_slots:
+  - current_state
+  - resume_state
+includes:
+  states:
+    - states.yaml
+  terminal_states:
+    - terminal_states.yaml
+subflow_instances: []

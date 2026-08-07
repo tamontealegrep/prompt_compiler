@@ -1,0 +1,4 @@
+input_variables:
+  - name: caller_name
+    description: The caller's name, injected by the platform at session start.
+    allowed_values: []

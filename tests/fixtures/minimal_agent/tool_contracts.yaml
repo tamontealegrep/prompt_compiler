@@ -1,0 +1,6 @@
+tool_contracts:
+  - name: noop_tool
+    description: A no-op tool declared only to satisfy the non-empty tools/contracts schema requirement.
+    inputs: []
+    outputs: []
+    notes: []

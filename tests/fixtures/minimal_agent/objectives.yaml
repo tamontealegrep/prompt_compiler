@@ -1,0 +1,6 @@
+primary_objective:
+  - Greet the test caller and close the interaction.
+secondary_objectives:
+  - Demonstrate a minimal valid two-state flow.
+success_alternatives:
+  - The caller receives a greeting and a closing message.

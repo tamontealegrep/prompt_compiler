@@ -1,0 +1,14 @@
+company_context:
+  - This is a synthetic test company used only by the prompt_compiler test suite.
+approved_services:
+  - Synthetic greeting service.
+summary_services_library:
+  - key: GREETING_SERVICE
+    procedure: greeting_service
+    text: A synthetic service used only for testing the compiler pipeline.
+approved_process_intro: This is a synthetic approved process used only for tests.
+approved_process_steps:
+  - title: Step one
+    text: Greet the caller.
+support_and_trust:
+  - This agent is a test fixture and is not deployed to real users.
