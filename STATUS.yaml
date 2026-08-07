@@ -1,0 +1,332 @@
+# STATUS.yaml — Project Memory: Prompt Compiler
+#
+# This file is the source of truth for the current state of the project.
+# It is read at the start of each session and updated when closing it.
+# Format: flat YAML. No references to classes or complex objects.
+# Changelog: reverse chronological — the most recent entry goes ABOVE.
+
+project:
+  name: "Prompt Compiler"
+  version: "2.0.0"
+  start_date: "2026-05-01"  # approximate — earliest commits in git log predate the visible history window
+  last_updated: "2026-08-06"
+  status: "active"  # active | paused | complete | archived
+  owner: "tamontealegrep (Engineering Board)"
+
+# ---------------------------------------------------------------------------
+# IMPLEMENTATION PHASES
+# Status of each phase according to SPEC.md §3
+# ---------------------------------------------------------------------------
+
+phases:
+  completed:
+    - id: 0
+      description: "Pydantic v2 schema layer for every YAML file type (app/schemas.py)"
+      completion_date: "2026-05"
+    - id: 1
+      description: "Loader: disk -> merged, alias-resolved AgentSpec (app/loaders.py)"
+      completion_date: "2026-05"
+    - id: 2
+      description: "11 graph validators + pluggable compliance-checker registry (app/validators.py)"
+      completion_date: "2026-05"
+    - id: 3
+      description: "Deduplicator (report-only duplicate-rule detector)"
+      completion_date: "2026-05"
+    - id: 4
+      description: "Orphan-state report"
+      completion_date: "2026-05"
+    - id: 5
+      description: "Classifier: System Prompt vs Reference Asset split (SSOT §10)"
+      completion_date: "2026-05"
+    - id: 6
+      description: "Jinja2 renderer ([[ ]] delimiters) -> System Prompt + Reference Asset"
+      completion_date: "2026-05"
+    - id: 7
+      description: "compile_agent() 7-stage orchestrator"
+      completion_date: "2026-05"
+    - id: 8
+      description: "Mermaid parser (flowchart -> SubflowTemplate scaffold)"
+      completion_date: "2026-05"
+    - id: 9
+      description: "Mermaid diagram export (AgentSpec -> PNG/HTML)"
+      completion_date: "2026-05"
+    - id: 10
+      description: "build_prompt.py CLI + main.py Rich TUI"
+      completion_date: "2026-06"
+    - id: 11
+      description: "Channel profiles (voice/chat/async_text) + medical_es compliance profile"
+      completion_date: "2026-06"
+    - id: 12
+      description: "Bilingual (ES/EN) system-prompt template variant"
+      completion_date: "2026-06"
+    - id: 13
+      description: "FAQ model refactor (say/say_verbatim split) + retrieval-policy docs"
+      completion_date: "2026-06-18"
+    - id: 16
+      description: "Integration test compiling a minimal synthetic agent end-to-end"
+      completion_date: "2026-08-06"
+
+  in_progress:
+    - id: 14
+      description: "Subflow-navigation and document-loading instruction clarity in templates/system_prompt.md.j2"
+      percentage: 90
+      start_date: "2026-06-18"
+      blocked_by: null
+    - id: 15
+      description: "Stand up tests/ with unit coverage for schemas.py, loaders.py, app/utils.py, validators.py, classifier.py, deduplicator.py, renderers.py"
+      percentage: 90
+      start_date: "2026-08-06"
+      blocked_by: null
+      note: "Core app/ modules covered (198 tests). mermaid_parser.py / mermaid_diagrams.py / build_prompt.py CLI / main.py TUI still untested — not part of the DSL/state-machine audit scope this session."
+
+  pending:
+    - id: 17
+      description: "CI workflow (.github/workflows/ci.yml) running ruff + pytest"
+      priority: "medium"
+      dependencies: [15, 16]
+    - id: 18
+      description: "Regression test for the say/say_verbatim FAQ split and subflow-navigation template change (d4c3557)"
+      priority: "medium"
+      dependencies: [15]
+    - id: 19
+      description: "Fix B1 — remove the duplicated trailing [[ input_variables_block ]] in both templates/*.j2"
+      priority: "high"
+      dependencies: []
+    - id: 20
+      description: "Fix B2 — complete FlowObjectBase.validate_semantics()'s per-type invariants (execute/final/capture/store/wait)"
+      priority: "high"
+      dependencies: []
+      blocked_by: "open_point 3 — needs the intended invariant matrix decided first"
+    - id: 21
+      description: "Fix B3 — wrap alias/param resolution failures into RuntimeError to match the documented contract"
+      priority: "medium"
+      dependencies: []
+    - id: 22
+      description: "Fix B4 — make GO_TO detection and the unresolved-alias guard whitespace/case robust, or explicitly document case-sensitivity"
+      priority: "medium"
+      dependencies: []
+      blocked_by: "open_point 4"
+    - id: 23
+      description: "Fix B5 — render_subflow_document reuses app.utils.extract_goto_targets instead of a local narrower regex"
+      priority: "low"
+      dependencies: []
+    - id: 24
+      description: "Add a HANDLER.trigger vs FAQ.match phrase-collision validator (B8)"
+      priority: "low"
+      dependencies: []
+
+# ---------------------------------------------------------------------------
+# ACTIVE TASKS
+# Tasks from the current or recent session. See FRAMEWORK.md §4 for lifecycle.
+# ---------------------------------------------------------------------------
+
+tasks:
+  - id: "2026-08-06-001"
+    title: "Adapt framework_example/ templates into project-specific root-level process docs"
+    status: "complete"
+    phase: null
+    experts: ["@guardian"]
+    criteria:
+      - description: "CLAUDE.md, SPEC.md, EXPERTS.md, FRAMEWORK.md, TESTING.md, DESIGN_PATTERNS.md, STATUS.yaml exist at repo root, filled in with real project facts (no {{PLACEHOLDER}} tokens)"
+        fulfilled: true
+      - description: "Content reflects actual app/ module structure, DSL invariants, and domain (medical conversational agents) rather than the generic ML/App template boilerplate"
+        fulfilled: true
+    files_to_touch:
+      - "CLAUDE.md (new)"
+      - "SPEC.md (new)"
+      - "EXPERTS.md (new)"
+      - "FRAMEWORK.md (new)"
+      - "TESTING.md (new)"
+      - "DESIGN_PATTERNS.md (new)"
+      - "STATUS.yaml (new)"
+    files_not_to_touch:
+      - "framework_example/* — left as the original generic template, untouched"
+      - "app/*, templates/*, agents/* — read-only research, no source code changes"
+    notes: "Derived from reading app/ (all 13 modules), templates/*.j2, AGENT_CREATION_GUIDE.md, PATTERN_GUIDE.md, faq.md, handlers.md, gestantes_old.md, pyproject.toml, README.md, and git log via an Explore subagent plus direct reads."
+
+  - id: "2026-08-06-002"
+    title: "Audit the DSL/compiler pipeline for bugs and gaps; stand up the missing tests/ suite"
+    status: "complete"
+    phase: 15
+    experts: ["@guardian", "@dsl-expert", "@qa"]
+    criteria:
+      - description: "Every app/ module touching the DSL state machine (schemas, utils, loaders, validators, classifier, deduplicator, renderers, compiler) plus both Jinja templates read in full"
+        fulfilled: true
+      - description: "Findings logged in SPEC.md §5.1 with severity, and scheduled or explicitly deferred in §10/§11/§12"
+        fulfilled: true
+      - description: "tests/unit/app/ and tests/integration/ created per TESTING.md's directory layout, covering every audited module"
+        fulfilled: true
+      - description: "pytest tests/ -q passes (known bugs documented as strict xfail, not silently asserted as correct)"
+        fulfilled: true
+      - description: "ruff check tests/ passes cleanly"
+        fulfilled: true
+    files_to_touch:
+      - "tests/conftest.py (new) — shared fixtures and in-memory AgentSpec builders"
+      - "tests/fixtures/minimal_agent/*.yaml (new) — on-disk fixture satisfying the real voice.yaml profile"
+      - "tests/unit/app/test_{utils,schemas,loaders,validators,classifier,deduplicator,renderers}.py (new)"
+      - "tests/integration/test_compile_{minimal_agent,with_subflows}.py (new)"
+      - "SPEC.md §5.1/§10/§11/§12/§13 — findings and roadmap"
+    files_not_to_touch:
+      - "app/*, templates/*.j2 — read-only audit this session; no bug fixes applied (CLAUDE.md §5.1.6 propose-and-wait)"
+    notes: "198 tests collected: 190 passing, 8 strict-xfail documenting known bugs B1/B2/B3/B4/B5 (see SPEC.md §5.1). No source code under app/ or templates/ was modified — every finding is logged for a follow-up, human-confirmed fix pass."
+
+# ---------------------------------------------------------------------------
+# OPEN POINTS
+# Unanswered questions, pending decisions, missing data.
+# ---------------------------------------------------------------------------
+
+open_points:
+  - id: 1
+    description: "Should gestantes_old.md, faq.md, handlers.md move into a docs/ subdirectory to separate authoritative specs (AGENT_CREATION_GUIDE.md, PATTERN_GUIDE.md) from historical/consulting material?"
+    open_since: "2026-08-06"
+    blocks: "Repo root cleanliness; not a functional blocker"
+    who_decides: "Repo owner"
+
+  - id: 2
+    description: "What is the target test-coverage bar before the next DSL grammar change lands (phase 15)?"
+    open_since: "2026-08-06"
+    blocks: "Whether new DSL features can proceed without tests in the interim"
+    who_decides: "Repo owner"
+
+  - id: 3
+    description: "For B2 (phase 20): what is the intended full per-type invariant matrix for execute/final/capture/store/wait? (e.g. should question require capture? should decision require an explicit wait: no?)"
+    open_since: "2026-08-06"
+    blocks: "Implementing the schema fix for B2"
+    who_decides: "Repo owner / @dsl-expert"
+
+  - id: 4
+    description: "Should GO_TO: matching stay strictly case-sensitive by design, or become case-insensitive/whitespace-tolerant? (B4)"
+    open_since: "2026-08-06"
+    blocks: "Implementing the fix for B4"
+    who_decides: "Repo owner / @dsl-expert"
+
+# ---------------------------------------------------------------------------
+# RECENT DECISIONS
+# Decisions made in the last sessions that are not yet in SPEC.md §13.
+# ---------------------------------------------------------------------------
+
+decisions_pending_registration: []
+# Note: the one decision made this session (adopting the framework_example
+# process templates) was written directly into SPEC.md §13 at creation time —
+# nothing pending migration.
+
+# ---------------------------------------------------------------------------
+# IDENTIFIED TECHNICAL DEBT
+# ---------------------------------------------------------------------------
+
+technical_debt:
+  - description: "Legacy path translation in loaders._resolve_path (configs/{id}/... -> agents/defs/{id}/...) kept for backward compatibility with pre-refactor agent directories."
+    identified: "2026-08-06"
+    impact: "low"
+    plan: "Revisit once confirmed no live agent definition still relies on the old path shape."
+
+  - description: "Automated test suite exists (198 tests) but doesn't yet cover mermaid_parser.py, mermaid_diagrams.py, scaffold_from_mermaid.py, build_prompt.py (CLI), or main.py (TUI)."
+    identified: "2026-08-06"
+    impact: "medium"
+    plan: "Extend tests/unit/app/ to the Mermaid round-trip tooling and CLI entry points once the DSL-focused suite (this session's scope) is reviewed."
+
+  - description: "No CI pipeline — nothing currently blocks a broken commit from landing on main."
+    identified: "2026-08-06"
+    impact: "medium"
+    plan: "SPEC.md §10 roadmap phase 17, gated on phases 15-16 (now largely complete) landing first."
+
+  - description: "10 DSL/compiler bugs and gaps found by code audit (B1-B10, SPEC.md §5.1), none fixed yet."
+    identified: "2026-08-06"
+    impact: "high (B1, B2), medium (B3, B4, B5, B6), low (B7, B8, B9, B10)"
+    plan: "SPEC.md §10 roadmap phases 19-24 schedule fixes for B1/B3/B4/B5/B8; B2/B6/B7/B9/B10 need an explicit human decision first (see open_points 3-4) before implementation, per CLAUDE.md §5.1.6."
+
+# ---------------------------------------------------------------------------
+# TEST SUITE STATUS
+# ---------------------------------------------------------------------------
+
+tests:
+  last_run: "2026-08-06"
+  total_tests: 198
+  status: "passing"  # passing | failing | not_run
+  failing_tests: []
+  passing_count: 190
+  strict_xfail_count: 8
+  strict_xfail_note: "Each strict-xfail test documents one known bug (B1-B5, SPEC.md §5.1) via the INTENDED behavior — it will flip to an unexpected pass (and fail the run) once the corresponding fix lands, forcing removal of the marker."
+  coverage_percentage: null  # pytest-cov not run this session; no coverage tool wired into pyproject.toml yet
+  modules_covered: ["schemas.py", "utils.py", "loaders.py", "validators.py", "classifier.py", "deduplicator.py", "renderers.py", "compiler.py (via integration tests)"]
+  modules_not_yet_covered: ["mermaid_parser.py", "mermaid_diagrams.py", "scaffold_from_mermaid.py", "build_prompt.py", "main.py"]
+
+# ---------------------------------------------------------------------------
+# PROJECT METRICS
+# ---------------------------------------------------------------------------
+
+metrics:
+  test_coverage_percentage: null
+  ci_configured: false
+  validators_count: 11
+  compliance_profiles_count: 1  # medical_es
+  channel_profiles_count: 3     # voice, chat, async_text
+  known_bugs_open: 10  # B1-B10, SPEC.md §5.1
+  last_evaluation: "2026-08-06"
+
+# ---------------------------------------------------------------------------
+# CONTEXT FOR NEXT SESSION
+# ---------------------------------------------------------------------------
+
+next_session:
+  continue_with: "Get human sign-off on open_points 3-4 (SPEC.md §12), then implement the scheduled bug fixes in priority order: B1 (roadmap phase 19, trivial — delete the duplicated template line) first since it's the highest-confidence, lowest-risk fix; then B3 (phase 21) and B5 (phase 23); B2 and B4 need the open-point decisions first."
+  important_context: |
+    This session did two things in sequence:
+    1. Adapted the generic framework_example/ (7 template docs) into
+       project-specific root-level files (prior session, see the 2026-08-06
+       changelog entry below).
+    2. Audited every app/ module that participates in the DSL/state-machine
+       pipeline (schemas, utils, loaders, validators, classifier,
+       deduplicator, renderers, compiler) plus both Jinja templates, logged
+       10 findings (B1-B10) in SPEC.md §5.1, and built the tests/ suite the
+       project was missing (198 tests: 190 passing, 8 strict-xfail documenting
+       the known bugs). No source code under app/ or templates/ was changed —
+       this was audit + test-infrastructure only, per the user's explicit ask
+       and CLAUDE.md §5.1.6 (propose and wait before landing a behavior fix).
+
+    The single most valuable finding: both templates/*.j2 render
+    [[ input_variables_block ]] twice (B1) — confirmed via a real compile of
+    the on-disk minimal_agent fixture through the actual compile_agent()
+    pipeline, not just template inspection. Every currently-compiled agent
+    ships a duplicated INPUT VARIABLES section today.
+
+    Test suite design notes for whoever continues this:
+    - tests/conftest.py has in-memory AgentSpec/StateModel/etc. builders
+      (build_minimal_agent_spec, build_message_state, build_terminal_state)
+      used by nearly every unit test — prefer these over hand-rolling specs.
+    - tests/fixtures/minimal_agent/ is a real on-disk agent satisfying the
+      REAL profiles/channels/voice.yaml's required policy sections (name_
+      handling_rules, style_and_vui_rules, pronunciation_rules, compliance_
+      and_scope_rules, data_and_variable_rules) — if that profile's required
+      sections change, this fixture (and tests/integration/test_compile_
+      with_subflows.py's inline REQUIRED_VOICE_POLICY_SECTIONS) needs a
+      matching update.
+    - Known-bug tests use `pytest.mark.xfail(strict=True, ...)` describing
+      the INTENDED behavior, never the buggy one — per DESIGN_PATTERNS.md A10
+      (retrospective test anti-pattern). When a bug is fixed, its xfail test
+      will XPASS and fail the run until the marker is removed.
+  do_not_forget:
+    - "agents/defs/ and agents/shared/ are NOT part of this git repo — do not try to commit changes there through this repo's git."
+    - "Never invent legal/compliance content (Colombian data-privacy law citations, medical claims) — source from existing repo material or ask."
+    - "gestantes_old.md is historical (pre-dates the HARD_TOOL_EXECUTION_CONTRACT section) — do not treat it as current spec."
+    - "A DSL grammar change is incomplete if it only touches schemas.py — renderers.py/templates/*.j2 and AGENT_CREATION_GUIDE.md/PATTERN_GUIDE.md must move together (CLAUDE.md §5.2.7)."
+    - "Before fixing any of B1-B10, re-run pytest tests/ -q first to confirm the baseline (190 passed, 8 xfailed) still holds — then flip the relevant xfail test(s) to normal assertions as part of the same fix commit."
+
+# ---------------------------------------------------------------------------
+# CHANGELOG
+# Reverse chronological: the most recent entry goes ABOVE.
+# ---------------------------------------------------------------------------
+
+changelog:
+  - date: "2026-08-06"
+    description: "Audited app/schemas.py, utils.py, loaders.py, validators.py, classifier.py, deduplicator.py, renderers.py, compiler.py, and both Jinja templates for DSL/state-machine bugs and gaps. Logged 10 findings (B1-B10) in SPEC.md §5.1, most notably B1: both templates render [[ input_variables_block ]] twice. Built tests/ from scratch (conftest.py, tests/fixtures/minimal_agent/, 7 unit test modules, 2 integration test modules) — 198 tests, 190 passing + 8 strict-xfail documenting the known bugs. No source code changed; ruff check tests/ clean."
+  - date: "2026-08-06"
+    description: "Adapted framework_example/'s 7 generic template documents into project-specific root-level files (CLAUDE.md, SPEC.md, EXPERTS.md, FRAMEWORK.md, TESTING.md, DESIGN_PATTERNS.md, STATUS.yaml) for Prompt Compiler, based on a full read of app/, templates/, existing docs, pyproject.toml, and git history. No source code changed."
+  - date: "2026-06-18"
+    description: "(Reconstructed from git log, commit d4c3557) Clarified subflow navigation and document loading instructions in templates/system_prompt.md.j2."
+  - date: "2026-06-18"
+    description: "(Reconstructed from git log, commit d3f18df) Updated handler types to 'message' and adjusted routing syntax."
+  - date: "2026-06-17"
+    description: "(Reconstructed from git log, commit a215c6b) Implemented FAQ rendering functions and updated retrieval policy in system prompt."
+  - date: "2026-06-17"
+    description: "(Reconstructed from git log, commit a6df3b0) Refactored FAQ structure to use 'say' and 'say_verbatim' fields."
