@@ -13,10 +13,14 @@ Default output layout::
 
     dist/{agent_id}/
         system_prompt.md
+        system_prompt_mini.md      (only if the agent's template has a
+                                     *_mini.md.j2 companion on disk)
         reference_asset.md
         reference_asset.json
         subflows/
             {NAMESPACE}.md   (one file per subflow)
+        subflows_mini/
+            {NAMESPACE}.md   (only alongside system_prompt_mini.md)
         reports/
             validation_report.md
             deduplication_report.md
@@ -178,6 +182,19 @@ def _write_artifacts(outputs: CompilationOutputs, agent_dist: Path) -> list[Path
             sf_path.write_text(content, encoding="utf-8")
             written.append(sf_path)
 
+    if outputs.system_prompt_mini is not None:
+        prompt_mini_path = agent_dist / "system_prompt_mini.md"
+        prompt_mini_path.write_text(outputs.system_prompt_mini, encoding="utf-8")
+        written.append(prompt_mini_path)
+
+        if outputs.subflow_documents_mini:
+            subflows_mini_dir = agent_dist / "subflows_mini"
+            subflows_mini_dir.mkdir(parents=True, exist_ok=True)
+            for namespace, content in sorted(outputs.subflow_documents_mini.items()):
+                sf_mini_path = subflows_mini_dir / f"{namespace}.md"
+                sf_mini_path.write_text(content, encoding="utf-8")
+                written.append(sf_mini_path)
+
     if outputs.reference_asset_markdown is not None:
         ref_md_path = agent_dist / "reference_asset.md"
         ref_md_path.write_text(outputs.reference_asset_markdown, encoding="utf-8")
@@ -208,6 +225,14 @@ def _print_summary(outputs: CompilationOutputs) -> None:
     print(
         f"Subflow documents: {n_subflows} ({s.estimated_subflows_chars} chars total)"
     )
+    if s.estimated_system_prompt_mini_chars is not None:
+        total_full = s.estimated_system_prompt_chars + s.estimated_subflows_chars
+        total_mini = s.estimated_system_prompt_mini_chars + s.estimated_subflows_mini_chars
+        reduction = round(100 * (1 - total_mini / total_full)) if total_full else 0
+        print(
+            f"System Prompt (mini) chars: {s.estimated_system_prompt_mini_chars} "
+            f"+ {s.estimated_subflows_mini_chars} subflow ({reduction}% smaller than full)"
+        )
     print(f"Reference Asset chars: {s.estimated_reference_asset_chars}")
     print(f"Duplicate rules: {s.duplicate_rules_found}")
     n_err = len(outputs.validation_report.errors)

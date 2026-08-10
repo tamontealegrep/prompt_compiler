@@ -53,6 +53,8 @@ python app/build_prompt.py agents/defs/my_agent --channel voice --verbosity stan
 ```
 dist/my_agent/
 ├── system_prompt.md
+├── system_prompt_mini.md   # compact-notation companion — only written when the
+│                           # agent's template has a *_mini.md.j2 companion on disk
 ├── reference_asset.md
 ├── reference_asset.json
 └── reports/
@@ -60,6 +62,8 @@ dist/my_agent/
     ├── deduplication_report.md
     └── orphan_states_report.md
 ```
+
+`system_prompt_mini.md` encodes the exact same STATES/HANDLERS/FAQS content as `system_prompt.md`, just denser — no information is dropped, only fields that are already fully implied by context (e.g. `WAIT`/`FINAL`, which are now fully determined by each node's type) are left unstated. See `SPEC.md`'s decision log for the compression rules and measured results. It has **not** been empirically validated against a live LLM yet — treat it as a second, opt-in artifact for now, not a drop-in replacement for `system_prompt.md`.
 
 ---
 

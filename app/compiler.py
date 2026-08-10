@@ -17,7 +17,9 @@ ties together every previous phase into one pipeline:
 6. **Orphan-state diagnostic** — separate Markdown report
    (:mod:`app.validators.build_orphan_state_report`).
 7. **Rendering** — System Prompt via Jinja2 and, when requested, the
-   Reference Asset in Markdown and/or JSON (:mod:`app.renderers`).
+   Reference Asset in Markdown and/or JSON (:mod:`app.renderers`). Also
+   renders a compact-notation companion System Prompt ("mini") when the
+   agent's template has a ``*_mini.md.j2`` sibling on disk.
 
 The orchestrator never writes to disk — that is the CLI's job
 (:mod:`build_prompt`). It returns a :class:`CompilationOutputs`
@@ -44,7 +46,9 @@ from app.loaders import (
 )
 from app.renderers import (
     render_all_subflow_documents,
+    render_all_subflow_documents_mini,
     render_prompt,
+    render_prompt_mini,
     render_reference_asset_json,
     render_reference_asset_markdown,
 )
@@ -60,6 +64,16 @@ from app.validators import build_orphan_state_report, validate_agent_spec
 def _project_root() -> Path:
     """Return the project root directory (parent of ``app/``)."""
     return Path(__file__).resolve().parent.parent
+
+
+def _mini_template_path(template_path: Path) -> Path:
+    """Return the compact-notation companion path for ``template_path``.
+
+    Convention: ``system_prompt.md.j2`` -> ``system_prompt_mini.md.j2``, in
+    the same directory. The caller checks the returned path's existence —
+    this function only computes the name, it does not touch the filesystem.
+    """
+    return template_path.with_name(template_path.name.replace(".md.j2", "_mini.md.j2"))
 
 
 def compile_agent(
@@ -116,6 +130,20 @@ def compile_agent(
         else render_all_subflow_documents(spec)
     )
 
+    # Compact-notation companion System Prompt. Skipped (None) rather than
+    # raising when the agent's template has no *_mini.md.j2 sibling on disk,
+    # so agents using a template without a mini companion keep compiling.
+    mini_template_path = _mini_template_path(template_path)
+    system_prompt_mini: str | None = None
+    subflow_documents_mini: dict[str, str] = {}
+    if mini_template_path.exists():
+        system_prompt_mini = render_prompt_mini(
+            classified, mini_template_path, channel_profile,
+            embed_subflows=params.embed_subflows,
+        )
+        if not params.embed_subflows:
+            subflow_documents_mini = render_all_subflow_documents_mini(spec)
+
     reference_asset_markdown: str | None = None
     reference_asset_json: dict | None = None
 
@@ -127,6 +155,7 @@ def compile_agent(
 
     # Compilation stats — character counts as a token-budget proxy.
     estimated_subflows_chars = sum(len(doc) for doc in subflow_documents.values())
+    estimated_subflows_mini_chars = sum(len(doc) for doc in subflow_documents_mini.values())
     stats = CompilationStats(
         total_states=len(spec.states),
         total_handlers=len(spec.handlers),
@@ -136,12 +165,18 @@ def compile_agent(
         estimated_system_prompt_chars=len(system_prompt),
         estimated_reference_asset_chars=len(reference_asset_markdown or ""),
         estimated_subflows_chars=estimated_subflows_chars,
+        estimated_system_prompt_mini_chars=(
+            len(system_prompt_mini) if system_prompt_mini is not None else None
+        ),
+        estimated_subflows_mini_chars=estimated_subflows_mini_chars,
     )
 
     return CompilationOutputs(
         agent_id=spec.manifest.agent_id,
         system_prompt=system_prompt,
         subflow_documents=subflow_documents,
+        system_prompt_mini=system_prompt_mini,
+        subflow_documents_mini=subflow_documents_mini,
         reference_asset_markdown=reference_asset_markdown,
         reference_asset_json=reference_asset_json,
         validation_report=validation_report,

@@ -115,6 +115,7 @@ This system does NOT:
 - Subflow templating (namespacing, `@instance.export` alias resolution, `<<param>>` substitution) is implemented with hard guards (`_validate_no_unresolved_aliases`) that fail loudly rather than silently compiling a broken reference.
 - Mermaid round-trip tooling (`mermaid_parser.py` scaffold-from-diagram, `mermaid_diagrams.py` export-to-diagram) is functional and documented.
 - Documentation is unusually thorough for the project's size: `AGENT_CREATION_GUIDE.md` (980 lines, authoritative technical reference), `PATTERN_GUIDE.md` (compact-flow authoring pattern), `faq.md` / `handlers.md` (domain-content recommendations).
+- A compact-notation ("mini") System Prompt is compiled alongside the standard one whenever the agent's template has a `*_mini.md.j2` companion — see the 2026-08-07 decision log entry. Measured 17% fewer characters on the real reference agent, with zero validation impact. Only `templates/system_prompt_mini.md.j2` exists so far; the bilingual template has no companion yet, so agents using it compile with `system_prompt_mini = None`.
 
 ### What is incomplete
 
@@ -333,6 +334,9 @@ The following invariants apply to all changes, without exception. They are the r
 | 22 | **Fix B4** — make `GO_TO` detection and the unresolved-alias guard whitespace/case robust (or explicitly document `GO_TO:` as case-sensitive-by-design and add an `UNPARSEABLE_GOTO`-style catch for near-miss casing) | Medium | A fixture with `go_to:`/irregular alias spacing produces an explicit validation error instead of silently compiling |
 | 23 | **Fix B5** — `render_subflow_document` reuses `app.utils.extract_goto_targets` instead of its local narrower regex | Low | A fixture `subflow_change` node with a dynamic `GO_TO: [slot]` exit shows the real target in the subflow document, not `—` |
 | 24 | Add a `HANDLER.trigger` vs `FAQ.match` phrase-collision validator (addresses B8) | Low | A fixture with an identical trigger/match phrase produces a warning |
+| 25 | Create `templates/system_prompt_bilingual_text_mini.md.j2` so bilingual (Family Aims-style) agents also get a mini artifact | Low | `compile_agent()` on a bilingual-templated agent returns a non-`None` `system_prompt_mini` |
+| 26 | Empirically validate the mini System Prompt against a real LLM — confirm state-machine adherence and spoken output are unaffected before any agent switches to using it as its primary deployed prompt | High (before production use) | A side-by-side conversation transcript comparison (standard vs mini) on the same scripted test cases shows no behavioral divergence; needs a human decision on methodology first |
+| 27 | Measure whether dropping `GOAL` from the mini renderer (currently kept) changes behavior; if not, drop it for further savings | Low | Requires phase 26's evaluation harness to exist first — no speculative change without a way to measure the effect |
 
 ### Findings not yet scheduled (need a product decision first)
 
@@ -373,6 +377,33 @@ B6 (disclaimer checker should scan `say`, not `goal`/`do`), B7 (tool vs. tool-co
 ---
 
 ## 13. Decision log
+
+### 2026-08-07 — Added a compact-notation ("mini") System Prompt as a second compile artifact
+
+**Context:** The repo owner asked whether a different rendering format could present the same state-machine content to the LLM with fewer tokens, without losing precision — "as if designing the renderer from zero." After discussing the tradeoffs (dense single-line/table formats vs. a hybrid that only compresses what's truly redundant), the owner asked to implement it as a second artifact compiled alongside the existing one, not a replacement.
+
+**Decision:** Added a compact node-rendering format (`app/renderers.py`'s "Compact ('mini') System Prompt renderers" section) and a companion template, `templates/system_prompt_mini.md.j2`. `compile_agent()` now also produces `system_prompt_mini` (and `subflow_documents_mini` when `embed_subflows=False`), and `build_prompt.py` writes `dist/{agent_id}/system_prompt_mini.md` (+ `subflows_mini/`) whenever the agent's manifest template has a `*_mini.md.j2` companion on disk. Mini rendering is skipped (not an error) when no companion exists — verified against the real bilingual template, which intentionally has none yet.
+
+**What the compact format removes, and why each is lossless:**
+- `WAIT`/`FINAL` are never shown — both are now fully derivable from `TYPE` (B2, this repo, 2026-08-06), so restating them is pure redundancy.
+- `STATE_ID`/`HANDLER_ID`/`FAQ_ID` and `TYPE` are stated once in a header line (`TAG ID`) instead of two separate labeled fields; FAQ headers drop the tag entirely since `FAQModel.type` is schema-fixed to `"message"`.
+- `EXECUTE: tool_name` never repeats the `TOOL`/`NEXT_ASSISTANT_ACTION`/`SPEECH_BEFORE_TOOL`/`ROUTE_BEFORE_TOOL_RESULT` boilerplate per node — that contract is global (`HARD_TOOL_EXECUTION_CONTRACT`) and stated once in the template, reused verbatim from the standard template.
+- `STORE` is omitted whenever it's exactly the trivial per-capture echo (`[slot] = [slot]`) — shown only when it does something else.
+- A single unconditional `GO_TO: X` with no `FALLBACK` inlines onto the header line.
+
+**What was deliberately left untouched, because compressing it risks precision:** `SAY` content (still quoted, still tagged `[flex]`/`[verb]`, just with shorter tag words) and any `ROUTE`/`FALLBACK` with real branching logic (multiple targets, `IF` conditions, or a fallback) — those stay an explicit, one-condition-per-line block using the exact same `IF <condition> -> GO_TO: X` syntax as the standard template. `GOAL`/`DO` are never dropped either, on the same reasoning. `capture`/`store` field freedom (per B2's decision not to over-constrain the schema) is respected — multi-capture nodes render as a tuple.
+
+**Alternatives considered:**
+- A maximally dense single-line-per-node grammar (S-expression / pipe-delimited table style) — rejected. Would have compressed further, but every field packed onto one line increases the chance a model misses something in a long context, and control-flow logic is exactly where that risk is least acceptable.
+- Making mini the *only* rendered prompt, replacing the standard one — rejected; the user asked for a second artifact, not a replacement, and no comparative data exists yet on whether a downstream LLM performs identically against the two formats.
+- Dropping `GOAL` entirely (it's internal-only commentary, never spoken) — rejected for this first version; behaviorally ambiguous enough that it needs a measured comparison before removing it, not an assumption.
+
+**Consequences — measured, not guessed:** Compiling the real reference agent (118 states, 8 terminal states, 9 handlers, 19 FAQs) end-to-end: **17% fewer characters** in the combined System Prompt + subflow documents (103,297 → 85,532), with zero new validation errors. This is lower than the 30-50% floated in conversation before implementing — that estimate was explicitly unmeasured speculation at the time, and the real number came in lower mostly because multi-branch `ROUTE` blocks (deliberately left uncompressed) make up a large share of total characters in a flow this dense with decision nodes. On the tiny local `tests/fixtures/minimal_agent` fixture (2 nodes), mini is actually *larger* than the standard prompt — the fixed grammar-teaching section (`COMPACT_OBJECT_NOTATION`) is a one-time cost that only pays for itself once a flow has enough nodes to amortize it. Token count (as opposed to character count) was not measured — no tokenizer dependency is installed in this project and none was added for this.
+
+**Not yet done, flagged rather than silently skipped:**
+- No companion `templates/system_prompt_bilingual_text_mini.md.j2` was created — the bilingual template is out of scope for this change; `compile_agent()` correctly falls back to skipping mini rendering for any agent using it.
+- The mini template renders `input_variables_block` exactly once (unlike the standard template, which — per B1 — intentionally renders it twice). This was a deliberate choice, not an oversight: duplicating it purely for parity would work against the whole point of a token-optimized artifact, but it was never separately confirmed with the repo owner that once is correct for this artifact specifically.
+- No production LLM was actually run against the mini format to confirm comprehension/precision holds — the "no precision loss" claim rests on the format only ever removing information that's provably redundant (derivable from `TYPE`, or restating a global rule), not on an empirical eval.
 
 ### 2026-08-06 — Retry-counter naming convention set to `_try`; B10's heuristic updated to match
 

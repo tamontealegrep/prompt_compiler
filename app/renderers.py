@@ -33,6 +33,7 @@ from jinja2 import Environment, FileSystemLoader
 from app.classifier import ClassifiedSpec
 from app.schemas import (
     AgentSpec,
+    CaptureField,
     ChannelProfile,
     ContextFile,
     FAQModel,
@@ -478,6 +479,293 @@ def render_all_subflow_documents(spec: AgentSpec) -> dict[str, str]:
 
 
 # ---------------------------------------------------------------------------
+# Compact ("mini") System Prompt renderers
+#
+# A token-optimized alternative encoding of the same STATES/TERMINAL_STATES/
+# HANDLERS/FAQS content rendered by the functions above. Every field these
+# functions render is already present in the full renderers' output — this
+# is a denser *encoding* of identical information, not a different spec.
+#
+# Compression rules (see PATTERN_GUIDE.md and SPEC.md decision log for the
+# rationale behind each one):
+#   - STATE_ID/HANDLER_ID/FAQ_ID is stated once, in the header, not repeated
+#     in a separate field line.
+#   - TYPE becomes a short header tag (see _MINI_TYPE_TAGS) instead of a
+#     labeled field. FAQ headers carry no tag at all — FAQModel.type is
+#     schema-fixed to "message", so the word conveys no information.
+#   - WAIT and FINAL are never rendered — both are now fully determined by
+#     TYPE (FlowObjectBase.validate_semantics(), SPEC.md B2), so restating
+#     them is pure redundancy.
+#   - EXECUTE never repeats the HARD_TOOL_EXECUTION_CONTRACT boilerplate
+#     (TOOL / NEXT_ASSISTANT_ACTION / SPEECH_BEFORE_TOOL / ...) — that
+#     contract is global and stated once in the mini template, not per node.
+#   - STORE is omitted whenever it is exactly the trivial per-capture echo
+#     ``[slot] = [slot]`` — that's the overwhelming default shape, so only
+#     a STORE that does something else is worth the tokens to show.
+#   - A single unconditional ``GO_TO: X`` route with no FALLBACK is inlined
+#     onto the header line. Anything with real branching (multiple route
+#     lines, IF conditions, or a FALLBACK) stays an explicit block — this is
+#     deliberately the one place compaction stops, since collapsing control
+#     flow logic is exactly where a token save could cost real precision.
+#   - GOAL, DO and SAY are kept (never dropped) — content that could carry
+#     behaviorally-relevant information is never assumed away, even when it
+#     costs tokens. Multi-line lists collapse to one line only when they
+#     genuinely have a single item.
+# ---------------------------------------------------------------------------
+
+
+_MINI_TYPE_TAGS: dict[str, str] = {
+    "start": "START",
+    "message": "MSG",
+    "question": "Q",
+    "decision": "DEC",
+    "action": "ACT",
+    "registration": "REG",
+    "terminal": "END",
+    "subflow_change": "CHANGE",
+}
+
+
+def _mini_verbatim_label(say_verbatim: bool) -> str:
+    """Short-form SAY annotation for the mini renderer."""
+    return "[verb]" if say_verbatim else "[flex]"
+
+
+def _render_mini_single_or_block(
+    label: str, lines: list[str], *, indent: int = 0
+) -> str:
+    """Render ``LABEL: value`` inline for a single-item list, a block otherwise."""
+    if not lines:
+        return ""
+    pad = " " * indent
+    if len(lines) == 1:
+        return f"{pad}{label}: {lines[0]}"
+    rendered = [f"{pad}{label}:"]
+    rendered.extend(f"{pad}  {line}" for line in lines)
+    return "\n".join(rendered)
+
+
+def _render_mini_say(lines: list[str], say_verbatim: bool, *, indent: int = 0) -> str:
+    """Render SAY with quoted content and the short verbatim/flexible tag."""
+    if not lines:
+        return ""
+    pad = " " * indent
+    label = _mini_verbatim_label(say_verbatim)
+    if len(lines) == 1:
+        return f"{pad}SAY {label}: {_quote(lines[0])}"
+    rendered = [f"{pad}SAY {label}:"]
+    rendered.extend(f"{pad}  {_quote(line)}" for line in lines)
+    return "\n".join(rendered)
+
+
+def _render_mini_capture(capture: list[CaptureField]) -> str:
+    """Render CAPTURE inline: one field -> ``slot:type``, several -> ``(a:ta, b:tb)``."""
+    if not capture:
+        return ""
+    if len(capture) == 1:
+        field = capture[0]
+        return f"{field.slot}:{field.type_expr}"
+    return "(" + ", ".join(f"{field.slot}:{field.type_expr}" for field in capture) + ")"
+
+
+def _default_store_for_capture(capture: list[CaptureField]) -> list[str]:
+    """The implicit per-capture echo STORE assumed when STORE is omitted."""
+    return [f"[{field.slot}] = [{field.slot}]" for field in capture]
+
+
+def _render_mini_store(
+    store: list[str], capture: list[CaptureField], *, indent: int = 0
+) -> str:
+    """Render STORE only when it differs from the trivial per-capture echo default."""
+    if not store or store == _default_store_for_capture(capture):
+        return ""
+    return _render_mini_single_or_block("STORE", store, indent=indent)
+
+
+def _extract_inline_single_goto(lines: list[str]) -> str | None:
+    """Return ``"GO_TO: X"`` if ``lines`` is exactly one unconditional GO_TO line."""
+    if len(lines) != 1:
+        return None
+    line = lines[0].strip()
+    if not line.startswith("GO_TO:"):
+        return None
+    return line
+
+
+def _render_mini_route_fallback(
+    route: list[str], fallback: list[str], *, indent: int = 0
+) -> tuple[str, str]:
+    """Return ``(header_suffix, block)`` for ROUTE/FALLBACK.
+
+    A single unconditional ``GO_TO: X`` route with no fallback is inlined
+    directly onto the header line via ``header_suffix``. Any real branching
+    (multiple route lines, IF conditions, or a non-empty fallback) is
+    rendered as an explicit ``ROUTE:``/``FALLBACK:`` block instead, and
+    ``header_suffix`` is empty.
+    """
+    single = _extract_inline_single_goto(route)
+    if single is not None and not fallback:
+        return (f"  {single}", "")
+
+    pad = " " * indent
+    parts: list[str] = []
+    if route:
+        parts.append(f"{pad}ROUTE:")
+        parts.extend(f"{pad}  {line}" for line in route)
+    if fallback:
+        parts.append(f"{pad}FALLBACK:")
+        parts.extend(f"{pad}  {line}" for line in fallback)
+    return ("", "\n".join(parts))
+
+
+def render_state_mini(state: StateModel) -> str:
+    """Render one state in the compact notation (see module docstring above)."""
+    tag = _MINI_TYPE_TAGS[state.type]
+    header = f"{tag} {state.state_id}"
+
+    attrs: list[str] = []
+    capture_str = _render_mini_capture(state.capture)
+    if capture_str:
+        attrs.append(f"CAPTURE: {capture_str}")
+    if state.execute:
+        attrs.append(f"EXECUTE: {state.execute}")
+    if state.faq_resume_to:
+        attrs.append(f"FAQ_RESUME_TO: {state.faq_resume_to}")
+    if attrs:
+        header += "  " + "  ".join(attrs)
+
+    inline_route, route_block = _render_mini_route_fallback(
+        state.route, state.fallback, indent=2
+    )
+    header += inline_route
+
+    body_parts = [
+        _render_mini_single_or_block("GOAL", state.goal, indent=2),
+        _render_mini_single_or_block("DO", state.do, indent=2),
+        _render_mini_say(state.say, state.say_verbatim, indent=2),
+        _render_mini_store(state.store, state.capture, indent=2),
+        route_block,
+    ]
+    body = "\n".join(part for part in body_parts if part)
+    return header + ("\n" + body if body else "")
+
+
+def render_handler_mini(handler: HandlerModel) -> str:
+    """Render one handler in the compact notation (see module docstring above)."""
+    tag = _MINI_TYPE_TAGS[handler.type]
+    header = f"{tag} {handler.handler_id}"
+
+    attrs: list[str] = []
+    capture_str = _render_mini_capture(handler.capture)
+    if capture_str:
+        attrs.append(f"CAPTURE: {capture_str}")
+    if handler.execute:
+        attrs.append(f"EXECUTE: {handler.execute}")
+    if attrs:
+        header += "  " + "  ".join(attrs)
+
+    inline_route, route_block = _render_mini_route_fallback(
+        handler.route, handler.fallback, indent=2
+    )
+    header += inline_route
+
+    trigger_line = ""
+    if handler.trigger:
+        joined = " | ".join(_quote(t) for t in handler.trigger)
+        trigger_line = f"  TRIGGER: {joined}"
+
+    body_parts = [
+        trigger_line,
+        _render_mini_single_or_block("GOAL", handler.goal, indent=2),
+        _render_mini_single_or_block("DO", handler.do, indent=2),
+        _render_mini_say(handler.say, handler.say_verbatim, indent=2),
+        _render_mini_store(handler.store, handler.capture, indent=2),
+        route_block,
+    ]
+    body = "\n".join(part for part in body_parts if part)
+    return header + ("\n" + body if body else "")
+
+
+def render_faq_mini(faq: FAQModel) -> str:
+    """Render one FAQ in the compact notation. No type tag — FAQ.type is always 'message'."""
+    header = faq.faq_id
+    if faq.resume_to is not None:
+        header += f"  RESUME_TO: {faq.resume_to}"
+
+    match_line = "  MATCH: " + " | ".join(_quote(m) for m in faq.match)
+    say_line = _render_mini_say(faq.say, faq.say_verbatim, indent=2)
+
+    return "\n".join(part for part in (header, match_line, say_line) if part)
+
+
+def render_states_mini(spec: AgentSpec) -> str:
+    """Render every main state in the compact notation, separated by blank lines."""
+    return "\n\n".join(render_state_mini(s) for s in spec.states)
+
+
+def render_terminal_states_mini(spec: AgentSpec) -> str:
+    """Render every terminal state in the compact notation, separated by blank lines."""
+    return "\n\n".join(render_state_mini(s) for s in spec.terminal_states)
+
+
+def render_handlers_mini(spec: AgentSpec) -> str:
+    """Render every handler in the compact notation, separated by blank lines."""
+    return "\n\n".join(render_handler_mini(h) for h in spec.handlers)
+
+
+def render_faqs_mini(spec: AgentSpec) -> str:
+    """Render every FAQ in the compact notation, separated by blank lines."""
+    return "\n\n".join(render_faq_mini(f) for f in spec.faqs)
+
+
+def render_root_states_mini(spec: AgentSpec) -> str:
+    """Compact-notation companion to ``render_root_states`` (no ``__`` in ID)."""
+    root = [s for s in spec.states if "__" not in s.state_id]
+    if not root:
+        return ""
+    return "\n\n".join(render_state_mini(s) for s in root)
+
+
+def render_root_terminal_states_mini(spec: AgentSpec) -> str:
+    """Compact-notation companion to ``render_root_terminal_states``."""
+    root = [s for s in spec.terminal_states if "__" not in s.state_id]
+    if not root:
+        return ""
+    return "\n\n".join(render_state_mini(s) for s in root)
+
+
+def render_subflow_document_mini(spec: AgentSpec, namespace: str) -> str:
+    """Compact-notation companion to ``render_subflow_document``."""
+    ns_prefix = namespace + "__"
+    subflow_states = [s for s in spec.states if s.state_id.startswith(ns_prefix)]
+    subflow_terminals = [
+        s for s in spec.terminal_states if s.state_id.startswith(ns_prefix)
+    ]
+
+    entry = _subflow_entry_state(spec, namespace)
+    entry_id = entry.state_id if entry else "—"
+
+    lines: list[str] = [f"# SUBFLOW: {namespace}", "", f"Entry: {entry_id}", ""]
+
+    if subflow_states:
+        lines.append("\n\n".join(render_state_mini(s) for s in subflow_states))
+
+    if subflow_terminals:
+        lines.append("")
+        lines.append("\n\n".join(render_state_mini(s) for s in subflow_terminals))
+
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def render_all_subflow_documents_mini(spec: AgentSpec) -> dict[str, str]:
+    """Return a mapping of namespace → compact-notation rendered subflow document."""
+    return {
+        ns: render_subflow_document_mini(spec, ns)
+        for ns in _get_subflow_namespaces(spec)
+    }
+
+
+# ---------------------------------------------------------------------------
 # Reference Asset renderers
 # ---------------------------------------------------------------------------
 
@@ -710,6 +998,30 @@ def build_render_context(
     }
 
 
+def _render_with_jinja_template(template_path: Path, context: dict[str, str]) -> str:
+    """Render ``context`` through the Jinja2 template at ``template_path``.
+
+    Shared by ``render_prompt`` and ``render_prompt_mini`` — both use the
+    same ``[[`` / ``]]`` delimiter convention (see ``render_prompt``'s
+    docstring for why) and the same file-loading/rendering mechanics; only
+    the context-building function differs between the two artifacts.
+    """
+    if not template_path.exists():
+        raise FileNotFoundError(f"No existe el template: {template_path}")
+
+    env = Environment(
+        loader=FileSystemLoader(str(template_path.parent)),
+        autoescape=False,
+        trim_blocks=False,
+        lstrip_blocks=False,
+        variable_start_string="[[",
+        variable_end_string="]]",
+    )
+
+    template = env.get_template(template_path.name)
+    return template.render(**context).strip() + "\n"
+
+
 def render_prompt(
     classified: ClassifiedSpec,
     template_path: Path,
@@ -727,18 +1039,66 @@ def render_prompt(
     When ``embed_subflows`` is True all subflow states are inlined in the
     rendered prompt instead of being deferred to separate reference files.
     """
-    if not template_path.exists():
-        raise FileNotFoundError(f"No existe el template: {template_path}")
-
-    env = Environment(
-        loader=FileSystemLoader(str(template_path.parent)),
-        autoescape=False,
-        trim_blocks=False,
-        lstrip_blocks=False,
-        variable_start_string="[[",
-        variable_end_string="]]",
-    )
-
-    template = env.get_template(template_path.name)
     context = build_render_context(classified, channel_profile, embed_subflows=embed_subflows)
-    return template.render(**context).strip() + "\n"
+    return _render_with_jinja_template(template_path, context)
+
+
+def build_render_context_mini(
+    classified: ClassifiedSpec,
+    channel_profile: ChannelProfile,
+    *,
+    embed_subflows: bool = False,
+) -> dict[str, str]:
+    """Compact-notation companion to ``build_render_context``.
+
+    Identical to ``build_render_context`` except ``states_block``,
+    ``terminal_states_block``, and ``handlers_block``/``faqs_block`` use the
+    compact ``_mini`` renderers. Every other block (constants, input
+    variables, tools, identity, objectives, policies, flow rules, faq
+    policy, subflow index) is reused unchanged — those aren't repeated once
+    per node, so compacting them wouldn't move the needle the way the
+    per-node blocks do.
+    """
+    spec = classified.spec
+    return {
+        "system_constants_block": render_system_constants(spec),
+        "input_variables_block": render_input_variables(spec),
+        "agent_tools_block": render_tools(classified.prompt_tool_names),
+        "identity_block": render_identity(spec),
+        "objectives_block": render_objectives(spec),
+        "global_operating_policies_block": render_global_policies(
+            spec, channel_profile
+        ),
+        "flow_entry_block": render_flow_entry(spec),
+        "flow_rules_block": render_flow_rules(spec),
+        "handlers_block": render_handlers_mini(spec),
+        "faqs_block": render_faqs_mini(spec),
+        "faq_policy_block": render_faq_policy(spec),
+        "subflow_index_block": "" if embed_subflows else render_subflow_index(spec),
+        "states_block": (
+            render_states_mini(spec) if embed_subflows else render_root_states_mini(spec)
+        ),
+        "terminal_states_block": (
+            render_terminal_states_mini(spec)
+            if embed_subflows
+            else render_root_terminal_states_mini(spec)
+        ),
+    }
+
+
+def render_prompt_mini(
+    classified: ClassifiedSpec,
+    template_path: Path,
+    channel_profile: ChannelProfile,
+    *,
+    embed_subflows: bool = False,
+) -> str:
+    """Render the compact-notation System Prompt using ``template_path``.
+
+    Same Jinja mechanics as ``render_prompt`` (see its docstring); only the
+    per-node block content differs, via ``build_render_context_mini``.
+    """
+    context = build_render_context_mini(
+        classified, channel_profile, embed_subflows=embed_subflows
+    )
+    return _render_with_jinja_template(template_path, context)

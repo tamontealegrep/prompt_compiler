@@ -1169,6 +1169,8 @@ class CompilationStats:
     estimated_system_prompt_chars: int
     estimated_reference_asset_chars: int
     estimated_subflows_chars: int
+    estimated_system_prompt_mini_chars: int | None
+    estimated_subflows_mini_chars: int
 
 
 @dataclass(frozen=True, slots=True)
@@ -1179,11 +1181,20 @@ class CompilationOutputs:
     forward references resolved by the type checker via ``TYPE_CHECKING``.
     The runtime classes live in ``app/validators.py`` and
     ``app/deduplicator.py``; they are not imported here to avoid a cycle.
+
+    ``system_prompt_mini`` / ``subflow_documents_mini`` are the compact-
+    notation companions to ``system_prompt`` / ``subflow_documents`` (see
+    ``app/renderers.py``'s "Compact ('mini') System Prompt renderers"
+    section). ``system_prompt_mini`` is ``None`` when the agent's manifest
+    template has no ``*_mini.md.j2`` companion on disk — mini rendering is
+    skipped rather than failing the whole compile in that case.
     """
 
     agent_id: str
     system_prompt: str
     subflow_documents: dict[str, str]
+    system_prompt_mini: str | None
+    subflow_documents_mini: dict[str, str]
     reference_asset_markdown: str | None
     reference_asset_json: dict[str, Any] | None
     validation_report: ValidationReport

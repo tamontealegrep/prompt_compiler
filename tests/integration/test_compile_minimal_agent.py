@@ -82,3 +82,34 @@ def test_compile_agent_never_writes_to_disk(tmp_path, monkeypatch):
     compile_agent(MINIMAL_AGENT_DIR, CompilationParams(channel=ChannelType.VOICE))
     after = set(tmp_path.rglob("*"))
     assert before == after
+
+
+def test_compile_minimal_agent_produces_a_mini_system_prompt():
+    outputs = compile_agent(MINIMAL_AGENT_DIR, CompilationParams(channel=ChannelType.VOICE))
+    assert outputs.system_prompt_mini is not None
+    assert "MSG GREETING" in outputs.system_prompt_mini
+    assert "END CLOSE" in outputs.system_prompt_mini
+
+
+def test_compile_minimal_agent_mini_prompt_has_no_validation_impact():
+    """Rendering the mini prompt alongside the full one must not change validation."""
+    outputs = compile_agent(MINIMAL_AGENT_DIR, CompilationParams(channel=ChannelType.VOICE))
+    assert outputs.validation_report.errors == []
+
+
+def test_compile_minimal_agent_mini_prompt_is_deterministic_across_two_runs():
+    params = CompilationParams(channel=ChannelType.VOICE)
+    first = compile_agent(MINIMAL_AGENT_DIR, params)
+    second = compile_agent(MINIMAL_AGENT_DIR, params)
+    assert first.system_prompt_mini == second.system_prompt_mini
+
+
+def test_compile_minimal_agent_mini_prompt_never_shows_wait_or_final_labels():
+    """B2 made WAIT/FINAL fully derivable from TYPE; the mini renderer must never restate
+    them on a node. (COMPACT_OBJECT_NOTATION's teaching prose legitimately says the words
+    "WAIT"/"FINAL" once each, explaining the rule — this checks the rendered STATES/
+    TERMINAL_STATES section specifically, not the whole document.)"""
+    outputs = compile_agent(MINIMAL_AGENT_DIR, CompilationParams(channel=ChannelType.VOICE))
+    states_section = outputs.system_prompt_mini.split("## STATES", 1)[1]
+    assert "WAIT" not in states_section
+    assert "FINAL" not in states_section

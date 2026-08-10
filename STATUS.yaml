@@ -68,6 +68,9 @@ phases:
     - id: 20
       description: "Fix B2 — completed FlowObjectBase.validate_semantics()'s per-type invariant matrix (execute/final/say restricted to documented types; decision requires explicit wait: no)"
       completion_date: "2026-08-06"
+    - id: 28
+      description: "Compact-notation ('mini') System Prompt as a second compile artifact: app/renderers.py mini renderers, templates/system_prompt_mini.md.j2, compile_agent()/CompilationOutputs wiring, build_prompt.py dist/ writing. Measured 17% char reduction on the real reference agent, zero validation impact."
+      completion_date: "2026-08-07"
 
   in_progress:
     - id: 14
@@ -80,7 +83,7 @@ phases:
       percentage: 90
       start_date: "2026-08-06"
       blocked_by: null
-      note: "Core app/ modules covered (198 tests). mermaid_parser.py / mermaid_diagrams.py / build_prompt.py CLI / main.py TUI still untested — not part of the DSL/state-machine audit scope this session."
+      note: "Core app/ modules covered, plus compiler.py (test_compiler.py) and a slice of build_prompt.py's artifact-writing (test_build_prompt_cli.py) added 2026-08-07 alongside the mini-prompt feature. mermaid_parser.py / mermaid_diagrams.py / main.py TUI / build_prompt.py's argparse layer still untested."
 
   cancelled:
     - id: 19
@@ -113,6 +116,19 @@ phases:
       description: "Add a HANDLER.trigger vs FAQ.match phrase-collision validator (B8)"
       priority: "low"
       dependencies: []
+    - id: 25
+      description: "Create templates/system_prompt_bilingual_text_mini.md.j2 so bilingual agents also get a mini artifact"
+      priority: "low"
+      dependencies: []
+    - id: 26
+      description: "Empirically validate the mini System Prompt against a real LLM before any agent uses it as its primary deployed prompt"
+      priority: "high (before production use of the mini artifact)"
+      dependencies: []
+      note: "Needs a human decision on evaluation methodology first — see SPEC.md open questions."
+    - id: 27
+      description: "Measure whether dropping GOAL from the mini renderer changes behavior; drop it if not"
+      priority: "low"
+      dependencies: [26]
 
 # ---------------------------------------------------------------------------
 # ACTIVE TASKS
@@ -241,10 +257,15 @@ technical_debt:
     impact: "low"
     plan: "Revisit once confirmed no live agent definition still relies on the old path shape."
 
-  - description: "Automated test suite exists (212 tests) but doesn't yet cover mermaid_parser.py, mermaid_diagrams.py, scaffold_from_mermaid.py, build_prompt.py (CLI), or main.py (TUI)."
+  - description: "Automated test suite exists (250 tests) but doesn't yet cover mermaid_parser.py, mermaid_diagrams.py, scaffold_from_mermaid.py, build_prompt.py's argparse layer, or main.py (TUI)."
     identified: "2026-08-06"
     impact: "medium"
-    plan: "Extend tests/unit/app/ to the Mermaid round-trip tooling and CLI entry points once the DSL-focused suite (this session's scope) is reviewed."
+    plan: "Extend tests/unit/app/ to the Mermaid round-trip tooling and the remaining CLI/TUI entry points."
+
+  - description: "The mini System Prompt (SPEC.md §13, 2026-08-07) has not been empirically validated against a real LLM — the 'no precision loss' claim rests on the format only removing provably redundant information, not on a behavioral eval. No agent should be switched to using it as its primary deployed prompt before that eval exists (SPEC.md roadmap phase 26)."
+    identified: "2026-08-07"
+    impact: "high (before any production use of the mini artifact); none currently, since it's compiled as a second, opt-in artifact alongside the existing one"
+    plan: "SPEC.md §10 roadmap phase 26 — needs a human decision on evaluation methodology first."
 
   - description: "No CI pipeline — nothing currently blocks a broken commit from landing on main."
     identified: "2026-08-06"
@@ -261,16 +282,16 @@ technical_debt:
 # ---------------------------------------------------------------------------
 
 tests:
-  last_run: "2026-08-06"
-  total_tests: 212
+  last_run: "2026-08-07"
+  total_tests: 250
   status: "passing"  # passing | failing | not_run
   failing_tests: []
-  passing_count: 206
-  strict_xfail_count: 6
-  strict_xfail_note: "Each strict-xfail test documents one known open bug (B3, B4 x2, B5 x2, SPEC.md §5.1) via the INTENDED behavior — it will flip to an unexpected pass (and fail the run) once the corresponding fix lands, forcing removal of the marker. B2's two xfail tests were flipped to normal passing assertions when B2 was fixed this session."
+  passing_count: 245
+  strict_xfail_count: 5
+  strict_xfail_note: "Each strict-xfail test documents one known open bug (B3: 1, B4: 3, B5: 1 — SPEC.md §5.1) via the INTENDED behavior — it will flip to an unexpected pass (and fail the run) once the corresponding fix lands, forcing removal of the marker. B2's xfail tests were flipped to normal passing assertions when B2 was fixed 2026-08-06."
   coverage_percentage: null  # pytest-cov not run this session; no coverage tool wired into pyproject.toml yet
-  modules_covered: ["schemas.py", "utils.py", "loaders.py", "validators.py", "classifier.py", "deduplicator.py", "renderers.py", "compiler.py (via integration tests)"]
-  modules_not_yet_covered: ["mermaid_parser.py", "mermaid_diagrams.py", "scaffold_from_mermaid.py", "build_prompt.py", "main.py"]
+  modules_covered: ["schemas.py", "utils.py", "loaders.py", "validators.py", "classifier.py", "deduplicator.py", "renderers.py (incl. mini renderers)", "compiler.py (test_compiler.py + integration tests)", "build_prompt.py (artifact-writing slice only, via test_build_prompt_cli.py)"]
+  modules_not_yet_covered: ["mermaid_parser.py", "mermaid_diagrams.py", "scaffold_from_mermaid.py", "build_prompt.py's argparse/CLI layer", "main.py"]
 
 # ---------------------------------------------------------------------------
 # PROJECT METRICS
@@ -285,16 +306,18 @@ metrics:
   known_bugs_open: 9  # B3-B11 minus B2 (fixed); B1 reclassified as by-design, not counted. SPEC.md §5.1
   known_bugs_fixed: 1  # B2
   known_bugs_not_bugs: 1  # B1
-  last_evaluation: "2026-08-06"
+  mini_prompt_char_reduction_pct: 17  # measured on the real reference agent, 2026-08-07 — see SPEC.md §13
+  mini_template_companions: 1  # templates/system_prompt_mini.md.j2 only; bilingual has none yet (roadmap phase 25)
+  last_evaluation: "2026-08-07"
 
 # ---------------------------------------------------------------------------
 # CONTEXT FOR NEXT SESSION
 # ---------------------------------------------------------------------------
 
 next_session:
-  continue_with: "B4 still needs open_point 4 decided (case-sensitivity of GO_TO) before phase 22 can start. B3 (phase 21, wrap ValueError into RuntimeError) and B5 (phase 23, reuse app.utils.extract_goto_targets in renderers.py) are both low-risk and could proceed without further sign-off if the owner wants to keep going down the fix list. B6/B7/B9/B10/B11 still need an explicit go-ahead before scheduling (CLAUDE.md §5.1.6)."
+  continue_with: "Highest priority: SPEC.md roadmap phase 26 — the mini System Prompt has not been empirically validated against a real LLM and should not become any agent's primary deployed prompt until it is (needs a methodology decision from the repo owner first). Otherwise: B4 still needs open_point 4 decided (case-sensitivity of GO_TO) before phase 22 can start. B3 (phase 21) and B5 (phase 23) are low-risk and could proceed without further sign-off. B6/B7/B9/B10(remaining gap)/B11 still need an explicit go-ahead before scheduling (CLAUDE.md §5.1.6)."
   important_context: |
-    This session had three phases so far:
+    This session had five phases so far:
     1. Adapted the generic framework_example/ (7 template docs) into
        project-specific root-level files (2026-08-06, see changelog below).
     2. Audited every app/ module in the DSL/state-machine pipeline plus both
@@ -308,10 +331,35 @@ next_session:
        decision log entry for the exact table and the textual basis for each
        constraint). Also found B11 while reading a real agent for the
        PATTERN_GUIDE.md rewrite — logged, not yet scheduled.
+    4. Repo owner set the retry-counter convention to `_try` (token economy)
+       and asked to update B10's validator heuristic to match — done
+       (accepts `_try`/`_counter`, no longer `_retry_count`).
+    5. Repo owner asked for a token-optimized alternative rendering of the
+       same STATES/HANDLERS/FAQS content. Implemented as a SECOND compile
+       artifact (not a replacement): `system_prompt_mini` /
+       `subflow_documents_mini` on `CompilationOutputs`, written to
+       `dist/{agent_id}/system_prompt_mini.md` whenever the agent's template
+       has a `*_mini.md.j2` companion. See SPEC.md §13's 2026-08-07 decision
+       log entry for the full compression-rule rationale and measured
+       results (17% char reduction on the real reference agent).
 
     IMPORTANT: B1 is by design. If a future audit or a fresh read of the
     templates flags the duplicated input_variables_block again, check SPEC.md
     §5.1 first — it's already resolved, don't re-report it as a bug.
+
+    IMPORTANT (process note to self): mid-way through the mini-prompt work,
+    a `ruff check ... --fix` was run with too broad a glob (`app/*.py`
+    instead of just the touched files) and silently reformatted six files
+    with zero intentional changes this session (deduplicator.py,
+    mermaid_diagrams.py, mermaid_parser.py, scaffold_from_mermaid.py,
+    utils.py, loaders.py) plus unrelated Optional->X|None rewrites scattered
+    through schemas.py. Caught via `git status`/`git diff` before committing
+    and reverted with `git checkout -- <file>` for the untouched files, then
+    schemas.py was reverted and its one real change (two new dataclass
+    fields) was re-applied by hand. Lesson: never run `ruff --fix` (or any
+    autofix) against a glob wider than the exact files changed this turn —
+    check `git status` immediately after any `--fix` invocation, before
+    doing anything else.
 
     B2 is a breaking schema change for any agent YAML that relied on the
     now-forbidden combinations (e.g. a decision node omitting wait, or a
@@ -352,6 +400,8 @@ next_session:
 # ---------------------------------------------------------------------------
 
 changelog:
+  - date: "2026-08-07"
+    description: "Implemented a compact-notation ('mini') System Prompt as a second compile artifact per the repo owner's request, after a discussion of format tradeoffs (dense single-line grammars vs. a hybrid that only compresses provably-redundant fields). Added app/renderers.py's mini renderer functions (render_state_mini, render_handler_mini, render_faq_mini, section/context-level companions), templates/system_prompt_mini.md.j2 (reuses all behavioral sections from the standard template verbatim, replaces only the object-notation teaching section), and wired compile_agent()/CompilationOutputs/build_prompt.py to produce+write it whenever the agent's template has a *_mini.md.j2 companion (gracefully skipped otherwise — verified against the real bilingual template, which has none). Measured 17% character reduction on the real 118-state reference agent with zero validation impact; PATTERN_GUIDE.md/SPEC.md correctly flagged as unmeasured speculation before this. Mid-task, an overly broad `ruff --fix app/*.py` accidentally reformatted 6 untouched files plus unrelated code in schemas.py — caught via git status/diff and fully reverted before it could be committed; see next_session notes for the process lesson. Full suite: 250 tests, 245 passing + 5 strict-xfail (corrected count — B4 is 3 tests, not 2 as an earlier entry stated)."
   - date: "2026-08-06"
     description: "Repo owner set the project's retry-counter naming convention to the short _try suffix (token economy) instead of _retry_count, and asked to update the compiler's own heuristic to match. Updated app/validators.py::_validate_question_self_loops (B10) to recognize _try or _counter instead of the hardcoded _retry_count, via TDD (4 tests updated/added in tests/unit/app/test_validators.py, confirmed RED then GREEN). Verified against the real reference agent: its _try-suffixed counters no longer trigger a false QUESTION_SELF_LOOP_WITHOUT_RETRY_COUNTER warning, still 0 validation errors. B10's underlying heuristic-vs-real-check gap remains open; B11 (the check never fires for the recommended question-decision-question pattern) is untouched. Full suite: 212 tests, 206 passing + 6 strict-xfail."
   - date: "2026-08-06"
