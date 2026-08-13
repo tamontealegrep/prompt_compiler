@@ -542,6 +542,8 @@ tools:
 ```yaml
 tool_contracts:
   - name: verify_customer_identity
+    description: "Authorized tool to verify a customer identity from account and birth-date data."
+    notes: "Keep notes immediately after description when the runtime tool UI only exposes one instructions field and you need to copy description + notes together."
     inputs:
       - name: account_id
         type: string
@@ -555,9 +557,10 @@ tool_contracts:
       - name: verified
         type: boolean
         description: "True if identity was successfully verified."
-    notes: "Returns false on any mismatch — do not reveal which field failed."
 
   - name: get_account_balance
+    description: "Authorized tool to retrieve the current balance for a customer account."
+    notes: "Keep notes immediately after description when the runtime tool UI only exposes one instructions field and you need to copy description + notes together."
     inputs:
       - name: account_id
         type: string
@@ -569,10 +572,379 @@ tool_contracts:
       - name: currency
         type: string
         description: "Currency code (e.g. USD)."
-    notes: "Returns null balance if account is suspended."
 ```
 
 Tool names in `execute` fields of states must match exactly a name declared in `tools`. The validator enforces tool/contract consistency.
+
+#### Recommended LLM-oriented tool contract pattern
+
+For tools that must be invoked reliably from `action` nodes, prefer a contract shape that removes ambiguity about whether the model should call the tool or reason past it.
+
+Recommended structure:
+
+```yaml
+tool_contracts:
+  - name: authoritative_tool
+    description: "Authorized tool for <job>. Call it immediately when the flow reaches the point where <job> must be resolved. Its output is the only authorized source of truth for the next decision."
+    notes:
+      - "Keep notes immediately after description when the runtime tool UI only exposes one instructions field and you need to copy description + notes together."
+      - "MANDATORY EXECUTION TRIGGER: call authoritative_tool as the next assistant action when <trigger condition>."
+      - "ABSOLUTE EXECUTION RULE: do not answer, summarize, confirm, infer, or continue before the tool call completes."
+      - "ARGUMENT RULE: build arguments only from declared slots, variables, constants, or the latest tool output. Do not invent missing values."
+      - "SOURCE OF TRUTH RULE: use result_field as the only authorized post-tool result. Do not replace it with model reasoning."
+      - "POST-EXECUTION RULE: if the output is null, invalid, false, stale, or not traceable to this call, stay in the recovery branch defined by the flow."
+    inputs:
+      - name: required_input
+        required: true
+        description: "Exact value to send. State where it comes from and which transformations are allowed."
+    outputs:
+      - name: result_field
+        required: true
+        description: "Canonical output field used by the flow after execution."
+```
+
+Recommended ordering in `tool_contracts.yaml`:
+
+```yaml
+- name: tool_name
+  description: "..."
+  notes:
+    - "..."
+  inputs:
+    - name: input_name
+      required: true
+      description: "..."
+  outputs:
+    - name: output_name
+      required: true
+      description: "..."
+```
+
+Put `notes` immediately after `description` whenever the deployment runtime exposes a single instructions field and operators need to copy the contract's instruction-bearing text in one pass.
+
+Why this works better for LLM agents:
+
+- It tells the model exactly when tool execution becomes mandatory.
+- It separates pre-call rules, argument construction, and post-call interpretation.
+- It names one canonical output field instead of forcing the model to reinterpret prose.
+- It reduces the chance that the model treats a tool as optional background guidance.
+
+Anti-patterns to avoid:
+
+- Mixing "call the tool now" with "ask the user before calling" inside the same `action`-stage contract.
+- Describing multiple possible output shapes for the same tool result.
+- Letting the contract imply the model may estimate, derive, or summarize the answer without executing the tool.
+- Referring to undocumented arguments, stale prior availability, or hidden platform memory as if they were safe sources of truth.
+
+#### Pre-deployment checklist for `action` nodes and tool contracts
+
+Use this checklist before deploying any new agent or any change that affects a tool-driven flow.
+
+**Tool contract review**
+
+- The tool name matches exactly across `tools.yaml`, `tool_contracts.yaml`, and every `execute` field that references it.
+- The contract description states clearly that the tool is authorized for a specific job and whether the call is mandatory.
+- Every input field names its source unambiguously: slot, runtime variable, constant, or latest tool output.
+- Every input field states any allowed transformation explicitly, such as ISO normalization, unit conversion, or literal mapping.
+- The contract exposes one canonical output field or one canonical verdict representation for downstream routing.
+- The notes include a `MANDATORY EXECUTION TRIGGER` when the tool must be called from a specific flow point.
+- The notes include an `ABSOLUTE EXECUTION RULE` when the assistant must not speak, confirm, infer, or continue before the tool call completes.
+- The notes include an `ARGUMENT RULE` that forbids inventing missing values or sourcing arguments from undeclared memory.
+- The notes include a `SOURCE OF TRUTH RULE` that makes clear which output field governs the next decision.
+- The notes include a `POST-EXECUTION RULE` that explains what to do if the tool returns null, false, stale, invalid, or incomplete data.
+- The contract does not describe multiple incompatible output shapes for the same result.
+- The contract does not mix platform behavior with conversational fallback instructions that belong in the flow.
+- The contract does not imply that the model may estimate the answer instead of calling the tool.
+- Constant or platform-fixed arguments described in the real runtime are reflected accurately in the contract text.
+- If the runtime tool contract differs from the compiler repo contract, that drift is resolved before deployment.
+
+**`action` node review**
+
+- The node type is really `action`, not `decision` or `registration` with hidden tool behavior in `do` text.
+- The node goal states that the tool call is obligatory and that the next valid assistant action is the real tool call.
+- The node goal states what captured result must exist before the flow may continue.
+- The `do` block starts with a direct imperative such as `TOOL CALL ONLY: call <tool_name> now.`
+- The `do` block explicitly forbids user-facing speech before the tool call when the node is non-conversational.
+- The `do` block explicitly forbids FAQ handling, handler continuation, or branch progression before the tool result is captured when that matters.
+- The `do` block maps each argument from concrete slots, variables, constants, or previous tool outputs.
+- The `do` block identifies one canonical output as the only authorized source of truth for the next step.
+- The node does not contain instructions to ask the user for clarification unless that clarification is captured in an earlier question node.
+- The `capture` field matches the actual output shape expected from the tool.
+- Any `store` rule derived from the tool result is explicit and only runs after a valid result is captured.
+- The `route` block advances only on a real captured result, not on an assumed outcome.
+- The `fallback` block keeps the agent in the safe recovery path and does not silently skip the tool call.
+- The node wording does not invite the model to summarize, infer, or replace the tool result with reasoning.
+- If the tool is safety-critical or business-critical, the node repeats that the tool result is mandatory and authoritative.
+
+**Flow-level consistency review**
+
+- Every `action` node has a preceding path that guarantees required arguments are already captured before entry.
+- If a tool depends on normalized dates, mapped literals, or prior tool outputs, that preparation happens before the node or is fully specified inside the node without requiring extra conversation.
+- No later node contradicts the tool contract by reinterpreting the output in a different shape.
+- Recovery branches after tool failure route back to the correct capture or retry point instead of continuing with stale state.
+- Adjacent message or decision nodes do not accidentally weaken the tool's authority by offering inferred results.
+
+**Deployment gate**
+
+- Rebuild the affected agent and confirm validation reports show `0 errors` and `0 warnings`.
+- Inspect the rendered `system_prompt_mini.md` to ensure the `ACT` nodes still read as imperative execution steps rather than descriptive guidance.
+- Inspect the rendered `reference_asset.md` to ensure the contract wording remained canonical and readable after compilation.
+- If possible, run at least one transcript or simulation that reaches each changed `action` node and verify the model actually calls the tool instead of hallucinating the answer.
+
+#### Short PR checklist
+
+Use this version in pull requests or review comments when you need a fast gate.
+
+- Tool names match across `tools.yaml`, `tool_contracts.yaml`, and all `execute` references.
+- Each tool contract defines one canonical output or verdict shape.
+- Each mandatory tool includes trigger, anti-hallucination, source-of-truth, and post-execution rules.
+- Each `action` node says the next valid assistant action is the real tool call.
+- Each `action` node maps arguments from declared slots, variables, constants, or previous tool outputs only.
+- No `action` node mixes tool execution with new conversational clarification that should happen earlier in the flow.
+- `route` and `fallback` do not let the flow advance on an assumed tool result.
+- Recompiled artifacts are clean and the rendered `ACT` nodes still read as imperative execution instructions.
+
+#### Patterns and anti-patterns for `action` nodes
+
+Use these as design heuristics when writing or reviewing tool-driving states.
+
+**Recommended patterns**
+
+- Pattern: state that the next valid assistant action is the real tool call in the current turn.
+- Pattern: name one canonical captured output that gates all downstream routing.
+- Pattern: start the `do` block with a hard imperative such as `TOOL CALL ONLY: call <tool_name> now.`
+- Pattern: map every tool argument from declared slots, runtime variables, constants, or prior tool outputs.
+- Pattern: explicitly forbid user-facing speech before the call when the node is non-conversational.
+- Pattern: explicitly forbid FAQ handling, handler drift, or normal route progression before the tool result is captured when that matters.
+- Pattern: repeat that the tool result is authoritative when the node supports a business-critical or safety-critical decision.
+- Pattern: keep all needed clarification in earlier `question` nodes so the `action` node can stay execution-only.
+- Pattern: route forward only on a real captured result and loop or fail safely otherwise.
+- Pattern: make the fallback preserve tool authority, usually by retrying the tool node or returning to the last legitimate capture point.
+
+**Common anti-patterns**
+
+- Anti-pattern: describing the tool as helpful or recommended instead of mandatory when the flow actually depends on it.
+- Anti-pattern: saying the assistant may answer directly if it already "knows" enough.
+- Anti-pattern: mixing tool execution with fresh conversational tasks like "ask the user if needed" inside the same `action` node.
+- Anti-pattern: allowing the node to continue to the next state without checking for a real captured tool result.
+- Anti-pattern: using vague outputs like `result` when the rest of the flow expects a more specific semantic verdict.
+- Anti-pattern: letting the `do` block describe several possible output interpretations instead of one canonical one.
+- Anti-pattern: referencing undeclared memory, hidden platform context, or stale previous tool results as valid argument sources.
+- Anti-pattern: instructing the model to estimate, infer, summarize, or approximate the tool answer if the call fails.
+- Anti-pattern: hiding essential argument mapping only in the tool contract and not restating it in the `action` node when the mapping is non-trivial.
+- Anti-pattern: writing a fallback that silently skips the tool call and advances the flow as if the action had succeeded.
+
+#### Mini template: `action` node YAML scaffold
+
+Use this scaffold as a copy-paste starting point for nodes that must call a tool reliably.
+
+```yaml
+- state_id: ACTION_STATE_ID
+  type: action
+  goal:
+    - "Mandatory action: execute tool_name as soon as this state is entered."
+    - "The next valid assistant action in this turn is the real tool call to tool_name."
+    - "Do not continue until a real result_slot has been captured."
+  do:
+    - "TOOL CALL ONLY: call tool_name now."
+    - "Map [slot_a] to input_a and [slot_b] to input_b."
+    - "Use result_slot as the only authorized result for the next route decision."
+    - "Do not answer the user, do not execute FAQs or handlers, and do not continue before the tool result is captured."
+    - "If the tool is not executed or [result_slot] remains null, stay in this recovery path and do not infer the result."
+  wait: "no"
+  capture:
+    - slot: result_slot
+      type_expr: "string"
+  store: []
+  execute: tool_name
+  route:
+    - "IF [result_slot] IS NOT NULL -> GO_TO: NEXT_STATE"
+  fallback:
+    - "GO_TO: ACTION_STATE_ID"
+```
+
+Adaptation notes:
+
+- Replace `type_expr` with the real output type expected from the tool.
+- Add a `store` rule only when the tool result must be copied or normalized into another slot.
+- Replace the self-loop fallback when the safe recovery path should return to an earlier capture state instead.
+- If argument mapping is non-trivial, state the transformation explicitly inside `do` rather than assuming it from the contract alone.
+
+#### Snippet library for common `action` node shapes
+
+Use these variants when the base scaffold is too generic.
+
+**Boolean result snippet**
+
+Use this shape when the tool returns a primitive yes/no, success/failure, or true/false result.
+
+```yaml
+- state_id: ACTION_BOOLEAN_RESULT
+  type: action
+  goal:
+    - "Mandatory action: execute tool_name as soon as this state is entered."
+    - "The next valid assistant action in this turn is the real tool call to tool_name."
+    - "Do not continue until a real boolean_result has been captured."
+  do:
+    - "TOOL CALL ONLY: call tool_name now."
+    - "Map declared inputs only from slots, variables, constants, or previous tool outputs."
+    - "Use boolean_result as the only authorized result for the next route decision."
+    - "Do not answer the user and do not continue before the tool result is captured."
+  wait: "no"
+  capture:
+    - slot: boolean_result
+      type_expr: "boolean"
+  execute: tool_name
+  route:
+    - "IF [boolean_result] == true -> GO_TO: SUCCESS_STATE"
+  fallback:
+    - "GO_TO: FAILURE_OR_RETRY_STATE"
+```
+
+**List result snippet**
+
+Use this shape when the tool returns options, candidates, slots, or any collection that the next node must present or filter.
+
+```yaml
+- state_id: ACTION_LIST_RESULT
+  type: action
+  goal:
+    - "Mandatory action: execute tool_name as soon as this state is entered."
+    - "The next valid assistant action in this turn is the real tool call to tool_name."
+    - "Do not continue until a real list_result has been captured."
+  do:
+    - "TOOL CALL ONLY: call tool_name now."
+    - "Use list_result as the only authorized source of options for all downstream messages and decisions."
+    - "Do not mention options, dates, times, or alternatives before the tool result is captured."
+    - "If the tool returns an empty, invalid, stale, or untraceable list, do not invent options. Route to the configured retry or fallback path."
+  wait: "no"
+  capture:
+    - slot: list_result
+      type_expr: "list"
+  execute: tool_name
+  route:
+    - "IF [list_result] IS NOT NULL -> GO_TO: NEXT_PRESENTATION_STATE"
+  fallback:
+    - "GO_TO: EMPTY_OR_RETRY_STATE"
+```
+
+**Textual verdict snippet**
+
+Use this shape when the tool returns a semantic verdict string such as `Apta`, `Rejected`, `Inconclusive`, or any canonical classification label.
+
+```yaml
+- state_id: ACTION_TEXT_VERDICT
+  type: action
+  goal:
+    - "Mandatory action: execute tool_name as soon as this state is entered."
+    - "The next valid assistant action in this turn is the real tool call to tool_name."
+    - "Do not continue until a real verdict_result has been captured."
+  do:
+    - "TOOL CALL ONLY: call tool_name now."
+    - "Map all currently available inputs from declared slots and send missing values as empty only if the contract allows it."
+    - "Use verdict_result as the only authorized semantic verdict for downstream routing."
+    - "Do not classify, summarize, or infer the verdict before the tool result is captured."
+  wait: "no"
+  capture:
+    - slot: verdict_result
+      type_expr: "string"
+  execute: tool_name
+  route:
+    - "IF [verdict_result] == 'APPROVED' -> GO_TO: APPROVED_STATE"
+    - "IF [verdict_result] == 'INCONCLUSIVE' -> GO_TO: RECOVER_MISSING_DATA_STATE"
+  fallback:
+    - "GO_TO: REJECTED_OR_RETRY_STATE"
+```
+
+**Composite result snippet (`has_flag + payload_list`)**
+
+Use this shape when the tool returns a control flag together with a payload list, for example `has_availability + available_slots`.
+
+```yaml
+- state_id: ACTION_COMPOSITE_RESULT
+  type: action
+  goal:
+    - "Mandatory action: execute tool_name as soon as this state is entered."
+    - "The next valid assistant action in this turn is the real tool call to tool_name."
+    - "Do not continue until the control flag and payload list from the real tool response are available."
+  do:
+    - "TOOL CALL ONLY: call tool_name now."
+    - "Capture payload_list from the tool response and evaluate control_flag only from that same response."
+    - "Use control_flag and [payload_list] together as the only authorized source of truth for downstream routing and presentation."
+    - "Do not mention options, dates, times, candidates, or alternatives before the tool result is captured."
+    - "If control_flag is false, or if [payload_list] is null, empty, stale, invalid, or untraceable to this call, route to the configured no-data or retry path and do not invent payload items."
+  wait: "no"
+  capture:
+    - slot: payload_list
+      type_expr: "list"
+  execute: tool_name
+  route:
+    - "IF tool_name.control_flag == true AND [payload_list] IS NOT NULL -> GO_TO: NEXT_PRESENTATION_STATE"
+  fallback:
+    - "GO_TO: EMPTY_OR_RETRY_STATE"
+```
+
+Adapt this pattern when the platform exposes part of the tool response directly in routing conditions and another part through captured slots.
+
+#### Example: good `action` node
+
+```yaml
+- state_id: VERIFY_ELIGIBILITY
+  type: action
+  goal:
+    - "Mandatory action: execute verify_eligibility as soon as this state is entered."
+    - "The next valid assistant action in this turn is the real tool call to verify_eligibility."
+    - "Do not continue until a real eligibility_result has been captured."
+  do:
+    - "TOOL CALL ONLY: call verify_eligibility now."
+    - "Map [age] to age and [city] to city."
+    - "Use eligibility_result as the only authorized verdict for the next route decision."
+    - "Do not answer the user, do not execute FAQs or handlers, and do not continue before the tool result is captured."
+  capture:
+    - slot: eligibility_result
+      type_expr: "string"
+  execute: verify_eligibility
+  route:
+    - "IF [eligibility_result] IS NOT NULL -> GO_TO: NEXT_STEP"
+  fallback:
+    - "GO_TO: VERIFY_ELIGIBILITY"
+```
+
+Why it is good:
+
+- The node makes tool execution mandatory in the current turn.
+- It identifies one canonical result field.
+- It maps arguments from declared state.
+- It blocks conversational drift before the call completes.
+- It does not allow routing on an assumed outcome.
+
+#### Example: bad `action` node
+
+```yaml
+- state_id: VERIFY_ELIGIBILITY
+  type: action
+  goal:
+    - "Check whether the user might be eligible."
+  do:
+    - "If you already know enough, you can answer directly."
+    - "Otherwise call verify_eligibility or ask the user for any extra detail you need."
+    - "If the tool fails, estimate the most likely result and continue."
+  capture:
+    - slot: result
+      type_expr: "string"
+  execute: verify_eligibility
+  route:
+    - "GO_TO: NEXT_STEP"
+  fallback: []
+```
+
+Why it is bad:
+
+- It treats the tool call as optional.
+- It invites the model to answer from its own reasoning.
+- It mixes execution with fresh clarification that belongs in earlier question nodes.
+- It lacks a canonical guarded route based on a real captured result.
+- It allows the flow to continue even if the tool was never called.
 
 ---
 

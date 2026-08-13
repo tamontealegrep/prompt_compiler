@@ -45,6 +45,7 @@ from tests.conftest import build_message_state, build_minimal_agent_spec, build_
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 REAL_TEMPLATE_PATH = PROJECT_ROOT / "templates" / "system_prompt.md.j2"
+REAL_TEMPLATE_MINI_PATH = PROJECT_ROOT / "templates" / "system_prompt_mini.md.j2"
 
 
 def _channel_profile(*section_names: str) -> ChannelProfile:
@@ -346,6 +347,17 @@ def test_real_template_renders_input_variables_section_twice_by_design():
     channel_profile = _channel_profile("compliance_and_scope_rules")
     rendered = render_prompt(classified, REAL_TEMPLATE_PATH, channel_profile)
     assert rendered.count("# INPUT VARIABLES") == 2
+
+
+@pytest.mark.skipif(not REAL_TEMPLATE_PATH.exists(), reason="real template not found")
+def test_real_template_keeps_execute_mandatory_even_when_contracts_are_external():
+    spec = build_minimal_agent_spec()
+    classified = ContentClassifier().classify(spec)
+    channel_profile = _channel_profile("compliance_and_scope_rules")
+    rendered = render_prompt(classified, REAL_TEMPLATE_PATH, channel_profile)
+    assert "Tool input/output schemas are defined by the platform tool layer." in rendered
+    assert "emit the tool call anyway" in rendered
+    assert "the agent only knows tool names" not in rendered
 
 
 # ---------------------------------------------------------------------------
@@ -697,3 +709,14 @@ def test_render_prompt_mini_raises_file_not_found_for_missing_template(tmp_path)
     classified = ContentClassifier().classify(spec)
     with pytest.raises(FileNotFoundError):
         render_prompt_mini(classified, tmp_path / "does_not_exist.j2", _channel_profile())
+
+
+@pytest.mark.skipif(not REAL_TEMPLATE_MINI_PATH.exists(), reason="real mini template not found")
+def test_real_mini_template_keeps_execute_mandatory_even_when_contracts_are_external():
+    spec = build_minimal_agent_spec()
+    classified = ContentClassifier().classify(spec)
+    channel_profile = _channel_profile("compliance_and_scope_rules")
+    rendered = render_prompt_mini(classified, REAL_TEMPLATE_MINI_PATH, channel_profile)
+    assert "Tool input/output schemas are defined by the platform tool layer." in rendered
+    assert "emit the tool call anyway" in rendered
+    assert "the agent only knows tool names" not in rendered
