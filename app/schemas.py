@@ -48,6 +48,7 @@ YES_NO = Literal["yes", "no"]
 NODE_TYPE = Literal["message", "question", "decision", "action", "registration", "terminal", "start", "subflow_change"]
 
 LOWER_SNAKE_RE = re.compile(r"^[a-z][a-z0-9_]*$")
+DOTTED_LOWER_SNAKE_RE = re.compile(r"^[a-z][a-z0-9_]*(\.[a-z][a-z0-9_]*)*$")
 UPPER_CONST_RE = re.compile(r"^[A-Z][A-Z0-9_]*$")
 UPPER_ID_RE = re.compile(r"^[A-Z][A-Z0-9_]*$")
 RULE_ID_RE = re.compile(r"^[A-Z]+_[0-9]+$")
@@ -417,7 +418,7 @@ class InputVariable(StrictModel):
     @field_validator("name")
     @classmethod
     def validate_name(cls, v: str) -> str:
-        return validate_pattern(v, LOWER_SNAKE_RE, "input_variable.name")
+        return validate_pattern(v, DOTTED_LOWER_SNAKE_RE, "input_variable.name")
 
 
 class InputVariablesFile(StrictModel):
@@ -466,7 +467,7 @@ class ToolContractField(StrictModel):
     @field_validator("name")
     @classmethod
     def validate_name(cls, v: str) -> str:
-        return validate_pattern(v, LOWER_SNAKE_RE, "tool_contract_field.name")
+        return validate_pattern(v, DOTTED_LOWER_SNAKE_RE, "tool_contract_field.name")
 
 
 class ToolContract(StrictModel):

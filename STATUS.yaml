@@ -9,7 +9,7 @@ project:
   name: "Prompt Compiler"
   version: "2.0.0"
   start_date: "2026-05-01"  # approximate — earliest commits in git log predate the visible history window
-  last_updated: "2026-08-06"
+  last_updated: "2026-08-20"
   status: "active"  # active | paused | complete | archived
   owner: "tamontealegrep (Engineering Board)"
 
@@ -400,6 +400,9 @@ next_session:
 # ---------------------------------------------------------------------------
 
 changelog:
+  - date: "2026-08-20"
+    author: "GitHub Copilot"
+    change: "Global migration of contact variables (phone, name, email) to dotted format (contact.phone, etc.) and updated DSL grammar to allow dots in InputVariable and ToolContractField names."
   - date: "2026-08-07"
     description: "Implemented a compact-notation ('mini') System Prompt as a second compile artifact per the repo owner's request, after a discussion of format tradeoffs (dense single-line grammars vs. a hybrid that only compresses provably-redundant fields). Added app/renderers.py's mini renderer functions (render_state_mini, render_handler_mini, render_faq_mini, section/context-level companions), templates/system_prompt_mini.md.j2 (reuses all behavioral sections from the standard template verbatim, replaces only the object-notation teaching section), and wired compile_agent()/CompilationOutputs/build_prompt.py to produce+write it whenever the agent's template has a *_mini.md.j2 companion (gracefully skipped otherwise — verified against the real bilingual template, which has none). Measured 17% character reduction on the real 118-state reference agent with zero validation impact; PATTERN_GUIDE.md/SPEC.md correctly flagged as unmeasured speculation before this. Mid-task, an overly broad `ruff --fix app/*.py` accidentally reformatted 6 untouched files plus unrelated code in schemas.py — caught via git status/diff and fully reverted before it could be committed; see next_session notes for the process lesson. Full suite: 250 tests, 245 passing + 5 strict-xfail (corrected count — B4 is 3 tests, not 2 as an earlier entry stated)."
   - date: "2026-08-06"
@@ -410,8 +413,6 @@ changelog:
     description: "Translated PATTERN_GUIDE.md to English and rewrote it as a domain-agnostic authoring guide (no references to any specific agent_id). Incorporated patterns observed while reading a real production-style agent in agents/defs/ (read-only, not committed to this repo): conditional-skip decisions, multi-branch decision routing, a farewell-message-plus-silent-terminal closing pattern, flow_rules-backed anti-hallucination guardrails for tool-fetching action nodes, and a handler-level repeat/no-input retry pattern. Found and logged B11 in SPEC.md §5.1 in the process: the self-loop retry-counter validator never fires for the guide's own recommended question-decision-question pattern. Updated CLAUDE.md's language-exception note to reflect PATTERN_GUIDE.md now being English."
   - date: "2026-08-06"
     description: "Audited app/schemas.py, utils.py, loaders.py, validators.py, classifier.py, deduplicator.py, renderers.py, compiler.py, and both Jinja templates for DSL/state-machine bugs and gaps. Logged 10 findings (B1-B10) in SPEC.md §5.1, most notably B1: both templates render [[ input_variables_block ]] twice. Built tests/ from scratch (conftest.py, tests/fixtures/minimal_agent/, 7 unit test modules, 2 integration test modules) — 198 tests, 190 passing + 8 strict-xfail documenting the known bugs. No source code changed; ruff check tests/ clean."
-  - date: "2026-08-06"
-    description: "Adapted framework_example/'s 7 generic template documents into project-specific root-level files (CLAUDE.md, SPEC.md, EXPERTS.md, FRAMEWORK.md, TESTING.md, DESIGN_PATTERNS.md, STATUS.yaml) for Prompt Compiler, based on a full read of app/, templates/, existing docs, pyproject.toml, and git history. No source code changed."
   - date: "2026-06-18"
     description: "(Reconstructed from git log, commit d4c3557) Clarified subflow navigation and document loading instructions in templates/system_prompt.md.j2."
   - date: "2026-06-18"
