@@ -1,0 +1,654 @@
+<title>Config de herramientas BabyNova</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+
+<style>
+  :root {
+    --paper: #f6f7f9;
+    --surface: #ffffff;
+    --surface-sunk: #eef1f4;
+    --ink: #1b2027;
+    --ink-soft: #4a545f;
+    --ink-faint: #79838e;
+    --line: #dde2e7;
+    --line-strong: #c6ccd3;
+    --accent: #0f6d78;
+    --accent-soft: #e3f0f1;
+    --req: #1f7a4d;
+    --req-soft: #e2f0e8;
+    --opt: #6b7681;
+    --opt-soft: #e9ecef;
+    --warn: #8a5a12;
+    --warn-soft: #f7ecd7;
+    --warn-line: #e3c98a;
+    --shadow: 0 1px 2px rgba(20, 28, 38, .06), 0 6px 20px rgba(20, 28, 38, .05);
+
+    --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+    --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", "Menlo", "Consolas", monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper: #0f1216;
+      --surface: #171b21;
+      --surface-sunk: #10141a;
+      --ink: #e7eaee;
+      --ink-soft: #b0b8c1;
+      --ink-faint: #7f8992;
+      --line: #262c34;
+      --line-strong: #333b45;
+      --accent: #45b8c4;
+      --accent-soft: #12312f;
+      --req: #57bd86;
+      --req-soft: #10291d;
+      --opt: #8b96a1;
+      --opt-soft: #1f252c;
+      --warn: #d9a94e;
+      --warn-soft: #2a2113;
+      --warn-line: #4a3a1c;
+      --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .28);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --paper: #0f1216;
+    --surface: #171b21;
+    --surface-sunk: #10141a;
+    --ink: #e7eaee;
+    --ink-soft: #b0b8c1;
+    --ink-faint: #7f8992;
+    --line: #262c34;
+    --line-strong: #333b45;
+    --accent: #45b8c4;
+    --accent-soft: #12312f;
+    --req: #57bd86;
+    --req-soft: #10291d;
+    --opt: #8b96a1;
+    --opt-soft: #1f252c;
+    --warn: #d9a94e;
+    --warn-soft: #2a2113;
+    --warn-line: #4a3a1c;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 8px 24px rgba(0, 0, 0, .28);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-size: 16px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 940px;
+    margin: 0 auto;
+    padding: clamp(1.5rem, 4vw, 3.5rem) clamp(1rem, 4vw, 2rem) 5rem;
+  }
+
+  header.masthead {
+    border-bottom: 2px solid var(--ink);
+    padding-bottom: 1.4rem;
+    margin-bottom: 2rem;
+  }
+
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: .72rem;
+    letter-spacing: .16em;
+    text-transform: uppercase;
+    color: var(--accent);
+    margin: 0 0 .7rem;
+  }
+
+  h1 {
+    font-size: clamp(1.7rem, 4.5vw, 2.5rem);
+    line-height: 1.12;
+    font-weight: 600;
+    letter-spacing: -.02em;
+    text-wrap: balance;
+    margin: 0 0 .6rem;
+  }
+
+  .lede { color: var(--ink-soft); max-width: 62ch; margin: 0; }
+
+  h2 {
+    font-size: 1.05rem;
+    font-weight: 600;
+    letter-spacing: .01em;
+    margin: 2.8rem 0 1rem;
+    padding-bottom: .5rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .rules {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: .7rem;
+    margin-bottom: 1.4rem;
+  }
+  .rule {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    padding: .9rem 1rem;
+  }
+  .rule dt {
+    font-family: var(--font-mono);
+    font-size: .68rem;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin-bottom: .3rem;
+  }
+  .rule dd { margin: 0; font-size: .9rem; color: var(--ink); }
+  .rule dd code { font-size: .82rem; }
+
+  .callout {
+    display: flex;
+    gap: .85rem;
+    background: var(--warn-soft);
+    border: 1px solid var(--warn-line);
+    border-radius: 10px;
+    padding: 1rem 1.1rem;
+    margin-bottom: 1rem;
+  }
+  .callout .mk { font-family: var(--font-mono); font-weight: 600; color: var(--warn); flex: none; }
+  .callout p { margin: 0; font-size: .9rem; color: var(--ink); }
+  .callout strong { color: var(--warn); font-weight: 600; }
+  .callout.ok { background: var(--req-soft); border-color: color-mix(in srgb, var(--req) 35%, transparent); }
+  .callout.ok .mk { color: var(--req); }
+  .callout.ok strong { color: var(--req); }
+  .callout.info { background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 35%, transparent); }
+  .callout.info .mk { color: var(--accent); }
+  .callout.info strong { color: var(--accent); }
+
+  code {
+    font-family: var(--font-mono);
+    font-size: .88em;
+    background: var(--surface-sunk);
+    padding: .08em .38em;
+    border-radius: 4px;
+    border: 1px solid var(--line);
+  }
+
+  .tool {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    box-shadow: var(--shadow);
+    padding: 1.4rem clamp(1rem, 3vw, 1.6rem);
+    margin-bottom: 1.5rem;
+  }
+  .tool > * + * { margin-top: 1rem; }
+
+  .tool-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: .55rem .8rem;
+  }
+  .tool-name {
+    font-family: var(--font-mono);
+    font-size: 1.16rem;
+    font-weight: 600;
+    letter-spacing: -.01em;
+    color: var(--ink);
+    margin: 0;
+  }
+  .tool-num { font-family: var(--font-mono); font-size: .8rem; color: var(--ink-faint); margin-right: .1rem; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: .4rem; }
+  .chip {
+    font-family: var(--font-mono);
+    font-size: .68rem;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    padding: .2rem .5rem;
+    border-radius: 999px;
+    border: 1px solid var(--line-strong);
+    color: var(--ink-soft);
+    white-space: nowrap;
+  }
+  .chip.node { background: var(--accent-soft); border-color: transparent; color: var(--accent); }
+  .chip.warnchip { background: var(--warn-soft); border-color: var(--warn-line); color: var(--warn); }
+
+  .field-label {
+    font-family: var(--font-mono);
+    font-size: .68rem;
+    letter-spacing: .13em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: .4rem;
+  }
+
+  .tool-desc { font-size: .88rem; color: var(--ink-soft); margin: 0; max-width: 68ch; }
+
+  .kv { font-family: var(--font-mono); font-size: .82rem; color: var(--ink-soft); word-break: break-all; }
+  .kv b { color: var(--ink); font-weight: 500; }
+
+  .trigger-box {
+    background: var(--surface-sunk);
+    border: 1px solid var(--line);
+    border-radius: 9px;
+    padding: .85rem .95rem;
+    font-family: var(--font-mono);
+    font-size: .81rem;
+    line-height: 1.62;
+    color: var(--ink);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+  }
+  .count { font-variant-numeric: tabular-nums; }
+  .count b { color: var(--req); font-weight: 600; }
+
+  .copy-btn {
+    font-family: var(--font-mono);
+    font-size: .66rem;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    background: var(--surface);
+    color: var(--ink-soft);
+    border: 1px solid var(--line-strong);
+    border-radius: 6px;
+    padding: .22rem .5rem;
+    cursor: pointer;
+  }
+  .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .copy-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  .table-scroll { overflow-x: auto; }
+  table { border-collapse: collapse; width: 100%; font-size: .84rem; }
+  thead th {
+    font-family: var(--font-mono);
+    font-size: .66rem;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    text-align: left;
+    font-weight: 500;
+    padding: .5rem .7rem;
+    border-bottom: 1px solid var(--line-strong);
+    white-space: nowrap;
+  }
+  tbody td { padding: .6rem .7rem; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tbody tr:last-child td { border-bottom: none; }
+  td.param { font-family: var(--font-mono); font-size: .82rem; color: var(--ink); white-space: nowrap; }
+  td.type { font-family: var(--font-mono); font-size: .78rem; color: var(--ink-faint); }
+  td.fixed { font-family: var(--font-mono); font-size: .78rem; color: var(--ink-soft); }
+
+  .tag {
+    font-family: var(--font-mono);
+    font-size: .64rem;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    padding: .13rem .42rem;
+    border-radius: 5px;
+    white-space: nowrap;
+  }
+  .tag.req { background: var(--req-soft); color: var(--req); }
+  .tag.opt { background: var(--opt-soft); color: var(--opt); }
+
+  .reads {
+    font-size: .85rem;
+    color: var(--ink-soft);
+    border-left: 2px solid var(--accent);
+    padding-left: .8rem;
+  }
+  .reads code { background: transparent; border: none; padding: 0; color: var(--accent); }
+
+  footer {
+    margin-top: 3rem;
+    padding-top: 1.4rem;
+    border-top: 1px solid var(--line);
+    font-size: .82rem;
+    color: var(--ink-faint);
+  }
+  footer code { font-size: .78rem; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; animation: none !important; }
+  }
+</style>
+
+<div class="wrap">
+  <header class="masthead">
+    <p class="eyebrow">BabyNova · gestante subrogada · voz</p>
+    <h1>Configuración de herramientas en la plataforma</h1>
+    <p class="lede">Cómo debe quedar cada herramienta para estar alineada con el subflujo <code>surrogate_questions</code>, <code>scheduling</code> y los <code>tool_contracts</code> del repo. Fuente de estos valores: <code>babynova_surrogacy_tools.platform.json</code>.</p>
+  </header>
+
+  <div class="callout info">
+    <span class="mk">i</span>
+    <p><strong>Escritos para GPT-4.1 con <code>toolCallStrictMode: true</code>.</strong> Ese modelo ignora instrucciones "soft" y responde de su propio conocimiento cuando tiene contexto para adivinar. Estructura fija de cada trigger (≤500 chars): <code>MANDATORY EXECUTION TRIGGER.</code> → <code>Nodo activo &lt;NODE&gt;: EJECUTA &lt;tool&gt; AHORA, SIN EXCEPCION.</code> → <code>PROHIBIDO: (1)… (2)… (3)…</code> lista numerada que siempre incluye la prohibición de <strong>inferir/estimar/calcular con conocimiento, entrenamiento, contexto o lógica propia</strong> y la de <strong>enrutar sin capturar el output</strong> → <code>PARAMETROS:</code> → <code>CAPTURA &lt;output&gt;</code> como único veredicto. La misma regla, generalizada, está en <code>policies.yaml</code> (<code>COMPLIANCE_AND_SCOPE_RULES</code>, precedencia 1), en el <code>GOAL</code>/<code>DO</code> de cada nodo de acción, y en <code>HARD_TOOL_EXECUTION_CONTRACT</code> (los 4 templates).</p>
+  </div>
+
+  <h2>Reglas transversales</h2>
+  <dl class="rules">
+    <div class="rule"><dt>Estilo del trigger</dt><dd><code>MANDATORY EXECUTION TRIGGER</code> → <code>EJECUTA &lt;tool&gt; AHORA, SIN EXCEPCION</code> → <code>PROHIBIDO: (1)…(2)…(3)…</code> numerado → <code>PARAMETROS</code> → <code>CAPTURA &lt;output&gt;</code>. GPT-4.1 strict ignora lo "soft".</dd></div>
+    <div class="rule"><dt>Nombres</dt><dd><code>snake_case</code> en todo: <code>properties</code>, <code>required</code> y contrato del repo deben coincidir letra por letra.</dd></div>
+    <div class="rule"><dt>Límite 500</dt><dd>Descripción y trigger prompt: máximo <b>500</b> caracteres cada uno. Todos los actuales están por debajo.</dd></div>
+    <div class="rule"><dt>Fuente del body</dt><dd>El <code>bodySchema</code> es la fuente. <code>parametersDefinition</code> queda vacío en las 8.</dd></div>
+    <div class="rule"><dt>Comunes</dt><dd><code>actionType: CAP</code> · <code>httpMethod: POST</code> · <code>apiTimeout: 10</code>s.</dd></div>
+    <div class="rule"><dt>Reintento</dt><dd>Solo <code>get_available_slots</code> lleva <code>retryOnFailure: true</code>. El resto <code>false</code>.</dd></div>
+    <div class="rule"><dt>Campos vacíos</dt><dd>Se envían siempre todos los campos declarados. El que el flujo no tenga va como string vacío <code>""</code> — presente, nunca omitido ni inventado.</dd></div>
+  </dl>
+
+  <div class="callout ok">
+    <span class="mk">✓</span>
+    <p><strong><code>duration</code> de la cita: alineado en 10 min.</strong> El constante del agente <code>APPOINTMENT_DURATION_MINUTES</code>, el contrato de <code>book_appointment</code> y el <code>bodySchema</code> de la plataforma (<code>const "10"</code>) coinciden en <code>"10"</code>.</p>
+  </div>
+
+  <h2>Herramientas del subflujo de preguntas</h2>
+
+  <!-- calculate_bmi -->
+  <article class="tool">
+    <div class="tool-head">
+      <span class="tool-num">01</span>
+      <p class="tool-name">calculate_bmi</p>
+      <div class="chips">
+        <span class="chip node">Q__SQ_CALCULATE_BMI</span>
+        <span class="chip">POST</span>
+        <span class="chip">retry: false</span>
+      </div>
+    </div>
+    <p class="kv"><b>webhook</b> &nbsp;/utils/v1/calculate-bmi</p>
+    <div>
+      <div class="field-label"><span>Descripción</span><span class="count"><b>140</b> / 500</span></div>
+      <p class="tool-desc">Llama a esta herramienta en el nodo Q__SQ_CALCULATE_BMI como primera y única acción del turno. Usa el campo <code>imc</code> que devuelve, sin redondear.</p>
+    </div>
+    <div>
+      <div class="field-label"><span>Trigger prompt</span><span class="count"><b>460</b> / 500</span></div>
+      <div class="trigger-box" data-copy>MANDATORY EXECUTION TRIGGER. Nodo activo Q__SQ_CALCULATE_BMI: EJECUTA calculate_bmi AHORA, SIN EXCEPCION. PROHIBIDO: (1) calcular, estimar o aproximar el IMC mentalmente o con logica propia; (2) usar valores sin convertir a kg y cm (lb/2.20462; ft x30.48; in x2.54); (3) declarar o enrutar con un IMC sin capturar el campo imc; (4) redondear imc. PARAMETROS: weight_kg (kg), height_cm (cm). CAPTURA imc literal, entrada obligatoria de surrogate_classification.</div>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Campo</th><th>Tipo</th><th>Oblig.</th><th>Ejemplo</th><th>Descripción del campo</th></tr></thead>
+        <tbody>
+          <tr><td class="param">weight_kg</td><td class="type">string</td><td><span class="tag req">sí</span></td><td class="fixed">"70"</td><td>Peso de la candidata en kilogramos, del dato ya capturado. Si respondió en libras, conviértelo antes (1&nbsp;lb&nbsp;=&nbsp;0.453592&nbsp;kg).</td></tr>
+          <tr><td class="param">height_cm</td><td class="type">string</td><td><span class="tag req">sí</span></td><td class="fixed">"165"</td><td>Altura de la candidata en centímetros, del dato ya capturado. Si respondió en pies/pulgadas, conviértelo antes (1&nbsp;in&nbsp;=&nbsp;2.54&nbsp;cm).</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="reads">El flujo lee <code>imc</code> (número, sin redondear) — lo reusa <code>surrogate_classification</code>.</p>
+  </article>
+
+  <!-- check_documentation -->
+  <article class="tool">
+    <div class="tool-head">
+      <span class="tool-num">02</span>
+      <p class="tool-name">check_documentation</p>
+      <div class="chips">
+        <span class="chip node">Q__SQ_CHECK_DOCUMENTATION</span>
+        <span class="chip">POST</span>
+        <span class="chip">retry: false</span>
+      </div>
+    </div>
+    <p class="kv"><b>webhook</b> &nbsp;/novafem_surrogacy/v1/check-documentation-sur</p>
+    <div>
+      <div class="field-label"><span>Descripción</span><span class="count"><b>192</b> / 500</span></div>
+      <p class="tool-desc">Llama a esta herramienta en el nodo Q__SQ_CHECK_DOCUMENTATION como primera y única acción del turno. <code>document_result</code> es el único veredicto documental; <code>document_result=false</code> no cierra el flujo.</p>
+    </div>
+    <div>
+      <div class="field-label"><span>Trigger prompt</span><span class="count"><b>486</b> / 500</span></div>
+      <div class="trigger-box" data-copy>MANDATORY EXECUTION TRIGGER. Nodo activo Q__SQ_CHECK_DOCUMENTATION: EJECUTA check_documentation AHORA como PRIMERA accion, sin evaluar nada antes. PROHIBIDO: (1) dar, adelantar o asumir un veredicto documental sin ejecutar la herramienta y capturar document_result; (2) enrutar sin document_result; (3) cerrar por document_result=false, NO termina el flujo. PARAMETROS: nationality ISO 3166-1 alfa-3 MAYUSCULAS; document_type (array) SOLO si nationality != COL. CAPTURA document_result.</div>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Campo</th><th>Tipo</th><th>Oblig.</th><th>Ejemplo</th><th>Descripción del campo</th></tr></thead>
+        <tbody>
+          <tr><td class="param">nationality</td><td class="type">string</td><td><span class="tag req">sí</span></td><td class="fixed">"COL"</td><td>Código ISO 3166-1 alfa-3 en mayúsculas (COL, VEN, ECU…). Se infiere del país que menciona la candidata, nunca del acento ni del teléfono. El flujo ya lo normaliza al capturarlo.</td></tr>
+          <tr><td class="param">document_type</td><td class="type">array&lt;string&gt;</td><td><span class="tag opt">no</span></td><td class="fixed">["cedula_ciudadania"]</td><td>Solo si <code>nationality != COL</code>: array con los documentos que reporta la candidata, ya normalizados. <code>cedula_ciudadania</code> y <code>ppt</code> aprueban; <code>cedula_extranjeria</code>, <code>pasaporte</code>, <code>otro</code> rechazan. Aprueba si cualquier elemento es válido.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="reads">El flujo lee <code>document_result</code> (bool), <code>document_motive</code>, <code>document_norm</code>. <code>false</code> no cierra: sigue a drogas y clasificación.</p>
+  </article>
+
+  <!-- surrogate_classification -->
+  <article class="tool">
+    <div class="tool-head">
+      <span class="tool-num">03</span>
+      <p class="tool-name">surrogate_classification</p>
+      <div class="chips">
+        <span class="chip node">Q__SQ_RUN_CLASSIFICATION</span>
+        <span class="chip">POST</span>
+        <span class="chip">retry: false</span>
+      </div>
+    </div>
+    <p class="kv"><b>webhook</b> &nbsp;/novafem_surrogacy/v1/surrogate-classification</p>
+    <div>
+      <div class="field-label"><span>Descripción</span><span class="count"><b>160</b> / 500</span></div>
+      <p class="tool-desc">Llama a esta herramienta en el nodo Q__SQ_RUN_CLASSIFICATION como primera y única acción del turno. <code>classification_result</code> es el único veredicto de elegibilidad.</p>
+    </div>
+    <div>
+      <div class="field-label"><span>Trigger prompt</span><span class="count"><b>492</b> / 500</span></div>
+      <div class="trigger-box" data-copy>MANDATORY EXECUTION TRIGGER. Nodo activo Q__SQ_RUN_CLASSIFICATION: EJECUTA surrogate_classification AHORA, SIN EXCEPCION, antes de mencionar el resultado. PROHIBIDO: (1) declarar apta, rechazada o inconclusa sin ejecutar la herramienta y capturar classification_result; (2) inferir el resultado tu mismo; (3) omitir campos: el que no tengas va como '', nunca omitido ni inventado. PARAMETROS: los 10 campos; documentation = document_result ('si' si colombiana). CAPTURA classification_result.</div>
+    </div>
+    <p class="tool-desc" style="color:var(--ink-faint);font-size:.83rem"><b style="color:var(--ink-soft)">required: los 10.</b> El backend devuelve <code>Inconclusive</code> si algún <em>valor</em> llega vacío — por eso todos van obligatorios en el schema, y el que el flujo no tenga se envía como <code>""</code> (clave presente, nunca omitida). En la ruta feliz el flujo ya garantiza los 10 antes de este nodo.</p>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Campo</th><th>Tipo</th><th>Oblig.</th><th>Origen</th><th>Descripción del campo</th></tr></thead>
+        <tbody>
+          <tr><td class="param">age</td><td class="type">string</td><td><span class="tag req">sí</span></td><td class="fixed">surrogate_age</td><td>Edad de la candidata en años (numérico). Si no lo tienes, <code>""</code>.</td></tr>
+          <tr><td class="param">city</td><td class="type">string</td><td><span class="tag req">sí</span></td><td class="fixed">city_residence</td><td>Ciudad ya normalizada a una de: Bogotá, Soacha, Zipaquirá, Chía, Mosquera, Funza, Cajicá, Madrid, La Calera, Cota, Facatativá, Sibaté, u <code>Otro</code>. Si no lo tienes, <code>""</code>.</td></tr>
+          <tr><td class="param">number_of_children</td><td class="type">string</td><td><span class="tag req">sí</span></td><td class="fixed">children_count</td><td>Número de hijos biológicos (numérico). Si no lo tienes, <code>""</code>.</td></tr>
+          <tr><td class="param">last_birth_date</td><td class="type">string</td><td><span class="tag req">sí</span></td><td class="fixed">last_birth_date</td><td><code>YYYY-MM-DD</code>, ya normalizada por el flujo con <code>time_now</code> (nunca relativa — el backend da error si recibe "hace 8 meses"). Si no lo tienes, <code>""</code>.</td></tr>
+          <tr><td class="param">number_of_c_sections</td><td class="type">string</td><td><span class="tag req">sí</span></td><td class="fixed">csections_count</td><td>Número de cesáreas (numérico); 0 si no ha tenido ninguna. Si no lo tienes, <code>""</code>.</td></tr>
+          <tr><td class="param">abortions</td><td class="type">string</td><td><span class="tag req">sí</span></td><td class="fixed">abortos</td><td>Antecedente de abortos o pérdidas previas. Acepta si/no · yes/no · true/false · 1/0. Si no lo tienes, <code>""</code>.</td></tr>
+          <tr><td class="param">preeclampsia</td><td class="type">string</td><td><span class="tag req">sí</span></td><td class="fixed">pree</td><td>Antecedente de preeclampsia. Acepta si/no · yes/no · true/false · 1/0. Si no lo tienes, <code>""</code>.</td></tr>
+          <tr><td class="param">bmi</td><td class="type">string</td><td><span class="tag req">sí</span></td><td class="fixed">imc</td><td>IMC del resultado de <code>calculate_bmi</code>, copiado literal y sin redondear. Si no lo tienes, <code>""</code>.</td></tr>
+          <tr><td class="param">documentation</td><td class="type">string</td><td><span class="tag req">sí</span></td><td class="fixed">document_result</td><td>El <code>document_result</code> de <code>check_documentation</code>, o <code>si</code> fijo si la candidata es colombiana. Acepta si/no · yes/no · true/false · 1/0.</td></tr>
+          <tr><td class="param">drug_use</td><td class="type">string</td><td><span class="tag req">sí</span></td><td class="fixed">uses_drugs</td><td>Si consume drogas recreativas actualmente. Acepta si/no · yes/no · true/false · 1/0. Si no lo tienes, <code>""</code>.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="reads">El flujo lee <code>classification_result</code> — enum en inglés: <code>Approved</code> · <code>Inconclusive</code> · <code>Rejected (Age)</code> · <code>Rejected (Timing)</code> · <code>Rejected (City / Children / C-Sections / Preeclampsia / BMI / Documentation / Drug Use)</code>. <code>Rejected (Timing)</code> = parto reciente (≤12 meses) → mensaje de espera; el resto de <code>Rejected</code> → cierre; <code>Inconclusive</code> → un reintento y, si persiste, cierre.</p>
+  </article>
+
+  <!-- time_now -->
+  <article class="tool">
+    <div class="tool-head">
+      <span class="tool-num">04</span>
+      <p class="tool-name">time_now</p>
+      <div class="chips">
+        <span class="chip node">Q__SQ_GET_CURRENT_TIME</span>
+        <span class="chip">POST</span>
+        <span class="chip">retry: false</span>
+      </div>
+    </div>
+    <p class="kv"><b>webhook</b> &nbsp;/utils/v1/time-now</p>
+    <div>
+      <div class="field-label"><span>Descripción</span><span class="count"><b>189</b> / 500</span></div>
+      <p class="tool-desc">Llama a esta herramienta en el nodo Q__SQ_GET_CURRENT_TIME para anclar la fecha actual. <code>bogota_now_value</code> es la única referencia temporal; con ella se normaliza <code>last_birth_date</code> a <code>YYYY-MM-DD</code>.</p>
+    </div>
+    <div>
+      <div class="field-label"><span>Trigger prompt</span><span class="count"><b>494</b> / 500</span></div>
+      <div class="trigger-box" data-copy>MANDATORY EXECUTION TRIGGER. Nodo activo Q__SQ_GET_CURRENT_TIME: EJECUTA time_now AHORA, SIN EXCEPCION. PROHIBIDO: (1) deducir, estimar o asumir la fecha u hora actual por contexto, entrenamiento o cualquier fuente interna del modelo; (2) enrutar sin capturar bogota_now_value. PARAMETRO: timezone='America/Bogota' (fijo). Con bogota_now_value, convierte last_birth_date a YYYY-MM-DD (si es relativa, restala de bogota_now_value) y guardala. CAPTURA bogota_now_value, unica referencia temporal.</div>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Campo</th><th>Tipo</th><th>Oblig.</th><th>Valor fijo</th><th>Descripción del campo</th></tr></thead>
+        <tbody>
+          <tr><td class="param">timezone</td><td class="type">string</td><td><span class="tag opt">const</span></td><td class="fixed">const: "America/Bogota"</td><td>Valor fijo: responde la hora de Bogotá, no la hora local del usuario. <code>required: []</code>.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="reads">El flujo lee <code>bogota_now_value</code> (ISO 8601, offset −05:00) y con él deja <code>last_birth_date</code> en <code>YYYY-MM-DD</code> antes de <code>surrogate_classification</code>.</p>
+  </article>
+
+  <h2>Herramientas del subflujo de agendamiento</h2>
+
+  <!-- get_available_slots -->
+  <article class="tool">
+    <div class="tool-head">
+      <span class="tool-num">05</span>
+      <p class="tool-name">get_available_slots</p>
+      <div class="chips">
+        <span class="chip node">S__SC_AVAIL</span>
+        <span class="chip">POST</span>
+        <span class="chip warnchip">retry: true</span>
+      </div>
+    </div>
+    <p class="kv"><b>webhook</b> &nbsp;/novafem_surrogacy/v1/available-slots</p>
+    <div>
+      <div class="field-label"><span>Descripción</span><span class="count"><b>171</b> / 500</span></div>
+      <p class="tool-desc">Llama a esta herramienta en el nodo S__SC_AVAIL como primera y única acción del turno. El array <code>available_slots</code> que devuelve es la única fuente autorizada de días y horas.</p>
+    </div>
+    <div>
+      <div class="field-label"><span>Trigger prompt</span><span class="count"><b>485</b> / 500</span></div>
+      <div class="trigger-box" data-copy>MANDATORY EXECUTION TRIGGER. Nodo activo S__SC_AVAIL: EJECUTA get_available_slots AHORA, SIN EXCEPCION. PROHIBIDO: (1) mencionar, inferir o prometer dias, horas o disponibilidad sin haber ejecutado la herramienta y capturado available_slots no vacio; (2) adivinar la zona horaria: si no la sabes, pregunta ciudad o pais; (3) enrutar sin available_slots real. PARAMETRO: user_timezone IANA continente/ciudad (Colombia -> America/Bogota). CAPTURA available_slots, unica fuente de agenda.</div>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Campo</th><th>Tipo</th><th>Oblig.</th><th>Ejemplo</th><th>Descripción del campo</th></tr></thead>
+        <tbody>
+          <tr><td class="param">user_timezone</td><td class="type">string</td><td><span class="tag req">sí</span></td><td class="fixed">"America/Bogota"</td><td>Zona horaria del usuario en formato IANA continente/ciudad. Pregunta la ciudad o país y conviértela; nunca la adivines ni uses abreviaturas (EST, COT). Si la omites, el backend asume America/Bogota.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="reads">El flujo lee <code>available_slots</code> — array de objetos con <code>start_co</code>, <code>end_co</code> (hora Bogotá, uso interno) y <code>start_local</code>, <code>end_local</code> (zona del usuario, para hablar). Array vacío = sin disponibilidad.</p>
+  </article>
+
+  <!-- book_appointment -->
+  <article class="tool">
+    <div class="tool-head">
+      <span class="tool-num">06</span>
+      <p class="tool-name">book_appointment</p>
+      <div class="chips">
+        <span class="chip node">S__SC_BOOK</span>
+        <span class="chip">POST</span>
+        <span class="chip">retry: false</span>
+      </div>
+    </div>
+    <p class="kv"><b>webhook</b> &nbsp;/novafem_surrogacy/v1/book-appointment</p>
+    <div>
+      <div class="field-label"><span>Descripción</span><span class="count"><b>163</b> / 500</span></div>
+      <p class="tool-desc">Llama a esta herramienta en el nodo S__SC_BOOK como primera y única acción del turno. <code>booking_success</code> es el único resultado autorizado para dar la cita por creada.</p>
+    </div>
+    <div>
+      <div class="field-label"><span>Trigger prompt</span><span class="count"><b>496</b> / 500</span></div>
+      <div class="trigger-box" data-copy>MANDATORY EXECUTION TRIGGER. Nodo activo S__SC_BOOK: EJECUTA book_appointment AHORA, SIN EXCEPCION. No la llames sin get_available_slots previo ni sin nombre y telefono confirmados. PROHIBIDO: (1) decir 'perfecto', confirmar o insinuar que la cita quedo agendada sin ejecutar la herramienta; (2) declarar exito sin capturar booking_success=true y event_id no nulo. PARAMETROS: start_date = start_co del slot elegido, literal, sin cambiar offset; duration='10'. CAPTURA booking_success y event_id.</div>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Campo</th><th>Tipo</th><th>Oblig.</th><th>Valor fijo / ejemplo</th><th>Descripción del campo</th></tr></thead>
+        <tbody>
+          <tr><td class="param">start_date</td><td class="type">string</td><td><span class="tag req">sí</span></td><td class="fixed">2026-08-28T09:00:00-05:00</td><td>Copia aquí, literal, el valor <code>start_co</code> del slot que eligió el usuario en <code>available_slots</code>. No lo conviertas, redondees ni reformatees; no cambies el offset.</td></tr>
+          <tr><td class="param">duration</td><td class="type">string</td><td><span class="tag opt">const</span></td><td class="fixed">const: "10"</td><td>Duración de la cita en minutos. Valor fijo: 10 (coincide con <code>APPOINTMENT_DURATION_MINUTES</code> y el contrato).</td></tr>
+          <tr><td class="param">contact_name</td><td class="type">string</td><td><span class="tag opt">const</span></td><td class="fixed">"{{contact.name}}"</td><td>Se inyecta desde la variable de contacto. No lo construyas tú.</td></tr>
+          <tr><td class="param">contact_phone</td><td class="type">string</td><td><span class="tag opt">const</span></td><td class="fixed">"{{contact.phone}}"</td><td>Se inyecta desde la variable de contacto en formato internacional. <code>x-sub-type: phone_number</code>.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="reads">El flujo lee <code>booking_success</code> (bool) y <code>event_id</code>. También <code>reason</code> (<code>past_date</code> / <code>invalid_start_date</code> / <code>invalid_hour</code> / <code>creation_failed</code>) para la rama de reintento.</p>
+  </article>
+
+  <!-- callback -->
+  <article class="tool">
+    <div class="tool-head">
+      <span class="tool-num">07</span>
+      <p class="tool-name">callback</p>
+      <div class="chips">
+        <span class="chip node">C__CB_RUN</span>
+        <span class="chip">POST</span>
+        <span class="chip">retry: false</span>
+      </div>
+    </div>
+    <p class="kv"><b>webhook</b> &nbsp;/utils/v1/request-callback</p>
+    <div>
+      <div class="field-label"><span>Descripción</span><span class="count"><b>149</b> / 500</span></div>
+      <p class="tool-desc">Llama a esta herramienta en el nodo C__CB_RUN como primera y única acción del turno. <code>errors=null</code> significa que la solicitud quedó lista para escalar.</p>
+    </div>
+    <div>
+      <div class="field-label"><span>Trigger prompt</span><span class="count"><b>486</b> / 500</span></div>
+      <div class="trigger-box" data-copy>MANDATORY EXECUTION TRIGGER. Nodo activo C__CB_RUN: EJECUTA callback AHORA, SIN EXCEPCION, antes de prometer nada. PROHIBIDO: (1) prometer que alguien llamara sin ejecutarla; (2) cerrar sin capturar errors=null; (3) omitir contact_name, reason o timezone; (4) omitir a la vez contact_phone y contact_email (se requiere al menos uno). PARAMETROS: reason (no_availability|booking_failed|user_requested|ambiguous_data|technical_error); timezone (la de get_available_slots). CAPTURA errors.</div>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Campo</th><th>Tipo</th><th>Oblig.</th><th>Valores</th><th>Descripción del campo</th></tr></thead>
+        <tbody>
+          <tr><td class="param">contact_name</td><td class="type">string</td><td><span class="tag req">sí</span></td><td class="fixed">—</td><td>Nombre completo del contacto tal como lo mencionó durante la llamada.</td></tr>
+          <tr><td class="param">reason</td><td class="type">enum</td><td><span class="tag req">sí</span></td><td class="fixed">no_availability · booking_failed · user_requested · ambiguous_data · technical_error</td><td>Mapea la situación real al valor más cercano: sin cupos / reserva falló repetido / pidió un humano / dato ambiguo tras reintentar / error técnico.</td></tr>
+          <tr><td class="param">timezone</td><td class="type">string</td><td><span class="tag req">sí</span></td><td class="fixed">"America/Bogota"</td><td>Zona horaria IANA del usuario, la misma que ya usaste para <code>get_available_slots</code>. No la vuelvas a preguntar.</td></tr>
+          <tr><td class="param">contact_phone</td><td class="type">string</td><td><span class="tag opt">no</span></td><td class="fixed">+573001234567</td><td>Teléfono en formato internacional. Manda al menos uno entre <code>contact_phone</code> y <code>contact_email</code>.</td></tr>
+          <tr><td class="param">contact_email</td><td class="type">string</td><td><span class="tag opt">no</span></td><td class="fixed">maria@example.com</td><td>Correo del contacto. Manda al menos uno entre <code>contact_phone</code> y <code>contact_email</code>.</td></tr>
+          <tr><td class="param">context</td><td class="type">string</td><td><span class="tag opt">no</span></td><td class="fixed">—</td><td>Resumen corto de qué pasó en la conversación, para que quien llame no lo haga a ciegas.</td></tr>
+          <tr><td class="param">preferred_days</td><td class="type">string</td><td><span class="tag opt">no</span></td><td class="fixed">weekdays · weekend · any · "monday,wednesday"</td><td>Manda esto solo si el usuario dio preferencia de día: un día, varios por coma, o los atajos.</td></tr>
+          <tr><td class="param">preferred_time_window</td><td class="type">enum</td><td><span class="tag opt">no</span></td><td class="fixed">morning · midday · afternoon · evening · any</td><td>Manda esto solo si el usuario dio preferencia de franja horaria.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="reads">El flujo lee <code>errors</code> — <code>null</code> significa que la solicitud quedó lista para escalar.</p>
+  </article>
+
+  <h2>Herramienta genérica (no usada por este agente)</h2>
+  <p class="lede" style="margin-bottom:1.4rem;font-size:.9rem"><code>check_days_elapsed</code> se quitó de <code>surrogate_questions</code>: <code>surrogate_classification</code> ya evalúa el parto reciente (<code>Rejected (Timing)</code>). Queda registrada para otros flujos; el trigger va sin referencia a nodo.</p>
+
+  <!-- check_days_elapsed -->
+  <article class="tool">
+    <div class="tool-head">
+      <span class="tool-num">08</span>
+      <p class="tool-name">check_days_elapsed</p>
+      <div class="chips">
+        <span class="chip">sin nodo</span>
+        <span class="chip">POST</span>
+        <span class="chip">retry: false</span>
+      </div>
+    </div>
+    <p class="kv"><b>webhook</b> &nbsp;/utils/v1/check-days-elapsed</p>
+    <div>
+      <div class="field-label"><span>Descripción</span><span class="count"><b>149</b> / 500</span></div>
+      <p class="tool-desc">Llama a esta herramienta para verificar si una fecha ocurrió hace más de cierto número de días. <code>year_elapsed_result</code> es el único veredicto autorizado.</p>
+    </div>
+    <div>
+      <div class="field-label"><span>Trigger prompt</span><span class="count"><b>442</b> / 500</span></div>
+      <div class="trigger-box" data-copy>MANDATORY EXECUTION TRIGGER. EJECUTA check_days_elapsed AHORA, SIN EXCEPCION, siempre que debas verificar si una fecha (p. ej. el ultimo parto) ocurrio hace mas de N dias. PROHIBIDO: (1) asumir, estimar o calcular mentalmente si ya paso el umbral; (2) enrutar sin capturar year_elapsed_result. PARAMETROS: date normalizada a YYYY-MM-DD antes de llamar; days='365'. CAPTURA year_elapsed_result, unico veredicto sobre la antiguedad de la fecha.</div>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Campo</th><th>Tipo</th><th>Oblig.</th><th>Valor fijo / ejemplo</th><th>Descripción del campo</th></tr></thead>
+        <tbody>
+          <tr><td class="param">date</td><td class="type">string</td><td><span class="tag req">sí</span></td><td class="fixed">"2024-06-15"</td><td>Fecha a evaluar (por ejemplo el último parto). Conviértela a <code>YYYY-MM-DD</code> antes de llamar; acepta también <code>YYYY/MM/DD</code>.</td></tr>
+          <tr><td class="param">days</td><td class="type">string</td><td><span class="tag opt">const</span></td><td class="fixed">const: "365"</td><td>Umbral en días. Valor fijo: 365 (un año).</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="reads">El flujo lee <code>year_elapsed_result</code> (bool) y <code>days_elapsed</code> (número).</p>
+  </article>
+
+  <footer>
+    Generado desde <code>babynova_surrogacy_tools.platform.json</code>. Contratos completos en <code>agents/defs/babynova_surrogate_questions_voice/tool_contracts.yaml</code> y <code>agents/shared/tool_contracts/callback_contract_es.yaml</code>. Nodos en <code>subflows/surrogate_questions.yaml</code> y <code>subflows/scheduling.yaml</code>.
+  </footer>
+</div>
+
+<script>
+  (function () {
+    document.querySelectorAll('.trigger-box[data-copy]').forEach(function (box) {
+      var label = box.parentElement.querySelector('.field-label');
+      if (!label) return;
+      var btn = document.createElement('button');
+      btn.className = 'copy-btn';
+      btn.type = 'button';
+      btn.textContent = 'copiar';
+      btn.addEventListener('click', function () {
+        var text = box.textContent;
+        var done = function () { btn.textContent = 'copiado'; setTimeout(function () { btn.textContent = 'copiar'; }, 1600); };
+        var fail = function () { btn.textContent = 'selecciona y copia'; setTimeout(function () { btn.textContent = 'copiar'; }, 2000); };
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(text).then(done, fail);
+          } else { fail(); }
+        } catch (e) { fail(); }
+      });
+      label.appendChild(btn);
+    });
+  })();
+</script>

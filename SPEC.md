@@ -115,7 +115,7 @@ This system does NOT:
 - Subflow templating (namespacing, `@instance.export` alias resolution, `<<param>>` substitution) is implemented with hard guards (`_validate_no_unresolved_aliases`) that fail loudly rather than silently compiling a broken reference.
 - Mermaid round-trip tooling (`mermaid_parser.py` scaffold-from-diagram, `mermaid_diagrams.py` export-to-diagram) is functional and documented.
 - Documentation is unusually thorough for the project's size: `AGENT_CREATION_GUIDE.md` (980 lines, authoritative technical reference), `PATTERN_GUIDE.md` (compact-flow authoring pattern), `faq.md` / `handlers.md` (domain-content recommendations).
-- A compact-notation ("mini") System Prompt is compiled alongside the standard one whenever the agent's template has a `*_mini.md.j2` companion — see the 2026-08-07 decision log entry. Measured 17% fewer characters on the real reference agent, with zero validation impact. Only `templates/system_prompt_mini.md.j2` exists so far; the bilingual template has no companion yet, so agents using it compile with `system_prompt_mini = None`.
+- A compact-notation ("mini") System Prompt is compiled alongside the standard one whenever the agent's template has a `*_mini.md.j2` companion — see the 2026-08-07 decision log entry. Measured 17% fewer characters on the real reference agent, with zero validation impact. `templates/system_prompt_mini.md.j2` is the only committed companion. A `templates/system_prompt_bilingual_text_mini.md.j2` draft exists on disk as an **untracked** work-in-progress (roadmap phase 25) and is deliberately not committed until the phase 26 LLM eval exists — so a bilingual agent compiles with a non-`None` `system_prompt_mini` on a checkout where that file is present and `system_prompt_mini = None` otherwise. See the 2026-08-28 decision log entry.
 
 ### What is incomplete
 
@@ -334,7 +334,7 @@ The following invariants apply to all changes, without exception. They are the r
 | 22 | **Fix B4** — make `GO_TO` detection and the unresolved-alias guard whitespace/case robust (or explicitly document `GO_TO:` as case-sensitive-by-design and add an `UNPARSEABLE_GOTO`-style catch for near-miss casing) | Medium | A fixture with `go_to:`/irregular alias spacing produces an explicit validation error instead of silently compiling |
 | 23 | **Fix B5** — `render_subflow_document` reuses `app.utils.extract_goto_targets` instead of its local narrower regex | Low | A fixture `subflow_change` node with a dynamic `GO_TO: [slot]` exit shows the real target in the subflow document, not `—` |
 | 24 | Add a `HANDLER.trigger` vs `FAQ.match` phrase-collision validator (addresses B8) | Low | A fixture with an identical trigger/match phrase produces a warning |
-| 25 | Create `templates/system_prompt_bilingual_text_mini.md.j2` so bilingual (Family Aims-style) agents also get a mini artifact | Low | `compile_agent()` on a bilingual-templated agent returns a non-`None` `system_prompt_mini` |
+| 25 | **Started — drafted on disk, not committed.** `templates/system_prompt_bilingual_text_mini.md.j2` exists as an untracked WIP file (compiles cleanly, ~13% char reduction on `family_aims_sam_text`). Held out of git until phase 26; see the 2026-08-28 decision log entry. Complete by committing it (+ flipping the test) after phase 26, or drop the draft. | Low | `compile_agent()` on a bilingual-templated agent returns a non-`None` `system_prompt_mini` |
 | 26 | Empirically validate the mini System Prompt against a real LLM — confirm state-machine adherence and spoken output are unaffected before any agent switches to using it as its primary deployed prompt | High (before production use) | A side-by-side conversation transcript comparison (standard vs mini) on the same scripted test cases shows no behavioral divergence; needs a human decision on methodology first |
 | 27 | Measure whether dropping `GOAL` from the mini renderer (currently kept) changes behavior; if not, drop it for further savings | Low | Requires phase 26's evaluation harness to exist first — no speculative change without a way to measure the effect |
 
@@ -377,6 +377,18 @@ B6 (disclaimer checker should scan `say`, not `goal`/`do`), B7 (tool vs. tool-co
 ---
 
 ## 13. Decision log
+
+### 2026-08-28 — Bilingual mini template: acknowledged as untracked WIP, not committed pending phase 26
+
+**Context:** `templates/system_prompt_bilingual_text_mini.md.j2` (the roadmap phase 25 companion) was found on disk as an untracked file, present before the 2026-08-28 session. It renders cleanly — compiling `family_aims_sam_text` end-to-end produces a 68,823-char mini prompt vs. 78,811 full (~13% reduction), 0 errors / 0 warnings — and its `HARD_TOOL_EXECUTION_CONTRACT` was hardened alongside the other two templates that carry it during that session. Its presence made `compile_agent()`'s bilingual output environment-dependent: a mini prompt is produced on a checkout where the file exists, and skipped (`system_prompt_mini = None`) on a fresh clone / CI / git worktree.
+
+**Decision (repo owner):** Keep the file as an untracked work-in-progress. It is a valid experiment but must not be committed until the phase 26 empirical LLM eval exists — the same gate that already applies before any agent adopts a mini prompt as its primary deployed prompt. Phase 25 stays open ("started — drafted on disk, not committed").
+
+**Follow-through:**
+- `tests/unit/app/test_compiler.py::test_compile_agent_skips_mini_prompt_when_companion_template_is_absent` (renamed from `..._when_no_companion_template_exists`) was made deterministic: it now `monkeypatch`es `app.compiler._mini_template_path` to a non-existent path instead of relying on the bilingual template having no companion on disk. It passes whether or not the untracked draft is present.
+- `app/compiler.py`'s skip logic is unchanged — it is correct; the environment-dependence is entirely a function of the file's tracking state.
+
+**Open:** The environment-dependent bilingual compile output is resolved either by committing the template (completing phase 25, after phase 26) or by deleting the draft.
 
 ### 2026-08-07 — Added a compact-notation ("mini") System Prompt as a second compile artifact
 

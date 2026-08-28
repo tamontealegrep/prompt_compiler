@@ -1,0 +1,342 @@
+[
+  {
+    "id": "6a8e007750f7837c7c950676",
+    "name": "get_available_slots",
+    "actionType": "CAP",
+    "description": "Llama a esta herramienta en el nodo S__SC_AVAIL como primera y unica accion del turno. El array available_slots que devuelve es la unica fuente autorizada de dias y horas.",
+    "triggerPrompt": "MANDATORY EXECUTION TRIGGER. Nodo activo S__SC_AVAIL: EJECUTA get_available_slots AHORA, SIN EXCEPCION. PROHIBIDO: (1) mencionar, inferir o prometer dias, horas o disponibilidad sin haber ejecutado la herramienta y capturado available_slots no vacio; (2) adivinar la zona horaria: si no la sabes, pregunta ciudad o pais; (3) enrutar sin available_slots real. PARAMETRO: user_timezone IANA continente/ciudad (Colombia -> America/Bogota). CAPTURA available_slots, unica fuente de agenda.",
+    "triggerMessage": "DEBUG get_available_slots: consultando disponibilidad de citas",
+    "webhookUrl": "https://appraiser-reactive-stunner.ngrok-free.dev/novafem_surrogacy/v1/available-slots",
+    "httpMethod": "POST",
+    "apiTimeout": 10,
+    "retryOnFailure": true,
+    "bodySchema": {
+      "type": "object",
+      "properties": {
+        "user_timezone": {
+          "type": "string",
+          "description": "Manda la zona horaria del usuario en formato IANA continente/ciudad. Pregunta la ciudad o pais y conviertela; nunca la adivines ni uses abreviaturas (EST, COT). Si la omites, el backend asume America/Bogota.",
+          "example": "America/Bogota"
+        }
+      },
+      "required": [
+        "user_timezone"
+      ]
+    },
+    "parametersDefinition": []
+  },
+  {
+    "id": "6a905f860c84dc7271ebae73",
+    "name": "book_appointment",
+    "actionType": "CAP",
+    "description": "Llama a esta herramienta en el nodo S__SC_BOOK como primera y unica accion del turno. booking_success es el unico resultado autorizado para dar la cita por creada.",
+    "triggerPrompt": "MANDATORY EXECUTION TRIGGER. Nodo activo S__SC_BOOK: EJECUTA book_appointment AHORA, SIN EXCEPCION. No la llames sin get_available_slots previo ni sin nombre y telefono confirmados. PROHIBIDO: (1) decir 'perfecto', confirmar o insinuar que la cita quedo agendada sin ejecutar la herramienta; (2) declarar exito sin capturar booking_success=true y event_id no nulo. PARAMETROS: start_date = start_co del slot elegido, literal, sin cambiar offset; duration='10'. CAPTURA booking_success y event_id.",
+    "triggerMessage": "DEBUG book_appointment: agendando la cita seleccionada",
+    "webhookUrl": "https://appraiser-reactive-stunner.ngrok-free.dev/novafem_surrogacy/v1/book-appointment",
+    "httpMethod": "POST",
+    "apiTimeout": 10,
+    "retryOnFailure": false,
+    "bodySchema": {
+      "type": "object",
+      "properties": {
+        "start_date": {
+          "type": "string",
+          "description": "Copia aqui, literal, el valor start_co del slot que eligio el usuario en available_slots. No lo conviertas, redondees ni reformatees; no cambies el offset.",
+          "example": "2026-08-28T09:00:00-05:00"
+        },
+        "duration": {
+          "type": "string",
+          "const": "10",
+          "description": "Duracion de la cita en minutos. Valor fijo: 10."
+        },
+        "contact_name": {
+          "type": "string",
+          "const": "{{contact.name}}",
+          "description": "Se inyecta desde la variable de contacto. No lo construyas tu."
+        },
+        "contact_phone": {
+          "type": "string",
+          "const": "{{contact.phone}}",
+          "x-sub-type": "phone_number",
+          "description": "Se inyecta desde la variable de contacto en formato internacional.",
+          "example": "+14155552671"
+        }
+      },
+      "required": [
+        "start_date"
+      ]
+    },
+    "parametersDefinition": []
+  },
+  {
+    "id": "6a9061918631410b9e53203f",
+    "name": "time_now",
+    "actionType": "CAP",
+    "description": "Llama a esta herramienta en el nodo Q__SQ_GET_CURRENT_TIME para anclar la fecha actual. bogota_now_value es la unica referencia temporal; con ella se normaliza last_birth_date a YYYY-MM-DD.",
+    "triggerPrompt": "MANDATORY EXECUTION TRIGGER. Nodo activo Q__SQ_GET_CURRENT_TIME: EJECUTA time_now AHORA, SIN EXCEPCION. PROHIBIDO: (1) deducir, estimar o asumir la fecha u hora actual por contexto, entrenamiento o cualquier fuente interna del modelo; (2) enrutar sin capturar bogota_now_value. PARAMETRO: timezone='America/Bogota' (fijo). Con bogota_now_value, convierte last_birth_date a YYYY-MM-DD (si es relativa, restala de bogota_now_value) y guardala. CAPTURA bogota_now_value, unica referencia temporal.",
+    "triggerMessage": "DEBUG time_now: obteniendo hora actual en Bogota",
+    "webhookUrl": "https://appraiser-reactive-stunner.ngrok-free.dev/utils/v1/time-now",
+    "httpMethod": "POST",
+    "apiTimeout": 10,
+    "retryOnFailure": false,
+    "bodySchema": {
+      "type": "object",
+      "properties": {
+        "timezone": {
+          "type": "string",
+          "const": "America/Bogota",
+          "description": "Valor fijo: America/Bogota. Responde la hora de Bogota, no la hora local del usuario."
+        }
+      },
+      "required": []
+    },
+    "parametersDefinition": []
+  },
+  {
+    "id": "6a9062d5629afac4f302966a",
+    "name": "check_days_elapsed",
+    "actionType": "CAP",
+    "description": "Llama a esta herramienta para verificar si una fecha ocurrio hace mas de cierto numero de dias. year_elapsed_result es el unico veredicto autorizado.",
+    "triggerPrompt": "MANDATORY EXECUTION TRIGGER. EJECUTA check_days_elapsed AHORA, SIN EXCEPCION, siempre que debas verificar si una fecha (p. ej. el ultimo parto) ocurrio hace mas de N dias. PROHIBIDO: (1) asumir, estimar o calcular mentalmente si ya paso el umbral; (2) enrutar sin capturar year_elapsed_result. PARAMETROS: date normalizada a YYYY-MM-DD antes de llamar; days='365'. CAPTURA year_elapsed_result, unico veredicto sobre la antiguedad de la fecha.",
+    "triggerMessage": "DEBUG check_days_elapsed: verificando antiguedad de la fecha",
+    "webhookUrl": "https://appraiser-reactive-stunner.ngrok-free.dev/utils/v1/check-days-elapsed",
+    "httpMethod": "POST",
+    "apiTimeout": 10,
+    "retryOnFailure": false,
+    "bodySchema": {
+      "type": "object",
+      "properties": {
+        "date": {
+          "type": "string",
+          "description": "Fecha a evaluar (por ejemplo el ultimo parto). Conviertela a YYYY-MM-DD antes de llamar; acepta tambien YYYY/MM/DD.",
+          "example": "2024-06-15"
+        },
+        "days": {
+          "type": "string",
+          "const": "365",
+          "description": "Umbral en dias. Valor fijo: 365 (un anio)."
+        }
+      },
+      "required": [
+        "date"
+      ]
+    },
+    "parametersDefinition": []
+  },
+  {
+    "id": "6a906367abe0bcb2ee0f150e",
+    "name": "calculate_bmi",
+    "actionType": "CAP",
+    "description": "Llama a esta herramienta en el nodo Q__SQ_CALCULATE_BMI como primera y unica accion del turno. Usa el campo imc que devuelve, sin redondear.",
+    "triggerPrompt": "MANDATORY EXECUTION TRIGGER. Nodo activo Q__SQ_CALCULATE_BMI: EJECUTA calculate_bmi AHORA, SIN EXCEPCION. PROHIBIDO: (1) calcular, estimar o aproximar el IMC mentalmente o con logica propia; (2) usar valores sin convertir a kg y cm (lb/2.20462; ft x30.48; in x2.54); (3) declarar o enrutar con un IMC sin capturar el campo imc; (4) redondear imc. PARAMETROS: weight_kg (kg), height_cm (cm). CAPTURA imc literal, entrada obligatoria de surrogate_classification.",
+    "triggerMessage": "DEBUG calculate_bmi: calculando indice de masa corporal",
+    "webhookUrl": "https://appraiser-reactive-stunner.ngrok-free.dev/utils/v1/calculate-bmi",
+    "httpMethod": "POST",
+    "apiTimeout": 10,
+    "retryOnFailure": false,
+    "bodySchema": {
+      "type": "object",
+      "properties": {
+        "weight_kg": {
+          "type": "string",
+          "description": "Peso de la candidata en kilogramos, del dato ya capturado. Si respondio en libras, conviertelo antes (1 lb = 0.453592 kg).",
+          "example": "70"
+        },
+        "height_cm": {
+          "type": "string",
+          "description": "Altura de la candidata en centimetros, del dato ya capturado. Si respondio en pies/pulgadas, conviertelo antes (1 in = 2.54 cm).",
+          "example": "165"
+        }
+      },
+      "required": [
+        "weight_kg",
+        "height_cm"
+      ]
+    },
+    "parametersDefinition": []
+  },
+  {
+    "id": "6a906e410c84dc90aeebba0a",
+    "name": "check_documentation",
+    "actionType": "CAP",
+    "description": "Llama a esta herramienta en el nodo Q__SQ_CHECK_DOCUMENTATION como primera y unica accion del turno. document_result es el unico veredicto documental; document_result=false no cierra el flujo.",
+    "triggerPrompt": "MANDATORY EXECUTION TRIGGER. Nodo activo Q__SQ_CHECK_DOCUMENTATION: EJECUTA check_documentation AHORA como PRIMERA accion, sin evaluar nada antes. PROHIBIDO: (1) dar, adelantar o asumir un veredicto documental sin ejecutar la herramienta y capturar document_result; (2) enrutar sin document_result; (3) cerrar por document_result=false, NO termina el flujo. PARAMETROS: nationality ISO 3166-1 alfa-3 MAYUSCULAS; document_type (array) SOLO si nationality != COL. CAPTURA document_result.",
+    "triggerMessage": "DEBUG check_documentation: verificando documentacion requerida",
+    "webhookUrl": "https://appraiser-reactive-stunner.ngrok-free.dev/novafem_surrogacy/v1/check-documentation-sur",
+    "httpMethod": "POST",
+    "apiTimeout": 10,
+    "retryOnFailure": false,
+    "bodySchema": {
+      "type": "object",
+      "properties": {
+        "nationality": {
+          "type": "string",
+          "description": "Codigo ISO 3166-1 alfa-3 en mayusculas (COL, VEN, ECU...). Infierelo del pais que menciono la candidata, nunca del acento ni del telefono. El flujo ya lo normaliza al capturarlo.",
+          "example": "COL"
+        },
+        "document_type": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Manda esto solo si nationality no es COL: array con los documentos que reporta la candidata, ya normalizados. cedula_ciudadania y ppt aprueban; cedula_extranjeria, pasaporte y otro rechazan. Aprueba si cualquier elemento es valido.",
+          "example": [
+            "cedula_ciudadania"
+          ]
+        }
+      },
+      "required": [
+        "nationality"
+      ]
+    },
+    "parametersDefinition": []
+  },
+  {
+    "id": "6a9070c6fbd21ffd4f8f2ceb",
+    "name": "surrogate_classification",
+    "actionType": "CAP",
+    "description": "Llama a esta herramienta en el nodo Q__SQ_RUN_CLASSIFICATION como primera y unica accion del turno. classification_result es el unico veredicto de elegibilidad.",
+    "triggerPrompt": "MANDATORY EXECUTION TRIGGER. Nodo activo Q__SQ_RUN_CLASSIFICATION: EJECUTA surrogate_classification AHORA, SIN EXCEPCION, antes de mencionar el resultado. PROHIBIDO: (1) declarar apta, rechazada o inconclusa sin ejecutar la herramienta y capturar classification_result; (2) inferir el resultado tu mismo; (3) omitir campos: el que no tengas va como '', nunca omitido ni inventado. PARAMETROS: los 10 campos; documentation = document_result ('si' si colombiana). CAPTURA classification_result.",
+    "triggerMessage": "DEBUG surrogate_classification: ejecutando clasificacion de candidata",
+    "webhookUrl": "https://appraiser-reactive-stunner.ngrok-free.dev/novafem_surrogacy/v1/surrogate-classification",
+    "httpMethod": "POST",
+    "apiTimeout": 10,
+    "retryOnFailure": false,
+    "bodySchema": {
+      "type": "object",
+      "properties": {
+        "age": {
+          "type": "string",
+          "description": "Edad de la candidata en anios (numerico). Del dato surrogate_age. Si no lo tienes, manda ''.",
+          "example": "28"
+        },
+        "city": {
+          "type": "string",
+          "description": "Ciudad de residencia, ya normalizada a una de: Bogota, Soacha, Zipaquira, Chia, Mosquera, Funza, Cajica, Madrid, La Calera, Cota, Facatativa, Sibate, u Otro. Si no lo tienes, manda ''.",
+          "example": "Bogota"
+        },
+        "number_of_children": {
+          "type": "string",
+          "description": "Numero de hijos biologicos (numerico). Si no lo tienes, manda ''.",
+          "example": "2"
+        },
+        "last_birth_date": {
+          "type": "string",
+          "description": "Fecha del ultimo parto en YYYY-MM-DD, ya normalizada por el flujo con time_now. Nunca una expresion relativa. Vacio si no se capturo.",
+          "example": "2024-03-10"
+        },
+        "number_of_c_sections": {
+          "type": "string",
+          "description": "Numero de cesareas (numerico); 0 si no ha tenido ninguna. Si no lo tienes, manda ''.",
+          "example": "1"
+        },
+        "abortions": {
+          "type": "string",
+          "description": "Antecedente de abortos o perdidas previas. Acepta si/no, yes/no, true/false, 1/0. Si no lo tienes, manda ''."
+        },
+        "preeclampsia": {
+          "type": "string",
+          "description": "Antecedente de preeclampsia. Acepta si/no, yes/no, true/false, 1/0. Si no lo tienes, manda ''."
+        },
+        "bmi": {
+          "type": "string",
+          "description": "IMC del resultado de calculate_bmi, copiado literal y sin redondear. Si no lo tienes, manda ''.",
+          "example": "22.0"
+        },
+        "documentation": {
+          "type": "string",
+          "description": "El document_result de check_documentation, o 'si' fijo si la candidata es colombiana. Acepta si/no, yes/no, true/false, 1/0. Si no lo tienes, manda ''."
+        },
+        "drug_use": {
+          "type": "string",
+          "description": "Si consume drogas recreativas actualmente. Acepta si/no, yes/no, true/false, 1/0. Si no lo tienes, manda ''."
+        }
+      },
+      "required": [
+        "age",
+        "city",
+        "number_of_children",
+        "last_birth_date",
+        "number_of_c_sections",
+        "abortions",
+        "preeclampsia",
+        "bmi",
+        "documentation",
+        "drug_use"
+      ]
+    },
+    "parametersDefinition": []
+  },
+  {
+    "id": "6a90d8f24d8105812145ea01",
+    "name": "callback",
+    "actionType": "CAP",
+    "description": "Llama a esta herramienta en el nodo C__CB_RUN como primera y unica accion del turno. errors=null significa que la solicitud quedo lista para escalar.",
+    "triggerPrompt": "MANDATORY EXECUTION TRIGGER. Nodo activo C__CB_RUN: EJECUTA callback AHORA, SIN EXCEPCION, antes de prometer nada. PROHIBIDO: (1) prometer que alguien llamara sin ejecutarla; (2) cerrar sin capturar errors=null; (3) omitir contact_name, reason o timezone; (4) omitir a la vez contact_phone y contact_email (se requiere al menos uno). PARAMETROS: reason (no_availability|booking_failed|user_requested|ambiguous_data|technical_error); timezone (la de get_available_slots). CAPTURA errors.",
+    "triggerMessage": "DEBUG callback: escalando a devolucion de llamada humana",
+    "webhookUrl": "https://appraiser-reactive-stunner.ngrok-free.dev/utils/v1/request-callback",
+    "httpMethod": "POST",
+    "apiTimeout": 10,
+    "retryOnFailure": false,
+    "bodySchema": {
+      "type": "object",
+      "properties": {
+        "contact_name": {
+          "type": "string",
+          "description": "Nombre completo del contacto tal como lo menciono durante la llamada."
+        },
+        "contact_phone": {
+          "type": "string",
+          "description": "Telefono en formato internacional. Manda al menos uno entre contact_phone y contact_email.",
+          "example": "+573001234567"
+        },
+        "contact_email": {
+          "type": "string",
+          "description": "Correo del contacto. Manda al menos uno entre contact_phone y contact_email.",
+          "example": "maria@example.com"
+        },
+        "reason": {
+          "type": "string",
+          "enum": [
+            "no_availability",
+            "booking_failed",
+            "user_requested",
+            "ambiguous_data",
+            "technical_error"
+          ],
+          "description": "Mapea la situacion real al valor mas cercano: no_availability (sin cupos), booking_failed (reserva fallo repetido), user_requested (pidio un humano), ambiguous_data (dato ambiguo tras reintentar), technical_error."
+        },
+        "context": {
+          "type": "string",
+          "description": "Resumen corto de que paso en la conversacion, para que quien llame no lo haga a ciegas."
+        },
+        "preferred_days": {
+          "type": "string",
+          "description": "Manda esto solo si el usuario dio preferencia de dia: un dia, varios por coma, o los atajos weekdays / weekend / any."
+        },
+        "preferred_time_window": {
+          "type": "string",
+          "enum": [
+            "morning",
+            "midday",
+            "afternoon",
+            "evening",
+            "any"
+          ],
+          "description": "Manda esto solo si el usuario dio preferencia de franja horaria."
+        },
+        "timezone": {
+          "type": "string",
+          "description": "Zona horaria IANA del usuario, la misma que ya usaste para get_available_slots. No la vuelvas a preguntar.",
+          "example": "America/Bogota"
+        }
+      },
+      "required": [
+        "contact_name",
+        "reason",
+        "timezone"
+      ]
+    },
+    "parametersDefinition": []
+  }
+]

@@ -43,3 +43,5 @@ Thumbs.db
 # Agent config
 agents/defs/
 agents/shared/
+
+backups/

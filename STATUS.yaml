@@ -9,7 +9,7 @@ project:
   name: "Prompt Compiler"
   version: "2.0.0"
   start_date: "2026-05-01"  # approximate — earliest commits in git log predate the visible history window
-  last_updated: "2026-08-20"
+  last_updated: "2026-08-28"
   status: "active"  # active | paused | complete | archived
   owner: "tamontealegrep (Engineering Board)"
 
@@ -267,6 +267,11 @@ technical_debt:
     impact: "high (before any production use of the mini artifact); none currently, since it's compiled as a second, opt-in artifact alongside the existing one"
     plan: "SPEC.md §10 roadmap phase 26 — needs a human decision on evaluation methodology first."
 
+  - description: "compile_agent() output for bilingual-templated agents (family_aims_sam_text) is environment-dependent: templates/system_prompt_bilingual_text_mini.md.j2 exists as an untracked WIP draft on the repo owner's checkout, so it produces a system_prompt_mini there, but a fresh clone / CI / git worktree has no such file and compiles with system_prompt_mini=None. The test suite is now insensitive to this (test made deterministic 2026-08-28), but a build could still differ across machines."
+    identified: "2026-08-28"
+    impact: "low — the mini artifact is opt-in and no agent deploys it yet; but it breaks the 'identical source YAML → identical output' expectation across checkouts"
+    plan: "Resolved by either committing the template (completing roadmap phase 25, after phase 26) or deleting the draft. SPEC.md §13, 2026-08-28 decision log entry."
+
   - description: "No CI pipeline — nothing currently blocks a broken commit from landing on main."
     identified: "2026-08-06"
     impact: "medium"
@@ -282,11 +287,11 @@ technical_debt:
 # ---------------------------------------------------------------------------
 
 tests:
-  last_run: "2026-08-07"
-  total_tests: 250
+  last_run: "2026-08-28"
+  total_tests: 252
   status: "passing"  # passing | failing | not_run
   failing_tests: []
-  passing_count: 245
+  passing_count: 247
   strict_xfail_count: 5
   strict_xfail_note: "Each strict-xfail test documents one known open bug (B3: 1, B4: 3, B5: 1 — SPEC.md §5.1) via the INTENDED behavior — it will flip to an unexpected pass (and fail the run) once the corresponding fix lands, forcing removal of the marker. B2's xfail tests were flipped to normal passing assertions when B2 was fixed 2026-08-06."
   coverage_percentage: null  # pytest-cov not run this session; no coverage tool wired into pyproject.toml yet
@@ -307,7 +312,7 @@ metrics:
   known_bugs_fixed: 1  # B2
   known_bugs_not_bugs: 1  # B1
   mini_prompt_char_reduction_pct: 17  # measured on the real reference agent, 2026-08-07 — see SPEC.md §13
-  mini_template_companions: 1  # templates/system_prompt_mini.md.j2 only; bilingual has none yet (roadmap phase 25)
+  mini_template_companions: 1  # committed: templates/system_prompt_mini.md.j2. Plus system_prompt_bilingual_text_mini.md.j2 as an UNTRACKED WIP draft, held out of git until phase 26 (roadmap phase 25; SPEC.md §13, 2026-08-28)
   last_evaluation: "2026-08-07"
 
 # ---------------------------------------------------------------------------
@@ -315,7 +320,7 @@ metrics:
 # ---------------------------------------------------------------------------
 
 next_session:
-  continue_with: "Highest priority: SPEC.md roadmap phase 26 — the mini System Prompt has not been empirically validated against a real LLM and should not become any agent's primary deployed prompt until it is (needs a methodology decision from the repo owner first). Otherwise: B4 still needs open_point 4 decided (case-sensitivity of GO_TO) before phase 22 can start. B3 (phase 21) and B5 (phase 23) are low-risk and could proceed without further sign-off. B6/B7/B9/B10(remaining gap)/B11 still need an explicit go-ahead before scheduling (CLAUDE.md §5.1.6)."
+  continue_with: "Highest priority: SPEC.md roadmap phase 26 — the mini System Prompt has not been empirically validated against a real LLM and should not become any agent's primary deployed prompt until it is (needs a methodology decision from the repo owner first). Phase 26 is now also the gate on phase 25: templates/system_prompt_bilingual_text_mini.md.j2 is drafted on disk but deliberately left untracked (SPEC.md §13, 2026-08-28) — commit it once phase 26 clears, or delete the draft. Otherwise: B4 still needs open_point 4 decided (case-sensitivity of GO_TO) before phase 22 can start. B3 (phase 21) and B5 (phase 23) are low-risk and could proceed without further sign-off. B6/B7/B9/B10(remaining gap)/B11 still need an explicit go-ahead before scheduling (CLAUDE.md §5.1.6)."
   important_context: |
     This session had five phases so far:
     1. Adapted the generic framework_example/ (7 template docs) into
@@ -400,6 +405,15 @@ next_session:
 # ---------------------------------------------------------------------------
 
 changelog:
+  - date: "2026-08-28"
+    author: "Claude (Sonnet 4.5) + repo owner"
+    change: "Synced the three template variants to the SSOT (system_prompt.md.j2). system_prompt_bilingual_text.md.j2 was the most drifted — it predated HARD_TOOL_EXECUTION_CONTRACT and never got it: added the full section, changed the conflict-precedence list from the old 5 items to the current 7 (HARD_TOOL_EXECUTION_CONTRACT #2, explicit state EXECUTE #3), replaced the permissive `action` type semantics ('may optionally include a short spoken acknowledgment') with the non-conversational version, added the three EXECUTE-first bullets to EXECUTION_ORDER, and fixed the EXECUTE operator-legend line. Now differs from the SSOT ONLY in the bilingual language policy (CONVENTIONS translation clause + BILINGUAL_OUTPUT_LANGUAGE_POLICY block), which is correct. system_prompt_mini.md.j2 / system_prompt_bilingual_text_mini.md.j2 verified already in sync for all behavioral content; the remaining differences are the intended compact-notation adaptations (COMPACT_OBJECT_NOTATION replacing OBJECT_STRUCTURES+TYPE_SEMANTICS, `[verb]`/`[flex]`, node/state, `[slot] = [slot] + 1`, tag-derived WAIT/FINAL) and, for the bilingual mini, the language policy. Collision note: this ran concurrently with the previous entry's task in another local session; that task briefly reverted the mini HARD_TOOL hardening and its NUMERIC_AND_RETRY_COUNTER_SEMANTICS notation — both re-applied here (the mini keeps `[slot] = [slot] + 1` / 'node', which matches PATTERN_GUIDE and the actual mini render). Suite: tests/ = 247 passed, 5 xfailed. Rebuilt babynova_surrogate_questions_voice, family_aims_sam_es, family_aims_sam_text: 0 errors."
+  - date: "2026-08-28"
+    author: "Claude (Sonnet 5) + repo owner"
+    change: "Resolved the stale test failure from the previous 2026-08-28 entry. Root cause: templates/system_prompt_bilingual_text_mini.md.j2 was an untracked WIP file (roadmap phase 25) present before that session; its presence makes compile_agent()'s bilingual output environment-dependent (mini prompt on a checkout where the file exists, system_prompt_mini=None on a fresh clone / CI / worktree — verified: family_aims_sam_text compiles to 68,823-char mini vs 78,811 full, 0/0). Repo-owner decision: keep the file untracked, do NOT commit until the phase 26 LLM eval exists. Made tests/unit/app/test_compiler.py::test_compile_agent_skips_mini_prompt_when_companion_template_is_absent (renamed) deterministic via monkeypatch of app.compiler._mini_template_path instead of depending on the bilingual template lacking a companion on disk — passes with or without the untracked draft. Dropped now-unused shutil/yaml imports and the PROJECT_ROOT/BILINGUAL_TEMPLATE constants from that test module. app/compiler.py unchanged (skip logic is correct). Coupled docs: SPEC.md §4 status prose + §13 (new 2026-08-28 decision log entry) + roadmap phase 25 updated. Suite: tests/ = 247 passed, 5 xfailed."
+  - date: "2026-08-28"
+    author: "Claude (Sonnet 4.5) + repo owner"
+    change: "Hardened HARD_TOOL_EXECUTION_CONTRACT in all three templates that carry it (system_prompt.md.j2, system_prompt_mini.md.j2, system_prompt_bilingual_text_mini.md.j2) for GPT-4.1 + toolCallStrictMode. Generalized the 'forbidden unless the tool was actually called' clause from the two hardcoded tool names (get_available_slots, book_appointment) to any tool-backed step; added an explicit ban on using model knowledge/memory/prior-turns/conversational context to produce or guess a tool-owned value ('Every such value has exactly ONE authorized source: that tool's most recent response' / 'Having enough context to guess the answer is NEVER a reason to skip the tool call'). Repo-owner-approved. Rebuilt babynova_surrogate_questions_voice and family_aims_sam_es: 0 errors / 0 warnings each; new block present in both full and mini prompts. Test suite: 78 pass / 1 pre-existing unrelated failure (test_compile_agent_skips_mini_prompt_when_no_companion_template_exists asserts system_prompt_bilingual_text_mini.md.j2 does not exist, but it was added as an untracked file before this session — the assertion is now stale). AGENT_CREATION_GUIDE.md / SPEC.md reference the section only by name, no content quote, so no coupled-doc edit needed."
   - date: "2026-08-20"
     author: "GitHub Copilot"
     change: "Global migration of contact variables (phone, name, email) to dotted format (contact.phone, etc.) and updated DSL grammar to allow dots in InputVariable and ToolContractField names."

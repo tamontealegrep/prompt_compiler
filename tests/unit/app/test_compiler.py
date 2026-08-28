@@ -8,17 +8,11 @@ graceful skip when an agent's template has no compact-notation companion.
 
 from __future__ import annotations
 
-import shutil
 from pathlib import Path
-
-import yaml
 
 from app.compiler import _mini_template_path, compile_agent
 from app.schemas import ChannelType, CompilationParams
 from tests.conftest import MINIMAL_AGENT_DIR
-
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
-BILINGUAL_TEMPLATE = PROJECT_ROOT / "templates" / "system_prompt_bilingual_text.md.j2"
 
 
 def test_mini_template_path_naming_convention():
@@ -39,23 +33,22 @@ def test_compile_agent_renders_mini_prompt_when_companion_template_exists():
     assert outputs.stats.estimated_system_prompt_mini_chars == len(outputs.system_prompt_mini)
 
 
-def test_compile_agent_skips_mini_prompt_when_no_companion_template_exists(tmp_path):
-    # The bilingual template intentionally has no *_mini.md.j2 companion
-    # (SPEC.md decision log, 2026-08-06) — this exercises the real,
-    # currently-shipping case where mini rendering must be skipped, not
-    # a synthetic one.
-    assert BILINGUAL_TEMPLATE.exists()
-    mini_companion = _mini_template_path(BILINGUAL_TEMPLATE)
-    assert not mini_companion.exists()
+def test_compile_agent_skips_mini_prompt_when_companion_template_is_absent(
+    tmp_path, monkeypatch
+):
+    # compile_agent() degrades gracefully when the agent's template has no
+    # *_mini.md.j2 companion: the full prompt still renders, the mini
+    # artifacts are simply omitted. Redirect the companion lookup to a path
+    # that does not exist so this branch is exercised deterministically,
+    # independent of which real templates/*_mini.md.j2 files happen to be
+    # present (the bilingual companion is an untracked work-in-progress —
+    # SPEC.md §13, roadmap phase 25).
+    monkeypatch.setattr(
+        "app.compiler._mini_template_path",
+        lambda _template_path: tmp_path / "absent_mini.md.j2",
+    )
 
-    agent_dir = tmp_path / "agent_without_mini"
-    shutil.copytree(MINIMAL_AGENT_DIR, agent_dir)
-    manifest_path = agent_dir / "manifest.yaml"
-    manifest = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
-    manifest["template_path"] = "templates/system_prompt_bilingual_text.md.j2"
-    manifest_path.write_text(yaml.safe_dump(manifest), encoding="utf-8")
-
-    outputs = compile_agent(agent_dir, CompilationParams(channel=ChannelType.VOICE))
+    outputs = compile_agent(MINIMAL_AGENT_DIR, CompilationParams(channel=ChannelType.VOICE))
 
     assert outputs.system_prompt is not None  # the full prompt still renders
     assert outputs.system_prompt_mini is None

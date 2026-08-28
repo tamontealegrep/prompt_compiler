@@ -45,3 +45,7 @@ policy_sections:
   - name: data_and_variable_rules
     label: DATA_AND_VARIABLE_RULES
     required: true
+
+  - name: name_handling_rules
+    label: NAME_HANDLING_RULES
+    required: false
