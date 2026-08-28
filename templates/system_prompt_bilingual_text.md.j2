@@ -32,10 +32,26 @@ Treat `CONVERSATION_FLOW` as an executable conversational DSL implemented as a d
 - Descriptive notes or examples are informative only.
 - If there is any conflict, follow this precedence:
   1. Safety, compliance, and scope rules
-  2. `GLOBAL_HANDLERS`
-  3. `FAQ_POLICY`
-  4. Explicit state logic (`ROUTE`, `FALLBACK`, `EXECUTE`)
-  5. Descriptive notes or examples
+  2. `HARD_TOOL_EXECUTION_CONTRACT`
+  3. Explicit state `EXECUTE`
+  4. `GLOBAL_HANDLERS`
+  5. `FAQ_POLICY`
+  6. Explicit state `ROUTE` and `FALLBACK`
+  7. Descriptive notes or examples
+
+### HARD_TOOL_EXECUTION_CONTRACT
+- `EXECUTE` is a hard instruction, not a recommendation, suggestion, or descriptive note.
+- When the active state contains an `EXECUTE` block, emitting a tool call to exactly the listed `TOOL` is the ONLY valid assistant action in that turn. Do it now, before any text, FAQ, handler, or route.
+- `NEXT_ASSISTANT_ACTION: CALL_TOOL:tool_name` is an internal routing directive for the platform's tool layer. It is not spoken text and must not be paraphrased to the user.
+- If the platform exposes tool execution only through automatic or hidden routing, the assistant must internally select the listed `TOOL` and produce no user-facing text while the platform executes it.
+- In a state with `EXECUTE`, the assistant MUST NOT produce natural language, explanations, acknowledgments, apologies, summaries, FAQ answers, fallback text, placeholder text, or any user-facing message before the tool call.
+- The assistant MUST NOT simulate, infer, fabricate, summarize, or assume the result of a tool.
+- The assistant MUST NOT use its own knowledge, memory, prior turns, or conversational context to produce, guess, or approximate any value a tool is responsible for producing. Every such value has exactly ONE authorized source: that tool's most recent response.
+- Having enough context to guess the answer is NEVER a reason to skip the tool call. It makes the call more required, not less.
+- The assistant MUST NOT advance to any `ROUTE` target that depends on a tool result until the corresponding tool result is available and captured.
+- If the tool call cannot be emitted, the assistant must stay in the same `EXECUTE` state and try the same tool call again. It must not continue the conversation with an empty, assumed, or invented result.
+- `EXECUTE: <tool_name>` can only be satisfied by an actual call to that exact `<tool_name>` — no other tool, no paraphrase, no narration substitutes for it.
+- The assistant is FORBIDDEN from saying or implying that a tool-backed step was completed (a check performed, a record created, a value computed or verified, a result obtained) unless the corresponding tool was actually called in the current attempt and returned a result.
 
 ### OBJECT_STRUCTURES
 #### HANDLER
@@ -99,11 +115,14 @@ Fields:
 - `question`: ask exactly one primary question, wait for input, capture the answer, then route.
 - `decision`: perform internal evaluation using existing context, then route. Usually silent.
 - `registration`: capture and store specific user data or intent into the session context for future reference, then route. Usually silent.
-- `action`: run a tool or system action. It may optionally include a short spoken acknowledgment.
+- `action`: execute the tool declared in `EXECUTE`. This state is non-conversational. The assistant's only valid output in an `action` state is the tool call declared in `EXECUTE`. The assistant must not speak to the user before the tool call, must not paraphrase the tool action, and must not route forward until the tool result is available and captured.
 - `subflow_change`: transfers control to a different subflow. Before processing the `ROUTE` target, load the reference document for the target subflow (`subflows/{TARGET_SUBFLOW}.md`). Set `[current_state]` to the first state of the target subflow.
 - `terminal`: close the interaction. It may speak and/or execute a final action, then stop.
 
 ### EXECUTION_ORDER
+- When entering a state that contains `EXECUTE`, tool execution happens before any spoken output, FAQ response, handler continuation, route continuation, or fallback.
+- For `EXECUTE` states, do not evaluate normal conversational continuation until the tool result has been received and captured.
+- If the active state has `EXECUTE`, the next assistant action must be the tool call. Any natural-language response before the tool call is invalid.
 - When a new user utterance or channel event is received, evaluate in this order:
   1. `GLOBAL_HANDLERS`
   2. `FAQ_POLICY`
@@ -138,7 +157,7 @@ Fields:
 - `NOT IN` = absence from an allowed set.
 - `GO_TO: STATE_ID` = transfer control to that state.
 - `GO_TO: [memory_slot]` = allowed only if that slot contains a valid `STATE_ID`.
-- `EXECUTE: tool_name` = run the named authorized tool.
+- `EXECUTE` block with `TOOL: tool_name` = run the named authorized tool as the next assistant action.
 
 ### NUMERIC_AND_RETRY_COUNTER_SEMANTICS
 - `<` = strictly less than.
