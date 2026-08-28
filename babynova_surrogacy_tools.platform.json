@@ -72,8 +72,8 @@
     "id": "6a9061918631410b9e53203f",
     "name": "time_now",
     "actionType": "CAP",
-    "description": "Llama a esta herramienta en el nodo Q__SQ_GET_CURRENT_TIME para anclar la fecha actual. bogota_now_value es la unica referencia temporal; con ella se normaliza last_birth_date a YYYY-MM-DD.",
-    "triggerPrompt": "MANDATORY EXECUTION TRIGGER. Nodo activo Q__SQ_GET_CURRENT_TIME: EJECUTA time_now AHORA, SIN EXCEPCION. PROHIBIDO: (1) deducir, estimar o asumir la fecha u hora actual por contexto, entrenamiento o cualquier fuente interna del modelo; (2) enrutar sin capturar bogota_now_value. PARAMETRO: timezone='America/Bogota' (fijo). Con bogota_now_value, convierte last_birth_date a YYYY-MM-DD (si es relativa, restala de bogota_now_value) y guardala. CAPTURA bogota_now_value, unica referencia temporal.",
+    "description": "Llama a esta herramienta en el nodo Q__SQ_GET_CURRENT_TIME para anclar la fecha actual. El campo 'now' de la respuesta es la unica referencia temporal; con el se normaliza last_birth_date a YYYY-MM-DD.",
+    "triggerPrompt": "MANDATORY EXECUTION TRIGGER. Nodo activo Q__SQ_GET_CURRENT_TIME: EJECUTA time_now AHORA, SIN EXCEPCION. PROHIBIDO: (1) deducir, estimar o asumir la fecha u hora actual por contexto, entrenamiento o cualquier fuente interna del modelo; (2) enrutar sin capturar el campo now. PARAMETRO: timezone='America/Bogota'. Con el campo now, convierte last_birth_date a YYYY-MM-DD (si es relativa, restala de now) y guardala. CAPTURA el campo now, unica referencia temporal.",
     "triggerMessage": "DEBUG time_now: obteniendo hora actual en Bogota",
     "webhookUrl": "https://appraiser-reactive-stunner.ngrok-free.dev/utils/v1/time-now",
     "httpMethod": "POST",
@@ -85,7 +85,7 @@
         "timezone": {
           "type": "string",
           "const": "America/Bogota",
-          "description": "Valor fijo: America/Bogota. Responde la hora de Bogota, no la hora local del usuario."
+          "description": "Zona horaria IANA continente/ciudad en la que se quiere la hora actual. Para este flujo: America/Bogota."
         }
       },
       "required": []

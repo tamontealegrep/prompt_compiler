@@ -466,22 +466,22 @@
     </div>
     <p class="kv"><b>webhook</b> &nbsp;/utils/v1/time-now</p>
     <div>
-      <div class="field-label"><span>Descripción</span><span class="count"><b>189</b> / 500</span></div>
-      <p class="tool-desc">Llama a esta herramienta en el nodo Q__SQ_GET_CURRENT_TIME para anclar la fecha actual. <code>bogota_now_value</code> es la única referencia temporal; con ella se normaliza <code>last_birth_date</code> a <code>YYYY-MM-DD</code>.</p>
+      <div class="field-label"><span>Descripción</span><span class="count"><b>201</b> / 500</span></div>
+      <p class="tool-desc">Llama a esta herramienta en el nodo Q__SQ_GET_CURRENT_TIME para anclar la fecha actual. El campo <code>now</code> de la respuesta es la única referencia temporal; con él se normaliza <code>last_birth_date</code> a <code>YYYY-MM-DD</code>.</p>
     </div>
     <div>
-      <div class="field-label"><span>Trigger prompt</span><span class="count"><b>494</b> / 500</span></div>
-      <div class="trigger-box" data-copy>MANDATORY EXECUTION TRIGGER. Nodo activo Q__SQ_GET_CURRENT_TIME: EJECUTA time_now AHORA, SIN EXCEPCION. PROHIBIDO: (1) deducir, estimar o asumir la fecha u hora actual por contexto, entrenamiento o cualquier fuente interna del modelo; (2) enrutar sin capturar bogota_now_value. PARAMETRO: timezone='America/Bogota' (fijo). Con bogota_now_value, convierte last_birth_date a YYYY-MM-DD (si es relativa, restala de bogota_now_value) y guardala. CAPTURA bogota_now_value, unica referencia temporal.</div>
+      <div class="field-label"><span>Trigger prompt</span><span class="count"><b>462</b> / 500</span></div>
+      <div class="trigger-box" data-copy>MANDATORY EXECUTION TRIGGER. Nodo activo Q__SQ_GET_CURRENT_TIME: EJECUTA time_now AHORA, SIN EXCEPCION. PROHIBIDO: (1) deducir, estimar o asumir la fecha u hora actual por contexto, entrenamiento o cualquier fuente interna del modelo; (2) enrutar sin capturar el campo now. PARAMETRO: timezone='America/Bogota'. Con el campo now, convierte last_birth_date a YYYY-MM-DD (si es relativa, restala de now) y guardala. CAPTURA el campo now, unica referencia temporal.</div>
     </div>
     <div class="table-scroll">
       <table>
         <thead><tr><th>Campo</th><th>Tipo</th><th>Oblig.</th><th>Valor fijo</th><th>Descripción del campo</th></tr></thead>
         <tbody>
-          <tr><td class="param">timezone</td><td class="type">string</td><td><span class="tag opt">const</span></td><td class="fixed">const: "America/Bogota"</td><td>Valor fijo: responde la hora de Bogotá, no la hora local del usuario. <code>required: []</code>.</td></tr>
+          <tr><td class="param">timezone</td><td class="type">string</td><td><span class="tag opt">const</span></td><td class="fixed">const: "America/Bogota"</td><td>Zona horaria IANA en la que se quiere la hora. Para este flujo fija en <code>America/Bogota</code>. El contrato compartido la trata como input real (<code>required: true</code>) porque la herramienta sirve para cualquier zona.</td></tr>
         </tbody>
       </table>
     </div>
-    <p class="reads">El flujo lee <code>bogota_now_value</code> (ISO 8601, offset −05:00) y con él deja <code>last_birth_date</code> en <code>YYYY-MM-DD</code> antes de <code>surrogate_classification</code>.</p>
+    <p class="reads">El flujo lee el campo <code>now</code> (ISO 8601 con offset) y con él deja <code>last_birth_date</code> en <code>YYYY-MM-DD</code> antes de <code>surrogate_classification</code>. También devuelve <code>success</code>, <code>timezone</code> (eco) y <code>errors</code>.</p>
   </article>
 
   <h2>Herramientas del subflujo de agendamiento</h2>
