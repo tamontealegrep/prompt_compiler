@@ -9,7 +9,7 @@ project:
   name: "Prompt Compiler"
   version: "2.0.0"
   start_date: "2026-05-01"  # approximate — earliest commits in git log predate the visible history window
-  last_updated: "2026-08-28"
+  last_updated: "2026-08-29"
   status: "active"  # active | paused | complete | archived
   owner: "tamontealegrep (Engineering Board)"
 
@@ -405,6 +405,9 @@ next_session:
 # ---------------------------------------------------------------------------
 
 changelog:
+  - date: "2026-08-29"
+    author: "Claude (Sonnet 5) + repo owner"
+    change: "Reworked main.py's interactive TUI to arrow-key menus via questionary (added questionary>=2.0,<3.0 to pyproject.toml + requirements.txt, installed in .venv). New _select/_checkbox/_text/_confirm helper layer with a shared questionary Style and a _screen() breadcrumb header; the plain numbered input() fallback is kept and auto-selected when stdin/stdout is not a TTY. Flows reorganised: the three overlapping compile/diagram menu entries collapsed into 'Compilar agente' (pick agent -> defaults or step-by-step options wizard -> compile -> post-build action loop: generate diagram / browse dist / recompile / change options) and 'Generar diagrama' (agent -> channel -> diagram wizard, loopable); dist browsing shared via _browse_dist(). build_prompt.py CLI, mermaid_diagrams calls and dist layout untouched. stdout/stderr reconfigured to UTF-8 at startup so the fallback glyphs survive a non-UTF-8 console. Smoke-tested the fallback path end to end (menu nav, real compile of family_aims_sam_es, diagram load-error handling); interactive questionary path mirrors ghl_tools/send_request.py's proven usage. No app/ code changed."
   - date: "2026-08-28"
     author: "Claude (Sonnet 4.5) + repo owner"
     change: "Synced the three template variants to the SSOT (system_prompt.md.j2). system_prompt_bilingual_text.md.j2 was the most drifted — it predated HARD_TOOL_EXECUTION_CONTRACT and never got it: added the full section, changed the conflict-precedence list from the old 5 items to the current 7 (HARD_TOOL_EXECUTION_CONTRACT #2, explicit state EXECUTE #3), replaced the permissive `action` type semantics ('may optionally include a short spoken acknowledgment') with the non-conversational version, added the three EXECUTE-first bullets to EXECUTION_ORDER, and fixed the EXECUTE operator-legend line. Now differs from the SSOT ONLY in the bilingual language policy (CONVENTIONS translation clause + BILINGUAL_OUTPUT_LANGUAGE_POLICY block), which is correct. system_prompt_mini.md.j2 / system_prompt_bilingual_text_mini.md.j2 verified already in sync for all behavioral content; the remaining differences are the intended compact-notation adaptations (COMPACT_OBJECT_NOTATION replacing OBJECT_STRUCTURES+TYPE_SEMANTICS, `[verb]`/`[flex]`, node/state, `[slot] = [slot] + 1`, tag-derived WAIT/FINAL) and, for the bilingual mini, the language policy. Collision note: this ran concurrently with the previous entry's task in another local session; that task briefly reverted the mini HARD_TOOL hardening and its NUMERIC_AND_RETRY_COUNTER_SEMANTICS notation — both re-applied here (the mini keeps `[slot] = [slot] + 1` / 'node', which matches PATTERN_GUIDE and the actual mini render). Suite: tests/ = 247 passed, 5 xfailed. Rebuilt babynova_surrogate_questions_voice, family_aims_sam_es, family_aims_sam_text: 0 errors."
