@@ -1,0 +1,690 @@
+<title>Contratos de herramientas · surrogate_questions_voice</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+
+<style>
+:root{
+  --paper:#f6f7f5;
+  --raise:#ffffff;
+  --ink:#141a17;
+  --ink-soft:#3c453f;
+  --muted:#5f6b66;
+  --line:#dce0db;
+  --line-strong:#c3c9c1;
+  --accent:#0d6e6e;
+  --accent-soft:#e2efee;
+  --req:#a8322d;
+  --req-soft:#f4e4e2;
+  --warn:#8a5b00;
+  --warn-soft:#f3e9d7;
+  --code-bg:#f0f2ef;
+  --shadow:0 1px 2px rgba(20,26,23,.05),0 8px 24px -12px rgba(20,26,23,.14);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#0f1512;
+    --raise:#161d19;
+    --ink:#e7ece8;
+    --ink-soft:#c2cbc4;
+    --muted:#8a958d;
+    --line:#283029;
+    --line-strong:#39433b;
+    --accent:#4bc0b7;
+    --accent-soft:#16302e;
+    --req:#e8817a;
+    --req-soft:#3a201e;
+    --warn:#d8a752;
+    --warn-soft:#33280f;
+    --code-bg:#121915;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 30px -14px rgba(0,0,0,.6);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0f1512;
+  --raise:#161d19;
+  --ink:#e7ece8;
+  --ink-soft:#c2cbc4;
+  --muted:#8a958d;
+  --line:#283029;
+  --line-strong:#39433b;
+  --accent:#4bc0b7;
+  --accent-soft:#16302e;
+  --req:#e8817a;
+  --req-soft:#3a201e;
+  --warn:#d8a752;
+  --warn-soft:#33280f;
+  --code-bg:#121915;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 12px 30px -14px rgba(0,0,0,.6);
+}
+
+*{box-sizing:border-box}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  font-size:16px;
+  line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:820px;margin:0 auto;padding:0 22px 120px}
+
+header.top{padding:64px 0 30px;border-bottom:1px solid var(--line)}
+.kicker{
+  font-family:"IBM Plex Mono",monospace;
+  font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent);margin:0 0 18px
+}
+h1{
+  font-family:"Fraunces",Georgia,serif;
+  font-weight:600;
+  font-size:clamp(2rem,5.4vw,3.05rem);
+  line-height:1.08;
+  letter-spacing:-.015em;
+  text-wrap:balance;
+  margin:0 0 18px;
+}
+.lede{font-size:1.08rem;color:var(--ink-soft);max-width:60ch;margin:0}
+.meta{
+  margin-top:26px;font-family:"IBM Plex Mono",monospace;font-size:12.5px;
+  color:var(--muted);display:flex;flex-wrap:wrap;gap:6px 18px
+}
+
+nav.tools{
+  position:sticky;top:0;z-index:20;
+  background:color-mix(in srgb,var(--paper) 88%,transparent);
+  backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--line);
+  margin:0 -22px 46px;padding:11px 22px;
+  display:flex;gap:7px;flex-wrap:wrap;
+}
+nav.tools a{
+  font-family:"IBM Plex Mono",monospace;font-size:12px;
+  text-decoration:none;color:var(--muted);
+  border:1px solid var(--line-strong);border-radius:999px;
+  padding:3px 10px;transition:all .15s;
+}
+nav.tools a:hover{color:var(--accent);border-color:var(--accent)}
+
+section{margin:56px 0 0;scroll-margin-top:64px}
+h2{
+  font-family:"Fraunces",Georgia,serif;
+  font-weight:600;font-size:1.7rem;letter-spacing:-.01em;
+  margin:0 0 6px;text-wrap:balance;
+}
+h2 .n{color:var(--accent);font-size:1rem;font-family:"IBM Plex Mono",monospace;margin-right:12px;vertical-align:2px}
+.section-note{color:var(--muted);font-size:.95rem;margin:0 0 26px}
+
+.finding{
+  background:var(--raise);border:1px solid var(--line);
+  border-radius:12px;padding:20px 22px;margin:16px 0;box-shadow:var(--shadow)
+}
+.finding h3{
+  margin:0 0 10px;font-size:1.06rem;font-weight:600;
+  display:flex;gap:10px;align-items:baseline;flex-wrap:wrap
+}
+.finding h3 .tag{
+  font-family:"IBM Plex Mono",monospace;font-size:11px;font-weight:500;
+  padding:2px 7px;border-radius:5px;white-space:nowrap;
+  background:var(--req-soft);color:var(--req);letter-spacing:.02em
+}
+.finding h3 .tag.med{background:var(--warn-soft);color:var(--warn)}
+.finding h3 .tag.done{background:var(--accent-soft);color:var(--accent)}
+.finding p{margin:9px 0 0}
+.finding p.fix{
+  margin-top:12px;padding-top:12px;border-top:1px dashed var(--line-strong);
+  font-size:.96rem
+}
+.finding p.fix b{color:var(--accent)}
+.sym{color:var(--muted);font-style:italic}
+
+.practice{background:var(--raise);border:1px solid var(--line);border-radius:12px;padding:20px 22px;margin:16px 0;box-shadow:var(--shadow)}
+.practice h3{margin:0 0 14px;font-size:1.06rem;font-weight:600;display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.practice h3 .pn{font-family:"IBM Plex Mono",monospace;color:var(--accent);font-size:.82rem;border:1px solid var(--line-strong);border-radius:5px;padding:1px 6px}
+.practice .row{display:grid;grid-template-columns:104px 1fr;gap:4px 14px}
+.practice .row + .row{margin-top:11px;padding-top:11px;border-top:1px solid var(--line)}
+.practice .row .k{font-family:"IBM Plex Mono",monospace;font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);padding-top:4px}
+.practice .row.sol .k{color:var(--accent)}
+.practice .row .v{margin:0}
+.practice .row .v ul{margin:6px 0 0;padding-left:18px}
+.practice .row .v li{margin:5px 0}
+@media(max-width:560px){.practice .row{grid-template-columns:1fr;gap:2px}.practice .row .k{padding-top:0}}
+
+.tool{
+  background:var(--raise);border:1px solid var(--line);
+  border-radius:14px;padding:26px;margin:22px 0 0;box-shadow:var(--shadow)
+}
+.tool-head{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:6px}
+.tool-head h3{
+  margin:0;font-family:"IBM Plex Mono",monospace;font-size:1.16rem;font-weight:500;
+  letter-spacing:-.01em
+}
+.node{
+  font-family:"IBM Plex Mono",monospace;font-size:11.5px;
+  background:var(--accent-soft);color:var(--accent);
+  padding:3px 9px;border-radius:6px
+}
+.tool > p.role{color:var(--ink-soft);font-size:.97rem;margin:6px 0 20px}
+
+.field-label{
+  font-family:"IBM Plex Mono",monospace;font-size:11px;text-transform:uppercase;
+  letter-spacing:.12em;color:var(--muted);margin:22px 0 8px;display:flex;
+  justify-content:space-between;align-items:center;gap:12px
+}
+.counter{
+  font-size:11px;letter-spacing:.04em;text-transform:none;
+  padding:1px 7px;border-radius:5px;background:var(--code-bg);color:var(--muted)
+}
+.counter.ok{color:var(--accent)}
+.counter.over{background:var(--req-soft);color:var(--req)}
+
+.paste{
+  font-family:"IBM Plex Mono",monospace;font-size:12.5px;line-height:1.66;
+  background:var(--code-bg);border:1px solid var(--line);border-radius:9px;
+  padding:14px 15px;white-space:pre-wrap;word-break:break-word;color:var(--ink)
+}
+.paste.tp{border-left:3px solid var(--accent)}
+.paste.hard{border-left:3px solid var(--req)}
+.paste.soft{border-left:3px solid var(--accent)}
+.field-label .kind{text-transform:none;letter-spacing:.02em;font-size:10.5px;padding:1px 7px;border-radius:5px}
+.field-label .kind.hard{background:var(--req-soft);color:var(--req)}
+.field-label .kind.soft{background:var(--accent-soft);color:var(--accent)}
+.pat-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:18px 0}
+@media (max-width:680px){.pat-grid{grid-template-columns:1fr}}
+.pat-col h4{margin:0 0 10px;font-family:"IBM Plex Mono",monospace;font-size:12px;text-transform:uppercase;letter-spacing:.1em}
+.pat-col.hard h4{color:var(--req)}
+.pat-col.soft h4{color:var(--accent)}
+.patfields{margin:0;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.patfields.hard{border-color:color-mix(in srgb,var(--req) 35%,var(--line))}
+.patfields.soft{border-color:color-mix(in srgb,var(--accent) 35%,var(--line))}
+.patfields > div{padding:11px 14px}
+.patfields > div + div{border-top:1px solid var(--line)}
+.patfields.hard > div:first-child{background:var(--req-soft)}
+.patfields.soft > div:first-child{background:var(--accent-soft)}
+.patfields dt{font-family:"IBM Plex Mono",monospace;font-size:10px;text-transform:uppercase;letter-spacing:.11em;color:var(--muted);margin:0 0 4px}
+.patfields dd{margin:0;font-size:.92rem;line-height:1.55}
+
+.tbl-scroll{overflow-x:auto;margin-top:10px;border:1px solid var(--line);border-radius:9px}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:560px}
+th,td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{
+  font-family:"IBM Plex Mono",monospace;font-size:10.5px;text-transform:uppercase;
+  letter-spacing:.09em;color:var(--muted);font-weight:500;background:var(--code-bg)
+}
+tr:last-child td{border-bottom:0}
+td code,.paste code{font-family:"IBM Plex Mono",monospace}
+td.arg{font-family:"IBM Plex Mono",monospace;font-size:12px;white-space:nowrap;color:var(--accent)}
+.pill{
+  font-family:"IBM Plex Mono",monospace;font-size:10.5px;padding:2px 7px;border-radius:999px;
+  display:inline-block;white-space:nowrap
+}
+.pill.req{background:var(--req-soft);color:var(--req)}
+.pill.opt{background:var(--code-bg);color:var(--muted)}
+.pill.const{background:var(--accent-soft);color:var(--accent)}
+td .enum{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--ink-soft)}
+td .ex{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--ink-soft);white-space:nowrap}
+.dash{color:var(--muted)}
+
+details.json{margin-top:16px;border:1px solid var(--line);border-radius:9px;overflow:hidden}
+details.json summary{
+  cursor:pointer;padding:10px 14px;font-family:"IBM Plex Mono",monospace;font-size:12px;
+  color:var(--muted);background:var(--code-bg);list-style:none
+}
+details.json summary::-webkit-details-marker{display:none}
+details.json summary::before{content:"▸ ";color:var(--accent)}
+details.json[open] summary::before{content:"▾ "}
+details.json pre{
+  margin:0;padding:14px 15px;font-family:"IBM Plex Mono",monospace;font-size:12px;
+  line-height:1.6;overflow-x:auto;color:var(--ink);background:var(--raise)
+}
+
+p a{color:var(--accent)}
+ul.clean{margin:12px 0 0;padding-left:20px}
+ul.clean li{margin:6px 0}
+.callout{
+  background:var(--accent-soft);border:1px solid color-mix(in srgb,var(--accent) 30%,transparent);
+  border-radius:10px;padding:16px 18px;margin:20px 0;font-size:.96rem
+}
+.callout b{color:var(--accent)}
+.matrix td.arg{white-space:normal}
+.foot{margin-top:60px;padding-top:22px;border-top:1px solid var(--line);color:var(--muted);font-size:13px}
+code.inl{font-family:"IBM Plex Mono",monospace;font-size:.9em;background:var(--code-bg);padding:1px 5px;border-radius:4px}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+
+<div class="wrap">
+
+<header class="top">
+  <p class="kicker">Auditoría de tool-calling · agente de voz</p>
+  <h1>Contratos de herramientas para <em>surrogate&nbsp;questions&nbsp;voice</em></h1>
+  <p class="lede">Por qué el agente no llama las herramientas cuando le falta un dato, y el texto exacto —descripción, trigger, argumentos, obligatoriedad, enumeraciones y ejemplos— para reforzar y estandarizar cada una dentro del límite de 500 caracteres de la plataforma.</p>
+  <div class="meta">
+    <span>agent_id: babynova_surrogate_questions_voice</span>
+    <span>9 herramientas</span>
+    <span>parámetros en snake_case</span>
+    <span>2026-09-01</span>
+  </div>
+</header>
+
+<nav class="tools" aria-label="Herramientas">
+  <a href="#patrones">Patrones hard/soft</a>
+  <a href="#diagnostico">Buenas prácticas</a>
+  <a href="#time_now">time_now</a>
+  <a href="#calculate_bmi">calculate_bmi</a>
+  <a href="#check_documentation">check_documentation</a>
+  <a href="#surrogate_classification">surrogate_classification</a>
+  <a href="#get_available_slots">get_available_slots</a>
+  <a href="#book_appointment">book_appointment</a>
+  <a href="#find_appointment">find_appointment</a>
+  <a href="#cancel_appointment">cancel_appointment</a>
+  <a href="#callback">callback</a>
+  <a href="#matriz">Matriz</a>
+</nav>
+
+<!-- ============ PATRONES ============ -->
+<section id="patrones">
+  <h2><span class="n">00</span>Patrón hard vs patrón soft</h2>
+  <p class="section-note">El <code class="inl">trigger_prompt</code> de cada herramienta solo debe decir <em>cuándo</em> llamarla. Toda la lógica de «no hables antes / no inventes el resultado / no enrutes» ya vive en el prompt compilado (<code class="inl">HARD_TOOL_EXECUTION_CONTRACT</code> + el bloque <code class="inl">EXECUTE</code> de cada nodo <code class="inl">action</code>). Repetir eso en los <code class="inl">trigger_prompt</code> —que GHL inyecta todos a la vez— hace que GPT-4.1 crea que tiene llamadas pendientes antes de poder hablar → <b>agente mudo tras la bienvenida</b>.</p>
+
+  <div class="pat-grid">
+    <div class="pat-col hard">
+      <h4>Patrón HARD (actual — problemático)</h4>
+      <div class="paste hard">EJECUTA &lt;tool&gt; AHORA en el nodo &lt;NODE_ID&gt;, como primera acción, SIN EXCEPCIÓN.
+NO hables, NO enrutes y NO afirmes ningún resultado antes de capturar &lt;output&gt;.
+PROHIBIDO &lt;el error más grave para esta herramienta&gt;.
+ARGUMENTOS: &lt;clave = fuente&gt;. El que no tengas va como "".</div>
+    </div>
+    <div class="pat-col soft">
+      <h4>Patrón SOFT (recomendado)</h4>
+      <div class="paste soft">Llama a &lt;tool&gt; solo cuando el flujo esté en el nodo &lt;NODE_ID&gt;
+[; o cuando &lt;evento de usuario&gt; | y &lt;precondición&gt; ya fue ejecutada | y ya tengas &lt;slots&gt; confirmados].
+Argumento(s): &lt;clave = slot | valor fijo&gt; [, con &lt;conversión/formato&gt; inline].
+Captura &lt;output&gt; [en &lt;slot&gt;] antes de &lt;continuar | ofrecer X | confirmar X&gt;.</div>
+    </div>
+  </div>
+
+  <div class="tbl-scroll"><table>
+    <tr><th>aspecto</th><th>HARD</th><th>SOFT</th></tr>
+    <tr><td>verbo</td><td><code>EJECUTA X AHORA</code> — imperativo + urgencia</td><td><code>Llama a X</code> — indicativo, describe</td></tr>
+    <tr><td>alcance</td><td><code>como primera acción, SIN EXCEPCIÓN</code> — orden permanente</td><td><code>solo cuando el flujo esté en el nodo Y</code> — condicional-específico</td></tr>
+    <tr><td>prohibiciones</td><td><code>NO hables / NO enrutes / PROHIBIDO…</code> dentro del trigger</td><td>ninguna — delegadas al prompt principal</td></tr>
+    <tr><td>relación con el prompt principal</td><td>duplica su contrato de ejecución de herramientas</td><td>lo complementa, no lo repite</td></tr>
+    <tr><td>GHL (inyección global)</td><td>el modelo cree que tiene llamadas pendientes → no habla</td><td>solo llama en el nodo correcto</td></tr>
+  </table></div>
+
+  <p style="margin-top:18px"><b>Cuándo usar cuál.</b> <b>SOFT por defecto</b> siempre que el prompt principal ya tenga un contrato de ejecución fuerte (nodos <code class="inl">action</code> con <code class="inl">EXECUTE</code> + <code class="inl">SPEECH_BEFORE_TOOL: FORBIDDEN</code>) — el caso de este compilador. <b>HARD</b> solo si el runtime no puede forzar la llamada desde el estado y el <code class="inl">trigger_prompt</code> es el único punto de control — y aun entonces, sin «NO hables» si la plataforma inyecta los triggers globalmente.</p>
+
+  <div class="pat-grid">
+    <div class="pat-col hard">
+      <h4>El patrón HARD, campo por campo</h4>
+      <dl class="patfields hard">
+        <div><dt>Cuándo</dt><dd><code class="inl">EJECUTA &lt;tool&gt; AHORA en el nodo &lt;NODE_ID&gt;, como primera acción, SIN EXCEPCIÓN.</code></dd></div>
+        <div><dt>Prohibiciones en el trigger</dt><dd><code class="inl">NO hables, NO enrutes, PROHIBIDO &lt;el error más grave&gt;</code> antes de capturar el resultado. Repetidas aunque el prompt principal ya las tenga.</dd></div>
+        <div><dt>Argumentos</dt><dd><code class="inl">clave = fuente</code>; el que falte va como <code class="inl">""</code>.</dd></div>
+        <div><dt>Qué capturar</dt><dd><code class="inl">&lt;output&gt;</code> — enunciado dentro de las prohibiciones («antes de capturar &lt;output&gt;»), no como paso propio.</dd></div>
+        <div><dt>Efecto en el modelo</dt><dd>Repite el contrato del prompt principal. Si la plataforma inyecta todos los triggers a la vez, el modelo cree que tiene llamadas pendientes antes de hablar → <b>mudo tras la bienvenida</b>.</dd></div>
+      </dl>
+    </div>
+    <div class="pat-col soft">
+      <h4>El patrón SOFT, campo por campo</h4>
+      <dl class="patfields soft">
+        <div><dt>Cuándo</dt><dd><code class="inl">Llama a &lt;tool&gt; solo cuando el flujo esté en el nodo &lt;NODE_ID&gt;</code> (+ «o cuando &lt;evento&gt;» / «y &lt;precondición&gt; ya fue ejecutada» / «y ya tengas &lt;slots&gt;»).</dd></div>
+        <div><dt>Prohibiciones en el trigger</dt><dd>Ninguna. Se delegan al prompt principal (<code class="inl">HARD_TOOL_EXECUTION_CONTRACT</code> + el bloque <code class="inl">EXECUTE</code> del nodo).</dd></div>
+        <div><dt>Argumentos</dt><dd><code class="inl">clave = slot / valor fijo</code>, con la conversión o el formato en la misma línea.</dd></div>
+        <div><dt>Qué capturar</dt><dd><code class="inl">Captura &lt;output&gt; antes de continuar / ofrecer / confirmar</code> — paso explícito.</dd></div>
+        <div><dt>Efecto en el modelo</dt><dd>Solo llama en el nodo correcto; el resto del tiempo conversa con normalidad.</dd></div>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<!-- ============ BUENAS PRÁCTICAS ============ -->
+<section id="diagnostico">
+  <h2><span class="n">01</span>Buenas prácticas · herramientas en agentes de voz</h2>
+  <p class="section-note">Aprendizajes generales de este proyecto, escritos para volver a ellos al configurar las herramientas de cualquier agente. Cada punto: <b>síntoma</b> observable, <b>causa</b>, <b>práctica</b> a aplicar.</p>
+
+  <div class="practice">
+    <h3><span class="pn">A</span> Obligatoriedad de argumentos (<code class="inl">required</code>)</h3>
+    <div class="row"><div class="k">Síntoma</div><div class="v">Una herramienta se ejecuta de forma intermitente —a veces sí, a veces no— y nunca cuando falta alguno de sus datos.</div></div>
+    <div class="row"><div class="k">Causa</div><div class="v">La plataforma trata un argumento <code class="inl">required</code> como precondición: el modelo espera a tener un valor no vacío antes de disparar. Eso choca con los nodos de acción que deben ejecutar siempre y dejar que el backend maneje los huecos.</div></div>
+    <div class="row sol"><div class="k">Práctica</div><div class="v">Marca <code class="inl">required: true</code> solo en los argumentos que el flujo garantiza no-vacíos antes del nodo (constantes, o datos ya capturados por una pregunta previa obligatoria). Todo lo demás → <code class="inl">required: false</code>, con la descripción y el enum incluyendo <code class="inl">""</code>. El backend decide qué hacer con los blancos.</div></div>
+  </div>
+
+  <div class="practice">
+    <h3><span class="pn">B</span> Dónde vive el «ejecuta la herramienta ahora»</h3>
+    <div class="row"><div class="k">Síntoma</div><div class="v">(1) Una herramienta no se llama aunque el flujo llegue a su nodo; o (2) el agente da el saludo y se queda mudo, nunca arranca el flujo.</div></div>
+    <div class="row"><div class="k">Causa</div><div class="v">El <code class="inl">trigger_prompt</code> es lo único que muchas plataformas inyectan de <em>todas</em> las herramientas a la vez, en todo momento. Si es condicional a criterio propio («cuando necesites X»), el modelo juzga que no lo necesita y no llama. Si es imperativo-global («ejecuta ahora, sin excepción, no hables antes»), con varias herramientas el modelo cree que tiene llamadas pendientes antes de poder hablar → mudo.</div></div>
+    <div class="row sol"><div class="k">Práctica</div><div class="v">Separa por capa:
+      <ul>
+        <li><b>Nodo</b> (estado de acción + su bloque de ejecución obligatoria): «ejecuta esto ahora, es tu única acción, no hables antes». Es local al estado, no contamina el resto del flujo. <b>Aquí vive el imperativo.</b></li>
+        <li><b>Prompt principal</b>: un contrato de ejecución de herramientas, condicional al estado. El compilador ya lo genera.</li>
+        <li><b><code class="inl">trigger_prompt</code></b>: solo dice <em>cuándo</em>, anclado al nodo — patrón SOFT (<a href="#patrones">§00</a>).</li>
+        <li><b>Políticas</b>: nunca «debes llamar X»; solo prohibiciones de actos de habla («no afirmes X sin haberlo obtenido de la herramienta»).</li>
+      </ul></div></div>
+  </div>
+
+  <div class="practice">
+    <h3><span class="pn">C</span> Nombres de argumento consistentes entre capas</h3>
+    <div class="row"><div class="k">Síntoma</div><div class="v">El modelo inventa nombres de argumento, o envía el dato con la clave equivocada y el backend lo ignora.</div></div>
+    <div class="row"><div class="k">Causa</div><div class="v">El endpoint, el esquema del tool en la plataforma y el texto del <code class="inl">trigger_prompt</code> usan convenciones distintas (camelCase vs snake_case, o un híbrido roto). Cuando el trigger nombra una clave que no existe en el esquema, el modelo improvisa.</div></div>
+    <div class="row sol"><div class="k">Práctica</div><div class="v">Una sola convención de nombres, idéntica en las tres capas y a lo que espera el endpoint. Además: todo argumento lleva descripción, aunque sea constante —da contexto al modelo y a quien mantiene la config.</div></div>
+  </div>
+
+  <div class="practice">
+    <h3><span class="pn">D</span> Un nodo de acción = un solo trabajo</h3>
+    <div class="row"><div class="k">Síntoma</div><div class="v">El modelo da por cumplido un nodo de herramienta sin haber llamado la herramienta.</div></div>
+    <div class="row"><div class="k">Causa</div><div class="v">El nodo hace dos cosas —llamar la herramienta <em>y</em> transformar o usar su resultado— y la condición de salida solo comprueba que el campo exista. Si el modelo puede producir la transformación de memoria, la escribe y avanza.</div></div>
+    <div class="row sol"><div class="k">Práctica</div><div class="v">Sepáralo en dos nodos: uno que <em>solo</em> ejecuta la herramienta y captura su salida cruda; el siguiente (registro o decisión) hace la transformación. Y la condición de salida valida la <b>procedencia</b> del valor (el formato esperado), no solo que no sea nulo; si no cumple, vuelve al nodo de la herramienta.</div></div>
+  </div>
+
+  <div class="practice">
+    <h3><span class="pn">E</span> Fuente de verdad: el resultado viene de la herramienta, no del modelo</h3>
+    <div class="row"><div class="k">Síntoma</div><div class="v">El modelo salta la herramienta (fecha actual, un cálculo, una clasificación) porque puede generar el valor de memoria o del contexto; o lo genera y sale mal / inconsistente entre llamadas.</div></div>
+    <div class="row"><div class="k">Causa</div><div class="v">Si el modelo puede producir el resultado, ve la llamada como redundante. Para valores derivados (una fecha relativa a partir de «hace 2 años») no hay una regla determinista, o la conversión usa una referencia inventada (su fecha de entrenamiento).</div></div>
+    <div class="row sol"><div class="k">Práctica</div><div class="v">
+      <ul>
+        <li>Regla de fuente-de-verdad en políticas, como prohibición de acto de habla: «prohibido afirmar / calcular / enrutar con X que no venga de la salida de <code class="inl">&lt;tool&gt;</code>».</li>
+        <li>Para valores derivados: ancla la conversión en la salida de la herramienta y fija reglas explícitas. Ej. fechas: expresión exacta → reformatear; «hace N unidades» → restar N a la fecha ancla conservando el resto; solo se conoce el año → una fecha media (<code class="inl">YYYY-07-01</code>) como convención documentada. La conversión vive en un nodo, no en el <code class="inl">trigger_prompt</code>.</li>
+      </ul></div></div>
+  </div>
+
+  <div class="practice">
+    <h3><span class="pn">F</span> Herramientas agregadoras y datos incompletos</h3>
+    <div class="row"><div class="k">Síntoma</div><div class="v">Una herramienta que recibe muchos campos (un clasificador, un scoring, un resumen) devuelve «inconcluso» o falla porque llegó con campos vacíos.</div></div>
+    <div class="row"><div class="k">Causa</div><div class="v">El flujo puede alcanzar el nodo de esa herramienta sin haber capturado todo lo que necesita.</div></div>
+    <div class="row sol"><div class="k">Práctica</div><div class="v">Si el flujo no garantiza ya la completitud pregunta-por-pregunta, pon antes del nodo un chequeo que, si falta un dato capturable y aún quedan reintentos, reencamine a la pregunta de ese dato. Enviar el campo vacío es el último recurso (reintentos agotados, o bandera de «forzar»), no el comportamiento normal.</div></div>
+  </div>
+
+  <div class="practice">
+    <h3><span class="pn">G</span> Organización de las políticas por propósito</h3>
+    <div class="row"><div class="k">Síntoma</div><div class="v">El bloque de políticas es un muro de texto donde se mezclan estilo, herramientas y compliance; cuesta mantenerlo y razonar sobre él.</div></div>
+    <div class="row"><div class="k">Causa</div><div class="v">El perfil de canal define secciones con propósito, pero por inercia todo termina en la de estilo (renderiza temprano, es el cajón de sastre).</div></div>
+    <div class="row sol"><div class="k">Práctica</div><div class="v">Reparte por propósito:
+      <ul>
+        <li><b>estilo / VUI</b>: cómo hablar — formato de números y fechas, longitud de frases, cómo presentar opciones.</li>
+        <li><b>comportamiento con herramientas</b>: cuándo un resultado es válido, qué no afirmar sin haberlo obtenido, no llamar herramientas fuera de su nodo.</li>
+        <li><b>resolución de fechas</b>: la fecha de «hoy» y las expresiones relativas vienen de la herramienta de tiempo, no del modelo.</li>
+        <li><b>compliance y alcance</b>: límites legales, médicos y de negocio, privacidad, manejo de reintentos.</li>
+      </ul>
+      Las «reglas imperativas» se redactan como <b>prohibiciones de actos de habla concretos</b> («prohibido ofrecer / afirmar / declarar X sin haberlo obtenido de <code class="inl">&lt;tool&gt;</code>»), nunca como órdenes («debes llamar X») —esas rompen la conversación (ver B).</div></div>
+  </div>
+
+  <div class="practice">
+    <h3><span class="pn">H</span> Repetir el contrato crítico al final de prompts largos</h3>
+    <div class="row"><div class="k">Síntoma</div><div class="v">En un prompt largo, el modelo ignora reglas que están a mitad del documento.</div></div>
+    <div class="row"><div class="k">Causa</div><div class="v">Los LLM pesan más el principio y el final del contexto; lo del medio se diluye.</div></div>
+    <div class="row sol"><div class="k">Práctica</div><div class="v">Repite el contrato crítico (ejecución de herramientas, límites de seguridad) al final del prompt además del principio. Repetición <em>literal</em> del mismo texto condicional, no una reformulación nueva —una reformulación nueva puede introducir imperativos sin ámbito (ver B).</div></div>
+  </div>
+
+  <div class="practice">
+    <h3><span class="pn">I</span> Ajustes del runtime (fuera del prompt)</h3>
+    <div class="row"><div class="k">Síntoma</div><div class="v">El tool-calling es no-determinista sin causa aparente en el prompt.</div></div>
+    <div class="row"><div class="k">Causa</div><div class="v">Parámetros de la plataforma que no se ven en el prompt.</div></div>
+    <div class="row sol"><div class="k">Práctica</div><div class="v">Checklist al configurar un agente:
+      <ul>
+        <li><code class="inl">temperature</code> baja (0–0.3): el tool-calling es más determinista.</li>
+        <li>forzar herramienta por acción (<code class="inl">tool_choice</code>) en los nodos de acción, si el runtime lo permite.</li>
+        <li>reintento automático solo en herramientas idempotentes (lecturas, cálculos); nunca en las que escriben (reservar, notificar, cobrar).</li>
+        <li>el mensaje que se dice mientras corre la herramienta debe ser vacío o un relleno natural («un momento, por favor»), nunca texto de depuración.</li>
+        <li>confirma que las herramientas están registradas como funciones de la API, no solo descritas en el prompt.</li>
+      </ul></div></div>
+  </div>
+</section>
+
+<!-- ============ TIME_NOW ============ -->
+<section id="time_now">
+  <h2><span class="n">02</span>time_now</h2>
+  <div class="tool">
+    <div class="tool-head"><h3>time_now</h3><span class="node ">Q__SQ_GET_CURRENT_TIME</span></div>
+    <p class="role">Ancla la fecha y hora actuales reales en la zona indicada. El campo <code class="inl">now</code> es la &uacute;nica referencia temporal autorizada del flujo (se usa para normalizar <code class="inl">[last_birth_date]</code>).</p>
+    <div class="field-label">trigger_prompt <span class="lang">ES</span> <span class="kind soft">soft</span> <span class="counter" data-count>&middot;</span></div>
+    <div class="paste soft" data-measure>Llama a time_now cuando el flujo est&eacute; en el nodo Q__SQ_GET_CURRENT_TIME (o cuando un nodo declare EXECUTE: time_now). Argumento: iana_timezone = 'America/Bogota' (valor fijo de este agente). Captura el campo now en [now] antes de normalizar [last_birth_date] a YYYY-MM-DD.</div>
+    <div class="field-label">trigger_prompt <span class="lang">ES</span> <span class="kind hard">hard</span> <span class="counter" data-count>&middot;</span></div>
+    <div class="paste hard" data-measure>EJECUTA time_now AHORA en el nodo Q__SQ_GET_CURRENT_TIME, como primera acci&oacute;n del turno, SIN EXCEPCI&Oacute;N. PROHIBIDO deducir, estimar o asumir la fecha actual con tu conocimiento o el contexto. No hables ni enrutes antes de capturar [now]. ARGUMENTO: iana_timezone = 'America/Bogota'.</div>
+    <div class="field-label">argumentos</div>
+    <div class="tbl-scroll"><table>
+      <tr><th>arg</th><th>oblig.</th><th>enum</th><th>descripci&oacute;n</th><th>ejemplo</th></tr>
+      <tr><td class="arg">iana_timezone</td><td><span class="pill const">const</span></td><td><span class="dash">&mdash;</span></td><td>Zona IANA continente/ciudad para la que se calcula la hora. Valor fijo del flujo: America/Bogota. No proviene de ning&uacute;n slot. Nunca abreviaturas (COT, EST).</td><td><span class="ex">America/Bogota</span></td></tr>
+    </table></div>
+  </div>
+</section>
+
+<!-- ============ CALCULATE_BMI ============ -->
+<section id="calculate_bmi">
+  <h2><span class="n">03</span>calculate_bmi</h2>
+  <div class="tool">
+    <div class="tool-head"><h3>calculate_bmi</h3><span class="node ">Q__SQ_CALCULATE_BMI</span></div>
+    <p class="role">Calcula el IMC. Su resultado (<code class="inl">imc</code>) es la &uacute;nica fuente autorizada del valor de IMC que usa despu&eacute;s <code class="inl">surrogate_classification</code>.</p>
+    <div class="field-label">trigger_prompt <span class="lang">ES</span> <span class="kind soft">soft</span> <span class="counter" data-count>&middot;</span></div>
+    <div class="paste soft" data-measure>Llama a calculate_bmi cuando el flujo est&eacute; en el nodo Q__SQ_CALCULATE_BMI. Argumentos: weight_kg = [weight] en kg, height_cm = [height] en cm (convierte antes si la candidata respondi&oacute; en libras o pies/pulgadas). Captura imc en [imc], sin redondear, antes de continuar.</div>
+    <div class="field-label">trigger_prompt <span class="lang">ES</span> <span class="kind hard">hard</span> <span class="counter" data-count>&middot;</span></div>
+    <div class="paste hard" data-measure>EJECUTA calculate_bmi AHORA en el nodo Q__SQ_CALCULATE_BMI, como primera acci&oacute;n, SIN EXCEPCI&Oacute;N. PROHIBIDO calcular o estimar el IMC por tu cuenta. No hables ni enrutes antes de capturar [imc]. ARGUMENTOS: weight_kg = [weight], height_cm = [height].</div>
+    <div class="field-label">argumentos</div>
+    <div class="tbl-scroll"><table>
+      <tr><th>arg</th><th>oblig.</th><th>enum</th><th>descripci&oacute;n</th><th>ejemplo</th></tr>
+      <tr><td class="arg">weight_kg</td><td><span class="pill req">true</span></td><td><span class="dash">&mdash;</span></td><td>Peso actual de la candidata en kilogramos, num&eacute;rico, del slot [weight]. Sin unidad.</td><td><span class="ex">70</span></td></tr>
+      <tr><td class="arg">height_cm</td><td><span class="pill req">true</span></td><td><span class="dash">&mdash;</span></td><td>Altura actual de la candidata en cent&iacute;metros, num&eacute;rico, del slot [height]. Sin unidad.</td><td><span class="ex">165</span></td></tr>
+    </table></div>
+  </div>
+</section>
+
+<!-- ============ CHECK_DOCUMENTATION ============ -->
+<section id="check_documentation">
+  <h2><span class="n">04</span>check_documentation</h2>
+  <div class="tool">
+    <div class="tool-head"><h3>check_documentation</h3><span class="node ">Q__SQ_CHECK_DOCUMENTATION</span></div>
+    <p class="role">Verifica el requisito documental. Su respuesta (<code class="inl">document_result</code>) es el &uacute;nico veredicto documental autorizado. <code class="inl">document_result == false</code> NO cierra el flujo.</p>
+    <div class="field-label">trigger_prompt <span class="lang">ES</span> <span class="kind soft">soft</span> <span class="counter" data-count>&middot;</span></div>
+    <div class="paste soft" data-measure>Llama a check_documentation cuando el flujo est&eacute; en el nodo Q__SQ_CHECK_DOCUMENTATION, como primera acci&oacute;n. Argumentos: nationality = [nationality] en ISO 3166-1 alfa-3 may&uacute;sculas; document_type solo si nationality != 'COL', con [has_cc] normalizado. Captura document_result antes de continuar.</div>
+    <div class="field-label">trigger_prompt <span class="lang">ES</span> <span class="kind hard">hard</span> <span class="counter" data-count>&middot;</span></div>
+    <div class="paste hard" data-measure>EJECUTA check_documentation AHORA en el nodo Q__SQ_CHECK_DOCUMENTATION, como primera acci&oacute;n, SIN EXCEPCI&Oacute;N. PROHIBIDO adelantar o asumir un veredicto documental. No preguntes, hables ni enrutes antes de capturar document_result. ARGUMENTOS: nationality = [nationality]; document_type = [has_cc] solo si nationality != 'COL'.</div>
+    <div class="field-label">argumentos</div>
+    <div class="tbl-scroll"><table>
+      <tr><th>arg</th><th>oblig.</th><th>enum</th><th>descripci&oacute;n</th><th>ejemplo</th></tr>
+      <tr><td class="arg">nationality</td><td><span class="pill req">true</span></td><td><span class="dash">&mdash;</span></td><td>C&oacute;digo ISO 3166-1 alfa-3 en may&uacute;sculas (COL, VEN, ECU, PER, ARG&hellip;). Inferido del pa&iacute;s que dice la candidata, nunca del acento ni del tel&eacute;fono.</td><td><span class="ex">COL</span></td></tr>
+      <tr><td class="arg">document_type</td><td><span class="pill opt">false</span></td><td><span class="enum">cedula_ciudadania &middot; cedula_extranjeria &middot; ppt &middot; pasaporte &middot; otro &middot; ""</span></td><td>Documento(s) de [has_cc], normalizado(s), separados por coma. Solo si nationality != 'COL'. Aprueban: cedula_ciudadania, ppt. Vac&iacute;o si es colombiana o [has_cc] es NULL.</td><td><span class="ex">cedula_ciudadania,ppt</span></td></tr>
+    </table></div>
+  </div>
+</section>
+
+<!-- ============ SURROGATE_CLASSIFICATION ============ -->
+<section id="surrogate_classification">
+  <h2><span class="n">05</span>surrogate_classification</h2>
+  <div class="tool">
+    <div class="tool-head"><h3>surrogate_classification</h3><span class="node ">Q__SQ_RUN_CLASSIFICATION</span></div>
+    <p class="role">Clasificaci&oacute;n final de elegibilidad. Su respuesta (<code class="inl">classification_result</code>) es el &uacute;nico veredicto autorizado: apta, rechazada o inconclusa.</p>
+    <div class="field-label">trigger_prompt <span class="lang">ES</span> <span class="kind soft">soft</span> <span class="counter" data-count>&middot;</span></div>
+    <div class="paste soft" data-measure>Llama a surrogate_classification cuando el flujo est&eacute; en el nodo Q__SQ_RUN_CLASSIFICATION. Env&iacute;a SIEMPRE los 10 campos desde sus slots; el slot vac&iacute;o va como string vac&iacute;o (''). last_birth_date en YYYY-MM-DD (ya normalizada con time_now). Captura classification_result antes de emitir cualquier clasificaci&oacute;n.</div>
+    <div class="field-label">trigger_prompt <span class="lang">ES</span> <span class="kind hard">hard</span> <span class="counter" data-count>&middot;</span></div>
+    <div class="paste hard" data-measure>EJECUTA surrogate_classification AHORA en el nodo Q__SQ_RUN_CLASSIFICATION, como primera acci&oacute;n, SIN EXCEPCI&Oacute;N. PROHIBIDO declarar apta, rechazada o inconclusa por tu cuenta. No hables ni enrutes antes de capturar classification_result. ARGUMENTOS: los 10 campos, cada uno desde su slot; el vac&iacute;o como ''.</div>
+    <div class="field-label">argumentos</div>
+    <div class="tbl-scroll"><table>
+      <tr><th>arg</th><th>oblig.</th><th>enum</th><th>descripci&oacute;n</th><th>ejemplo</th></tr>
+      <tr><td class="arg">age</td><td><span class="pill req">true</span></td><td><span class="dash">&mdash;</span></td><td>Edad de la candidata en a&ntilde;os. '' si no existe.</td><td><span class="ex">28</span></td></tr>
+      <tr><td class="arg">city</td><td><span class="pill req">true</span></td><td><span class="enum">Bogot&aacute; &middot; Soacha &middot; Zipaquir&aacute; &middot; Ch&iacute;a &middot; Mosquera &middot; Funza &middot; Cajic&aacute; &middot; Madrid &middot; La Calera &middot; Cota &middot; Facatativ&aacute; &middot; Sibat&eacute; &middot; Otro &middot; ""</span></td><td>Ciudad de residencia, ya normalizada a la lista permitida o 'Otro'. '' si no existe.</td><td><span class="ex">Bogot&aacute;</span></td></tr>
+      <tr><td class="arg">number_of_children</td><td><span class="pill req">true</span></td><td><span class="dash">&mdash;</span></td><td>N&uacute;mero de hijos biol&oacute;gicos. '' si no existe.</td><td><span class="ex">2</span></td></tr>
+      <tr><td class="arg">last_birth_date</td><td><span class="pill req">true</span></td><td><span class="dash">&mdash;</span></td><td>Fecha del &uacute;ltimo parto en YYYY-MM-DD, ya normalizada por el flujo. Nunca una expresi&oacute;n relativa.</td><td><span class="ex">2023-07-01</span></td></tr>
+      <tr><td class="arg">number_of_c_sections</td><td><span class="pill req">true</span></td><td><span class="dash">&mdash;</span></td><td>N&uacute;mero de ces&aacute;reas; 0 si ninguna. '' si no existe.</td><td><span class="ex">1</span></td></tr>
+      <tr><td class="arg">abortions</td><td><span class="pill req">true</span></td><td><span class="enum">si &middot; no &middot; ""</span></td><td>Antecedente de abortos o p&eacute;rdidas previas.</td><td><span class="ex">no</span></td></tr>
+      <tr><td class="arg">preeclampsia</td><td><span class="pill req">true</span></td><td><span class="enum">si &middot; no &middot; ""</span></td><td>Antecedente de preeclampsia.</td><td><span class="ex">no</span></td></tr>
+      <tr><td class="arg">bmi</td><td><span class="pill req">true</span></td><td><span class="dash">&mdash;</span></td><td>IMC calculado por calculate_bmi, copiado literal.</td><td><span class="ex">24.2</span></td></tr>
+      <tr><td class="arg">documentation</td><td><span class="pill req">true</span></td><td><span class="enum">si &middot; no &middot; ""</span></td><td>Cumple el requisito documental: document_result de check_documentation ('si' fijo para colombianas).</td><td><span class="ex">si</span></td></tr>
+      <tr><td class="arg">drug_use</td><td><span class="pill req">true</span></td><td><span class="enum">si &middot; no &middot; ""</span></td><td>Consumo actual de drogas recreativas.</td><td><span class="ex">no</span></td></tr>
+    </table></div>
+  </div>
+</section>
+
+<!-- ============ GET_AVAILABLE_SLOTS ============ -->
+<section id="get_available_slots">
+  <h2><span class="n">06</span>get_available_slots</h2>
+  <div class="tool">
+    <div class="tool-head"><h3>get_available_slots</h3><span class="node ">S__SC_AVAIL</span></div>
+    <p class="role">Disponibilidad real para las citas comerciales de BabyNova (Subrogaci&oacute;n). Su salida (<code class="inl">available_slots</code>) es la &uacute;nica fuente autorizada de d&iacute;as y horas. Este agente opera solo en Colombia.</p>
+    <div class="field-label">trigger_prompt <span class="lang">ES</span> <span class="kind soft">soft</span> <span class="counter" data-count>&middot;</span></div>
+    <div class="paste soft" data-measure>Llama a get_available_slots cuando el flujo est&eacute; en el nodo S__SC_AVAIL, o ante cualquier intenci&oacute;n de agendar, reagendar, ver m&aacute;s opciones o reintentar una cita. Argumento: iana_timezone = 'America/Bogota' (valor fijo). Captura [available_slots] antes de mencionar d&iacute;as u horas.</div>
+    <div class="field-label">trigger_prompt <span class="lang">ES</span> <span class="kind hard">hard</span> <span class="counter" data-count>&middot;</span></div>
+    <div class="paste hard" data-measure>EJECUTA get_available_slots AHORA en el nodo S__SC_AVAIL, como primera acci&oacute;n del turno, SIN EXCEPCI&Oacute;N. NO menciones d&iacute;as, fechas, horas ni disponibilidad, y no enrutes, antes de capturar [available_slots]. ARGUMENTO: iana_timezone = 'America/Bogota'.</div>
+    <div class="field-label">argumentos</div>
+    <div class="tbl-scroll"><table>
+      <tr><th>arg</th><th>oblig.</th><th>enum</th><th>descripci&oacute;n</th><th>ejemplo</th></tr>
+      <tr><td class="arg">iana_timezone</td><td><span class="pill req">true</span></td><td><span class="dash">&mdash;</span></td><td>Identificador IANA continente/ciudad. Valor fijo America/Bogota. Si se omite, el backend usa America/Bogota.</td><td><span class="ex">America/Bogota</span></td></tr>
+    </table></div>
+  </div>
+</section>
+
+<!-- ============ BOOK_APPOINTMENT ============ -->
+<section id="book_appointment">
+  <h2><span class="n">07</span>book_appointment</h2>
+  <div class="tool">
+    <div class="tool-head"><h3>book_appointment</h3><span class="node write">S__SC_BOOK</span></div>
+    <p class="role">Crea la cita comercial a partir de un slot v&aacute;lido de get_available_slots. Solo est&aacute; agendada si <code class="inl">success == true</code> y <code class="inl">event_id</code> no es nulo.</p>
+    <div class="field-label">trigger_prompt <span class="lang">ES</span> <span class="kind soft">soft</span> <span class="counter" data-count>&middot;</span></div>
+    <div class="paste soft" data-measure>Llama a book_appointment cuando el flujo est&eacute; en el nodo S__SC_BOOK y get_available_slots ya fue ejecutado. Argumentos: start_date = start_co literal del slot elegido, duration='10', language='ES', contact_name/contact_email/contact_phone confirmados, iana_timezone='America/Bogota'. Captura success y reason antes de confirmar.</div>
+    <div class="field-label">trigger_prompt <span class="lang">ES</span> <span class="kind hard">hard</span> <span class="counter" data-count>&middot;</span></div>
+    <div class="paste hard" data-measure>EJECUTA book_appointment AHORA en el nodo S__SC_BOOK, como primera acci&oacute;n, SIN EXCEPCI&Oacute;N. No digas que la cita qued&oacute; agendada, y no enrutes a confirmaci&oacute;n, antes de recibir success == true y event_id no nulo. ARGUMENTOS: start_date (start_co literal), duration='10', language='ES', contact_name/email/phone, iana_timezone='America/Bogota'.</div>
+    <div class="field-label">argumentos</div>
+    <div class="tbl-scroll"><table>
+      <tr><th>arg</th><th>oblig.</th><th>enum</th><th>descripci&oacute;n</th><th>ejemplo</th></tr>
+      <tr><td class="arg">start_date</td><td><span class="pill req">true</span></td><td><span class="dash">&mdash;</span></td><td>Fecha y hora de inicio en ISO 8601 con offset. Copia literal de start_co del slot elegido.</td><td><span class="ex">2026-06-04T08:00:00-05:00</span></td></tr>
+      <tr><td class="arg">duration</td><td><span class="pill const">const</span></td><td><span class="dash">&mdash;</span></td><td>Duraci&oacute;n de la cita en minutos (APPOINTMENT_DURATION_MINUTES).</td><td><span class="ex">10</span></td></tr>
+      <tr><td class="arg">language</td><td><span class="pill const">const</span></td><td><span class="dash">&mdash;</span></td><td>C&oacute;digo de idioma de dos letras (TOOL_LANGUAGE_CODE).</td><td><span class="ex">ES</span></td></tr>
+      <tr><td class="arg">contact_name</td><td><span class="pill req">true</span></td><td><span class="dash">&mdash;</span></td><td>Nombre completo confirmado en el flujo.</td><td><span class="ex">Maria Gomez</span></td></tr>
+      <tr><td class="arg">contact_email</td><td><span class="pill req">true</span></td><td><span class="dash">&mdash;</span></td><td>Correo confirmado, en min&uacute;sculas. Se usa para enviar la confirmaci&oacute;n.</td><td><span class="ex">maria@example.com</span></td></tr>
+      <tr><td class="arg">contact_phone</td><td><span class="pill req">true</span></td><td><span class="dash">&mdash;</span></td><td>Tel&eacute;fono confirmado en formato internacional E.164.</td><td><span class="ex">+573001234567</span></td></tr>
+      <tr><td class="arg">iana_timezone</td><td><span class="pill req">true</span></td><td><span class="dash">&mdash;</span></td><td>Zona IANA del contacto, la misma usada en get_available_slots. Valor fijo America/Bogota.</td><td><span class="ex">America/Bogota</span></td></tr>
+    </table></div>
+  </div>
+</section>
+
+<!-- ============ FIND_APPOINTMENT ============ -->
+<section id="find_appointment">
+  <h2><span class="n">08</span>find_appointment</h2>
+  <div class="tool">
+    <div class="tool-head"><h3>find_appointment</h3></div>
+    <p class="role">Busca citas existentes de un contacto por su nombre en los calendarios de BabyNova. Ejec&uacute;tala cuando la candidata quiera consultar o verificar una cita que cree haber agendado.</p>
+    <div class="field-label">trigger_prompt <span class="lang">ES</span> <span class="kind soft">soft</span> <span class="counter" data-count>&middot;</span></div>
+    <div class="paste soft" data-measure>Llama a find_appointment cuando la candidata quiera consultar, verificar o conocer los detalles de una cita que cree haber agendado. Argumentos: contact_name = nombre completo (como figura en el CRM o en la cita), iana_timezone = 'America/Bogota', language = 'ES'. Captura [appointments] antes de responder sobre la cita.</div>
+    <div class="field-label">trigger_prompt <span class="lang">ES</span> <span class="kind hard">hard</span> <span class="counter" data-count>&middot;</span></div>
+    <div class="paste hard" data-measure>EJECUTA find_appointment AHORA cuando la candidata pida consultar o verificar una cita, como primera acci&oacute;n del turno, SIN EXCEPCI&Oacute;N. NO afirmes ni niegues que existe una cita antes de capturar [appointments]. ARGUMENTOS: contact_name = nombre completo; iana_timezone = 'America/Bogota'; language = 'ES'. El que falte va como "".</div>
+    <div class="field-label">argumentos</div>
+    <div class="tbl-scroll"><table>
+      <tr><th>arg</th><th>oblig.</th><th>enum</th><th>descripci&oacute;n</th><th>ejemplo</th></tr>
+      <tr><td class="arg">contact_name</td><td><span class="pill req">true</span></td><td><span class="dash">&mdash;</span></td><td>Nombre completo del contacto para la b&uacute;squeda, como figura en el CRM o como se registr&oacute; la cita.</td><td><span class="ex">Maria Gomez</span></td></tr>
+      <tr><td class="arg">iana_timezone</td><td><span class="pill opt">false</span></td><td><span class="dash">&mdash;</span></td><td>Zona horaria IANA para mostrar las horas de las citas encontradas. Defecto: America/Bogota.</td><td><span class="ex">America/Bogota</span></td></tr>
+      <tr><td class="arg">language</td><td><span class="pill opt">false</span></td><td><span class="dash">&mdash;</span></td><td>Idioma para formatear los resultados. Defecto: ES.</td><td><span class="ex">ES</span></td></tr>
+    </table></div>
+  </div>
+</section>
+
+<!-- ============ CANCEL_APPOINTMENT ============ -->
+<section id="cancel_appointment">
+  <h2><span class="n">09</span>cancel_appointment</h2>
+  <div class="tool">
+    <div class="tool-head"><h3>cancel_appointment</h3></div>
+    <p class="role">Cancela/elimina una cita existente en los calendarios de BabyNova. Ejec&uacute;tala solo si la candidata lo pide expl&iacute;citamente y confirma el <code class="inl">event_id</code> (obtenido antes v&iacute;a find_appointment).</p>
+    <div class="field-label">trigger_prompt <span class="lang">ES</span> <span class="kind soft">soft</span> <span class="counter" data-count>&middot;</span></div>
+    <div class="paste soft" data-measure>Llama a cancel_appointment solo cuando la candidata pida expl&iacute;citamente cancelar su cita y ya tengas el event_id confirmado (de find_appointment). Argumentos: event_id = el ID exacto devuelto por la API, iana_timezone = 'America/Bogota'. Captura [success] antes de confirmar la cancelaci&oacute;n.</div>
+    <div class="field-label">trigger_prompt <span class="lang">ES</span> <span class="kind hard">hard</span> <span class="counter" data-count>&middot;</span></div>
+    <div class="paste hard" data-measure>EJECUTA cancel_appointment AHORA cuando la candidata confirme que quiere cancelar y tengas el event_id, como primera acci&oacute;n del turno, SIN EXCEPCI&Oacute;N. NO digas que la cita qued&oacute; cancelada antes de capturar [success] == true. ARGUMENTOS: event_id = ID exacto de la API; iana_timezone = 'America/Bogota'.</div>
+    <div class="field-label">argumentos</div>
+    <div class="tbl-scroll"><table>
+      <tr><th>arg</th><th>oblig.</th><th>enum</th><th>descripci&oacute;n</th><th>ejemplo</th></tr>
+      <tr><td class="arg">event_id</td><td><span class="pill req">true</span></td><td><span class="dash">&mdash;</span></td><td>Identificador &uacute;nico del evento a cancelar, exactamente como lo devolvi&oacute; la API.</td><td><span class="ex">evt_123456</span></td></tr>
+      <tr><td class="arg">iana_timezone</td><td><span class="pill opt">false</span></td><td><span class="dash">&mdash;</span></td><td>Zona horaria IANA del contacto.</td><td><span class="ex">America/Bogota</span></td></tr>
+    </table></div>
+  </div>
+</section>
+
+<!-- ============ CALLBACK ============ -->
+<section id="callback">
+  <h2><span class="n">10</span>callback</h2>
+  <div class="tool">
+    <div class="tool-head"><h3>callback</h3><span class="node write">C__CB_RUN</span></div>
+    <p class="role">Escala la conversaci&oacute;n a una llamada humana. Solo valida y normaliza la solicitud; la notificaci&oacute;n real la ejecuta un paso posterior del flujo. Usa <code class="inl">errors == null</code> como &uacute;nico indicador de &eacute;xito.</p>
+    <div class="field-label">trigger_prompt <span class="lang">ES</span> <span class="kind soft">soft</span> <span class="counter" data-count>&middot;</span></div>
+    <div class="paste soft" data-measure>Llama a callback en el nodo C__CB_RUN, o cuando get_available_slots no d&eacute; cupos, book_appointment falle, un dato quede ambiguo, o la candidata pida hablar con una persona. Argumentos: contact_name = {{contact.name}}, al menos uno entre contact_phone = {{contact.phone}} y contact_email = {{contact.email}}, reason (1 de 5), iana_timezone (la de get_available_slots); context/preferred_days/preferred_time_window si aplican. Captura errors antes de prometer el contacto.</div>
+    <div class="field-label">trigger_prompt <span class="lang">ES</span> <span class="kind hard">hard</span> <span class="counter" data-count>&middot;</span></div>
+    <div class="paste hard" data-measure>EJECUTA callback AHORA en el nodo C__CB_RUN, como primera acci&oacute;n del turno, SIN EXCEPCI&Oacute;N. No prometas que alguien llamar&aacute;, y no enrutes al cierre, antes de capturar errors == null. ARGUMENTOS: contact_name = {{contact.name}}; al menos uno entre contact_phone y contact_email; reason (5 valores exactos); iana_timezone (la de get_available_slots). El que falte va como "".</div>
+    <div class="field-label">argumentos</div>
+    <div class="tbl-scroll"><table>
+      <tr><th>arg</th><th>oblig.</th><th>enum</th><th>descripci&oacute;n</th><th>ejemplo</th></tr>
+      <tr><td class="arg">contact_name</td><td><span class="pill const">const</span></td><td><span class="dash">&mdash;</span></td><td>Nombre completo. <code>{{contact.name}}</code>.</td><td><span class="dash">&mdash;</span></td></tr>
+      <tr><td class="arg">contact_phone</td><td><span class="pill opt">false</span></td><td><span class="dash">&mdash;</span></td><td>Tel&eacute;fono internacional. <code>{{contact.phone}}</code>. Al menos uno entre phone y email.</td><td><span class="ex">+573000000000</span></td></tr>
+      <tr><td class="arg">contact_email</td><td><span class="pill opt">false</span></td><td><span class="dash">&mdash;</span></td><td>Correo. <code>{{contact.email}}</code>. Al menos uno entre phone y email.</td><td><span class="ex">maria@example.com</span></td></tr>
+      <tr><td class="arg">reason</td><td><span class="pill req">true</span></td><td><span class="enum">no_availability &middot; booking_failed &middot; user_requested &middot; ambiguous_data &middot; technical_error</span></td><td>Motivo del callback, mapeado al valor m&aacute;s cercano.</td><td><span class="ex">no_availability</span></td></tr>
+      <tr><td class="arg">context</td><td><span class="pill opt">false</span></td><td><span class="dash">&mdash;</span></td><td>Resumen breve de qu&eacute; pas&oacute; en la conversaci&oacute;n.</td><td><span class="dash">&mdash;</span></td></tr>
+      <tr><td class="arg">preferred_days</td><td><span class="pill opt">false</span></td><td><span class="enum">monday&hellip;sunday &middot; weekdays &middot; weekend &middot; any</span></td><td>D&iacute;a(s) preferido(s). Solo si expres&oacute; preferencia.</td><td><span class="ex">weekdays</span></td></tr>
+      <tr><td class="arg">preferred_time_window</td><td><span class="pill opt">false</span></td><td><span class="enum">morning &middot; midday &middot; afternoon &middot; evening &middot; any</span></td><td>Franja horaria preferida. Solo si expres&oacute; preferencia.</td><td><span class="ex">morning</span></td></tr>
+      <tr><td class="arg">iana_timezone</td><td><span class="pill req">true</span></td><td><span class="dash">&mdash;</span></td><td>Zona IANA del usuario, la misma ya determinada para get_available_slots.</td><td><span class="ex">America/Bogota</span></td></tr>
+    </table></div>
+  </div>
+</section>
+
+<section id="matriz">
+  <h2><span class="n">11</span>Matriz de obligatoriedad y enumeración</h2>
+  <p class="section-note">Estado actual de cada argumento. Regla general: <code class="inl">required: true</code> solo cuando el flujo garantiza estructuralmente el valor antes del nodo; el resto → <code class="inl">required: false</code> con <code class="inl">""</code> documentado y en el enum. Los 10 campos de <code class="inl">surrogate_classification</code> son <b>siempre</b> obligatorios: el slot vacío se envía como <code class="inl">""</code>, nunca se omite. Nombres de argumento en snake_case.</p>
+
+  <div class="tbl-scroll"><table class="matrix">
+    <tr><th>herramienta</th><th>argumento</th><th>slot de origen</th><th>obligatorio</th><th>enum</th></tr>
+    <tr><td class="arg">time_now</td><td class="arg">iana_timezone</td><td>&mdash; (const America/Bogota)</td><td><span class="pill const">const</span></td><td>&mdash;</td></tr>
+    <tr><td class="arg">calculate_bmi</td><td class="arg">weight_kg</td><td><code>[weight]</code></td><td><span class="pill req">true</span></td><td>&mdash;</td></tr>
+    <tr><td class="arg">calculate_bmi</td><td class="arg">height_cm</td><td><code>[height]</code></td><td><span class="pill req">true</span></td><td>&mdash;</td></tr>
+    <tr><td class="arg">check_documentation</td><td class="arg">nationality</td><td><code>[nationality]</code></td><td><span class="pill req">true</span></td><td>&mdash;</td></tr>
+    <tr><td class="arg">check_documentation</td><td class="arg">document_type</td><td><code>[has_cc]</code></td><td><span class="pill opt">false</span></td><td>sí (+ <code>""</code>)</td></tr>
+    <tr><td class="arg">surrogate_classification</td><td class="arg">age</td><td><code>[surrogate_age]</code></td><td><span class="pill req">true</span></td><td>&mdash;</td></tr>
+    <tr><td class="arg">surrogate_classification</td><td class="arg">city</td><td><code>[city_residence]</code></td><td><span class="pill req">true</span></td><td>sí (+ <code>""</code>)</td></tr>
+    <tr><td class="arg">surrogate_classification</td><td class="arg">number_of_children</td><td><code>[children_count]</code></td><td><span class="pill req">true</span></td><td>&mdash;</td></tr>
+    <tr><td class="arg">surrogate_classification</td><td class="arg">last_birth_date</td><td><code>[last_birth_date]</code></td><td><span class="pill req">true</span></td><td>&mdash;</td></tr>
+    <tr><td class="arg">surrogate_classification</td><td class="arg">number_of_c_sections</td><td><code>[csections_count]</code></td><td><span class="pill req">true</span></td><td>&mdash;</td></tr>
+    <tr><td class="arg">surrogate_classification</td><td class="arg">abortions</td><td><code>[abortos]</code></td><td><span class="pill req">true</span></td><td>sí · <code>si|no|""</code></td></tr>
+    <tr><td class="arg">surrogate_classification</td><td class="arg">preeclampsia</td><td><code>[pree]</code></td><td><span class="pill req">true</span></td><td>sí · <code>si|no|""</code></td></tr>
+    <tr><td class="arg">surrogate_classification</td><td class="arg">bmi</td><td><code>[imc]</code></td><td><span class="pill req">true</span></td><td>&mdash;</td></tr>
+    <tr><td class="arg">surrogate_classification</td><td class="arg">documentation</td><td><code>[document_result]</code></td><td><span class="pill req">true</span></td><td>sí · <code>si|no|""</code></td></tr>
+    <tr><td class="arg">surrogate_classification</td><td class="arg">drug_use</td><td><code>[uses_drugs]</code></td><td><span class="pill req">true</span></td><td>sí · <code>si|no|""</code></td></tr>
+    <tr><td class="arg">get_available_slots</td><td class="arg">iana_timezone</td><td>&mdash; (fijo America/Bogota)</td><td><span class="pill req">true</span></td><td>&mdash;</td></tr>
+    <tr><td class="arg">book_appointment</td><td class="arg">start_date</td><td><code>[slot]</code> → <code>start_co</code></td><td><span class="pill req">true</span></td><td>&mdash;</td></tr>
+    <tr><td class="arg">book_appointment</td><td class="arg">duration</td><td>&mdash; (const)</td><td><span class="pill const">const</span></td><td>&mdash;</td></tr>
+    <tr><td class="arg">book_appointment</td><td class="arg">language</td><td>&mdash; (const)</td><td><span class="pill const">const</span></td><td>&mdash;</td></tr>
+    <tr><td class="arg">book_appointment</td><td class="arg">contact_name</td><td>confirmado en el flujo</td><td><span class="pill req">true</span></td><td>&mdash;</td></tr>
+    <tr><td class="arg">book_appointment</td><td class="arg">contact_email</td><td>confirmado en el flujo</td><td><span class="pill req">true</span></td><td>&mdash;</td></tr>
+    <tr><td class="arg">book_appointment</td><td class="arg">contact_phone</td><td>confirmado en el flujo</td><td><span class="pill req">true</span></td><td>&mdash;</td></tr>
+    <tr><td class="arg">book_appointment</td><td class="arg">iana_timezone</td><td>&mdash; (fijo America/Bogota)</td><td><span class="pill req">true</span></td><td>&mdash;</td></tr>
+    <tr><td class="arg">find_appointment</td><td class="arg">contact_name</td><td>CRM / cita</td><td><span class="pill req">true</span></td><td>&mdash;</td></tr>
+    <tr><td class="arg">find_appointment</td><td class="arg">iana_timezone</td><td>&mdash; (def. America/Bogota)</td><td><span class="pill opt">false</span></td><td>&mdash;</td></tr>
+    <tr><td class="arg">find_appointment</td><td class="arg">language</td><td>&mdash; (def. ES)</td><td><span class="pill opt">false</span></td><td>&mdash;</td></tr>
+    <tr><td class="arg">cancel_appointment</td><td class="arg">event_id</td><td>find_appointment</td><td><span class="pill req">true</span></td><td>&mdash;</td></tr>
+    <tr><td class="arg">cancel_appointment</td><td class="arg">iana_timezone</td><td>&mdash;</td><td><span class="pill opt">false</span></td><td>&mdash;</td></tr>
+    <tr><td class="arg">callback</td><td class="arg">contact_name</td><td><code>{{contact.name}}</code></td><td><span class="pill const">const</span></td><td>&mdash;</td></tr>
+    <tr><td class="arg">callback</td><td class="arg">contact_phone</td><td><code>{{contact.phone}}</code></td><td><span class="pill opt">false</span></td><td>&mdash;</td></tr>
+    <tr><td class="arg">callback</td><td class="arg">contact_email</td><td><code>{{contact.email}}</code></td><td><span class="pill opt">false</span></td><td>&mdash;</td></tr>
+    <tr><td class="arg">callback</td><td class="arg">reason</td><td>subflow callback</td><td><span class="pill req">true</span></td><td>sí · 5 valores</td></tr>
+    <tr><td class="arg">callback</td><td class="arg">context</td><td>&mdash;</td><td><span class="pill opt">false</span></td><td>&mdash;</td></tr>
+    <tr><td class="arg">callback</td><td class="arg">preferred_days</td><td>&mdash;</td><td><span class="pill opt">false</span></td><td>sí · <code>monday…any</code></td></tr>
+    <tr><td class="arg">callback</td><td class="arg">preferred_time_window</td><td>&mdash;</td><td><span class="pill opt">false</span></td><td>sí · <code>morning…any</code></td></tr>
+    <tr><td class="arg">callback</td><td class="arg">iana_timezone</td><td>subflow callback</td><td><span class="pill req">true</span></td><td>&mdash;</td></tr>
+  </table></div>
+</section>
+
+<div class="foot">
+  <p>Fuente: <code>agents/defs/babynova_surrogate_questions_voice/</code> (subflows <code>surrogate_questions.yaml</code>, <code>scheduling.yaml</code>; <code>tool_contracts.yaml</code>) y contratos/subflows compartidos <code>time_now</code> y <code>callback</code>. Los IDs de nodo asumen el namespace del manifest (<code>q</code> → <code>Q__SQ_*</code>, <code>s</code> → <code>S__SC_*</code>, <code>c</code> → <code>C__CB_*</code>). Nombres de slot tomados de <code>local_memory_slots</code> de cada subflujo.</p>
+  <p>Los contadores de caracteres se calculan sobre el texto tal como se pegaría en la plataforma; el límite es 500.</p>
+</div>
+
+</div>
+
+<script>
+(function(){
+  document.querySelectorAll('.field-label').forEach(function(lbl){
+    var counter = lbl.querySelector('[data-count]');
+    if(!counter) return;
+    var box = lbl.nextElementSibling;
+    while(box && !box.hasAttribute('data-measure')) box = box.nextElementSibling;
+    if(!box) return;
+    var n = box.textContent.trim().replace(/\s+/g,' ').length;
+    counter.textContent = n + ' / 500';
+    counter.classList.add(n > 500 ? 'over' : 'ok');
+  });
+})();
+</script>

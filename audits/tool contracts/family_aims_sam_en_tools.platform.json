@@ -1,0 +1,322 @@
+{
+  "agent_id": "{{PENDING}}",
+  "agent_name": "family_aims_sam_en",
+  "location_id": "{{PENDING}}",
+  "total_tools": 7,
+  "tools": [
+    {
+      "tool_name": "time_now",
+      "tool_id": "{{PENDING}}",
+      "action_type": "CAP",
+      "description": "Call time_now only when the flow is in node SC__SC_TIME.\nArgument: iana_timezone = [user_timezone].\nCapture the now field in [now] before moving to the summary.",
+      "trigger_message": "DEBUG time_now: getting the contact's current time",
+      "http_config": {
+        "url": "{{PENDING_WEBHOOK_URL}}",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "timeout_seconds": 10,
+        "retry_on_failure": true
+      },
+      "arguments": [
+        {
+          "name": "iana_timezone",
+          "type": "string",
+          "description": "IANA continent/city timezone for the current time. Send [user_timezone], the same already resolved for availability. (In babynova this tool uses const America/Bogota; family is multi-zone.)",
+          "required": true,
+          "example": "Europe/Madrid"
+        }
+      ]
+    },
+    {
+      "tool_name": "callback",
+      "tool_id": "{{PENDING}}",
+      "action_type": "CAP",
+      "description": "Call callback only when the flow is in node C__CB_RUN and you have a confirmed number and timezone.\nMap contact_name, contact_phone, contact_email, reason, context, iana_timezone, preferred_days, and preferred_time_window from their slots.\nCapture errors before continuing.",
+      "trigger_message": "DEBUG callback: escalating to a human callback",
+      "http_config": {
+        "url": "{{PENDING_WEBHOOK_URL}}",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "timeout_seconds": 10,
+        "retry_on_failure": false
+      },
+      "arguments": [
+        {
+          "name": "contact_name",
+          "type": "string",
+          "description": "Contact full name. Injected from {{contact.name}}.",
+          "required": true,
+          "const": "{{contact.name}}"
+        },
+        {
+          "name": "contact_phone",
+          "type": "string",
+          "description": "Phone in international format. Send at least one of contact_phone and contact_email.",
+          "required": false,
+          "const": "{{contact.phone}}",
+          "example": "+573001234567"
+        },
+        {
+          "name": "contact_email",
+          "type": "string",
+          "description": "Contact email. Send at least one of contact_phone and contact_email.",
+          "required": false,
+          "const": "{{contact.email}}",
+          "example": "maria@example.com"
+        },
+        {
+          "name": "reason",
+          "type": "string",
+          "description": "Callback reason, mapped to the closest value.",
+          "required": true,
+          "example": "no_availability",
+          "enum": [
+            "no_availability",
+            "booking_failed",
+            "user_requested",
+            "ambiguous_data",
+            "technical_error"
+          ]
+        },
+        {
+          "name": "context",
+          "type": "string",
+          "description": "Short summary of what happened in the conversation.",
+          "required": false
+        },
+        {
+          "name": "preferred_days",
+          "type": "string",
+          "description": "Preferred day(s) for the call. Only if a preference was expressed.",
+          "required": false,
+          "enum": [
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday",
+            "weekdays",
+            "weekend",
+            "any"
+          ]
+        },
+        {
+          "name": "preferred_time_window",
+          "type": "string",
+          "description": "Preferred time window. Only if a preference was expressed.",
+          "required": false,
+          "example": "morning",
+          "enum": [
+            "morning",
+            "midday",
+            "afternoon",
+            "evening",
+            "any"
+          ]
+        },
+        {
+          "name": "iana_timezone",
+          "type": "string",
+          "description": "Contact IANA timezone — the same already used for availability. Do not ask again.",
+          "required": true,
+          "example": "America/Bogota"
+        }
+      ]
+    },
+    {
+      "tool_name": "contact_attempt",
+      "tool_id": "{{PENDING}}",
+      "action_type": "CAP",
+      "description": "Call contact_attempt only when the flow is in node CALL_NO_ANSWER_LOG.\nArgument: contact_phone = {{contact.phone}}.\nCapture attempt_registered before closing the session.",
+      "trigger_message": "DEBUG contact_attempt: logging a failed contact attempt",
+      "http_config": {
+        "url": "{{PENDING_WEBHOOK_URL}}",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "timeout_seconds": 10,
+        "retry_on_failure": false
+      },
+      "arguments": [
+        {
+          "name": "contact_phone",
+          "type": "string",
+          "description": "Lead phone that was attempted. Injected from the contact variable {{contact.phone}}.",
+          "required": false,
+          "const": "{{contact.phone}}",
+          "example": "+573001234567"
+        }
+      ]
+    },
+    {
+      "tool_name": "get_available_slots",
+      "action_type": "CAP",
+      "description": "Authorized availability tool for Family Aims commercial appointments (IVF or Surrogacy). Its output is the only authorized source of days and times. MANDATORY EXECUTION TRIGGER: on entering node SC__SC_AV_I (use calendar_type: 'IVF') or SC__SC_AV_S (use calendar_type: 'SUR'), call get_available_slots as the first action of the turn ? imperative, no exception.",
+      "trigger_message": "DEBUG get_available_slots: checking availability",
+      "http_config": {
+        "url": "{{PENDING_WEBHOOK_URL}}",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "timeout_seconds": 10,
+        "retry_on_failure": true
+      },
+      "arguments": [
+        {
+          "name": "iana_timezone",
+          "type": "string",
+          "description": "Contact's IANA timezone.",
+          "required": true
+        },
+        {
+          "name": "calendar_type",
+          "type": "string",
+          "description": "Literal 'IVF' or 'SUR'.",
+          "required": true,
+          "enum": [
+            "IVF",
+            "SUR"
+          ]
+        }
+      ]
+    },
+    {
+      "tool_name": "book_appointment",
+      "action_type": "CAP",
+      "description": "Authorized booking tool for Family Aims commercial appointments (IVF or Surrogacy). Creates the appointment from a valid get_available_slots slot. MANDATORY EXECUTION TRIGGER: on entering node SC__SC_BOOK_I (use calendar_type: 'IVF') or SC__SC_BOOK_S (use calendar_type: 'SUR'), call book_appointment as the first action of the turn ? imperative, no exception.",
+      "trigger_message": "DEBUG book_appointment: booking appointment",
+      "http_config": {
+        "url": "{{PENDING_WEBHOOK_URL}}",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "timeout_seconds": 10,
+        "retry_on_failure": false
+      },
+      "arguments": [
+        {
+          "name": "calendar_type",
+          "type": "string",
+          "description": "Literal 'IVF' or 'SUR'.",
+          "required": true,
+          "enum": [
+            "IVF",
+            "SUR"
+          ]
+        },
+        {
+          "name": "start_date",
+          "type": "string",
+          "description": "Start date (start_co) in ISO 8601.",
+          "required": true
+        },
+        {
+          "name": "duration",
+          "type": "string",
+          "const": "30",
+          "required": false
+        },
+        {
+          "name": "language",
+          "type": "string",
+          "const": "EN",
+          "required": false
+        },
+        {
+          "name": "contact_name",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "contact_email",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "contact_phone",
+          "type": "string",
+          "required": true
+        },
+        {
+          "name": "iana_timezone",
+          "type": "string",
+          "required": true
+        }
+      ]
+    },
+    {
+      "tool_name": "find_appointment",
+      "action_type": "CAP",
+      "description": "Authorized tool to search for existing appointments of a contact by their name in Family Aims calendars.",
+      "arguments": [
+        {
+          "name": "contact_name",
+          "type": "string",
+          "description": "Contact's full name to perform the search.",
+          "required": true
+        },
+        {
+          "name": "calendar_type",
+          "type": "string",
+          "description": "Calendar filter: 'IVF', 'SUR', or 'BOTH' (default) to search in both.",
+          "required": false,
+          "enum": [
+            "IVF",
+            "SUR",
+            "BOTH"
+          ]
+        },
+        {
+          "name": "iana_timezone",
+          "type": "string",
+          "description": "IANA timezone to display the found appointments' times. Default: America/Bogota.",
+          "required": false
+        },
+        {
+          "name": "language",
+          "type": "string",
+          "description": "Language to format results. Default: EN.",
+          "required": false
+        }
+      ]
+    },
+    {
+      "tool_name": "cancel_appointment",
+      "action_type": "CAP",
+      "description": "Authorized tool to cancel/delete an existing appointment in Family Aims calendars.",
+      "arguments": [
+        {
+          "name": "event_id",
+          "type": "string",
+          "description": "Unique identifier of the Google Calendar event to cancel, exactly as returned by the API.",
+          "required": true
+        },
+        {
+          "name": "calendar_type",
+          "type": "string",
+          "description": "Type of calendar where the appointment resides: 'IVF' or 'SUR'.",
+          "required": true,
+          "enum": [
+            "IVF",
+            "SUR"
+          ]
+        },
+        {
+          "name": "iana_timezone",
+          "type": "string",
+          "description": "Contact's IANA timezone.",
+          "required": false
+        }
+      ]
+    }
+  ]
+}
