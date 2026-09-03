@@ -12,15 +12,19 @@ only when there are no warnings either).
 Default output layout::
 
     dist/{agent_id}/
-        system_prompt.md
-        system_prompt_mini.md      (only if the agent's template has a
-                                     *_mini.md.j2 companion on disk)
-        reference_asset.md
-        reference_asset.json
-        subflows/
-            {NAMESPACE}.md   (one file per subflow)
-        subflows_mini/
-            {NAMESPACE}.md   (only alongside system_prompt_mini.md)
+        full/
+            system_prompt.md            (subflow states always embedded)
+            system_prompt_mini.md       (only if the agent's template has a
+                                          *_mini.md.j2 companion on disk)
+            reference_asset.md
+            reference_asset.json
+        split/                          (deploy-platform package)
+            system_prompt.md            (# PERSONALITY / # GOAL / # INSTRUCTIONS)
+            system_prompt_mini.md       (only if a mini prompt was rendered)
+            knowledge_base.md           (the CONVERSATION_FLOW block + subflows)
+            knowledge_base_mini.md      (only if a mini prompt was rendered)
+            reference_asset.md
+            reference_asset.json
         reports/
             validation_report.md
             deduplication_report.md
@@ -56,6 +60,7 @@ from app.schemas import (
     ReferenceAssetFormat,
     VerbosityLevel,
 )
+from app.split_package import SPLIT_SYSTEM_PROMPT_WORD_LIMIT, section_word_counts
 
 
 def _build_parser() -> argparse.ArgumentParser:
@@ -109,15 +114,6 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Treat validator warnings as build errors.",
     )
     parser.add_argument(
-        "--split-subflows",
-        action="store_true",
-        help=(
-            "Write subflow states as separate subflows/ reference documents "
-            "instead of embedding them inline in system_prompt.md.  By default "
-            "all states are embedded in a single file."
-        ),
-    )
-    parser.add_argument(
         "--dist-dir",
         default="dist",
         help="Output root directory (default: dist).",
@@ -136,7 +132,6 @@ def _params_from_args(args: argparse.Namespace) -> CompilationParams:
             ReferenceAssetFormat(f) for f in args.reference_formats
         ],
         compliance_profile=args.compliance_profile,
-        embed_subflows=not args.split_subflows,
     )
 
 
@@ -163,50 +158,98 @@ def _write_diagnostics(outputs: CompilationOutputs, agent_dist: Path) -> None:
     )
 
 
-def _write_artifacts(outputs: CompilationOutputs, agent_dist: Path) -> list[Path]:
-    """Write the System Prompt, subflow documents, and Reference Asset.
+def _subflow_appendix(documents: dict[str, str]) -> str:
+    """Return subflow documents as one trailing block, or ``""`` when empty.
 
-    Returns the list of written paths.
+    Subflow content is normally embedded directly in the rendered prompt
+    (``embed_subflows=True``). If a caller opted out (``--split-subflows``),
+    the documents are still folded into the single output file here rather
+    than written as loose ``subflows/*.md`` — the flow must live in
+    ``system_prompt.md`` / ``knowledge_base.md``, never in a side folder.
     """
+    if not documents:
+        return ""
+    body = "\n\n".join(content.strip() for _, content in sorted(documents.items()))
+    return "\n\n" + body + "\n"
+
+
+def _write_reference_asset(outputs: CompilationOutputs, target: Path) -> list[Path]:
+    """Write ``reference_asset.md`` / ``.json`` into ``target`` when present."""
     written: list[Path] = []
-
-    prompt_path = agent_dist / "system_prompt.md"
-    prompt_path.write_text(outputs.system_prompt, encoding="utf-8")
-    written.append(prompt_path)
-
-    if outputs.subflow_documents:
-        subflows_dir = agent_dist / "subflows"
-        subflows_dir.mkdir(parents=True, exist_ok=True)
-        for namespace, content in sorted(outputs.subflow_documents.items()):
-            sf_path = subflows_dir / f"{namespace}.md"
-            sf_path.write_text(content, encoding="utf-8")
-            written.append(sf_path)
-
-    if outputs.system_prompt_mini is not None:
-        prompt_mini_path = agent_dist / "system_prompt_mini.md"
-        prompt_mini_path.write_text(outputs.system_prompt_mini, encoding="utf-8")
-        written.append(prompt_mini_path)
-
-        if outputs.subflow_documents_mini:
-            subflows_mini_dir = agent_dist / "subflows_mini"
-            subflows_mini_dir.mkdir(parents=True, exist_ok=True)
-            for namespace, content in sorted(outputs.subflow_documents_mini.items()):
-                sf_mini_path = subflows_mini_dir / f"{namespace}.md"
-                sf_mini_path.write_text(content, encoding="utf-8")
-                written.append(sf_mini_path)
-
     if outputs.reference_asset_markdown is not None:
-        ref_md_path = agent_dist / "reference_asset.md"
+        ref_md_path = target / "reference_asset.md"
         ref_md_path.write_text(outputs.reference_asset_markdown, encoding="utf-8")
         written.append(ref_md_path)
-
     if outputs.reference_asset_json is not None:
-        ref_json_path = agent_dist / "reference_asset.json"
+        ref_json_path = target / "reference_asset.json"
         ref_json_path.write_text(
             json.dumps(outputs.reference_asset_json, ensure_ascii=False, indent=2),
             encoding="utf-8",
         )
         written.append(ref_json_path)
+    return written
+
+
+def _write_artifacts(outputs: CompilationOutputs, agent_dist: Path) -> list[Path]:
+    """Write the ``full/`` and ``split/`` artifact bundles.
+
+    ``full/`` holds the monolithic System Prompt (+ mini) and the Reference
+    Asset. ``split/`` holds the deploy-platform package: a 3-section profile
+    document (PERSONALITY / GOAL / INSTRUCTIONS), a standalone
+    CONVERSATION_FLOW knowledge base (+ mini) and a copy of the Reference
+    Asset. Subflow content is always folded into ``system_prompt.md`` /
+    ``knowledge_base.md`` — never written as a side folder. Returns the list
+    of written paths.
+    """
+    written: list[Path] = []
+
+    subflows = _subflow_appendix(outputs.subflow_documents)
+    subflows_mini = _subflow_appendix(outputs.subflow_documents_mini)
+
+    full_dir = agent_dist / "full"
+    full_dir.mkdir(parents=True, exist_ok=True)
+
+    prompt_path = full_dir / "system_prompt.md"
+    prompt_path.write_text(outputs.system_prompt + subflows, encoding="utf-8")
+    written.append(prompt_path)
+
+    if outputs.system_prompt_mini is not None:
+        prompt_mini_path = full_dir / "system_prompt_mini.md"
+        prompt_mini_path.write_text(
+            outputs.system_prompt_mini + subflows_mini, encoding="utf-8"
+        )
+        written.append(prompt_mini_path)
+
+    written += _write_reference_asset(outputs, full_dir)
+
+    split_dir = agent_dist / "split"
+    split_dir.mkdir(parents=True, exist_ok=True)
+
+    split_prompt_path = split_dir / "system_prompt.md"
+    split_prompt_path.write_text(outputs.split_system_prompt, encoding="utf-8")
+    written.append(split_prompt_path)
+
+    split_kb_path = split_dir / "knowledge_base.md"
+    split_kb_path.write_text(
+        outputs.split_knowledge_base + subflows, encoding="utf-8"
+    )
+    written.append(split_kb_path)
+
+    if outputs.split_system_prompt_mini is not None:
+        split_prompt_mini_path = split_dir / "system_prompt_mini.md"
+        split_prompt_mini_path.write_text(
+            outputs.split_system_prompt_mini, encoding="utf-8"
+        )
+        written.append(split_prompt_mini_path)
+
+    if outputs.split_knowledge_base_mini is not None:
+        split_kb_mini_path = split_dir / "knowledge_base_mini.md"
+        split_kb_mini_path.write_text(
+            outputs.split_knowledge_base_mini + subflows_mini, encoding="utf-8"
+        )
+        written.append(split_kb_mini_path)
+
+    written += _write_reference_asset(outputs, split_dir)
 
     return written
 
@@ -234,6 +277,21 @@ def _print_summary(outputs: CompilationOutputs) -> None:
             f"+ {s.estimated_subflows_mini_chars} subflow ({reduction}% smaller than full)"
         )
     print(f"Reference Asset chars: {s.estimated_reference_asset_chars}")
+
+    counts = section_word_counts(outputs.split_system_prompt)
+    kb_words = len(outputs.split_knowledge_base.split())
+    print(
+        "Split package (words): "
+        f"PERSONALITY {counts['PERSONALITY']} · GOAL {counts['GOAL']} · "
+        f"INSTRUCTIONS {counts['INSTRUCTIONS']} · KB {kb_words}"
+    )
+    for name, count in counts.items():
+        if count > SPLIT_SYSTEM_PROMPT_WORD_LIMIT:
+            print(
+                f"[!] Split package: {name} is {count} words, over the "
+                f"{SPLIT_SYSTEM_PROMPT_WORD_LIMIT}-word profile-field limit."
+            )
+
     print(f"Duplicate rules: {s.duplicate_rules_found}")
     n_err = len(outputs.validation_report.errors)
     n_warn = len(outputs.validation_report.warnings)

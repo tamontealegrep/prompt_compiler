@@ -56,6 +56,10 @@ def test_compile_minimal_agent_is_deterministic_across_two_runs():
     assert first.system_prompt == second.system_prompt
     assert first.reference_asset_markdown == second.reference_asset_markdown
     assert first.reference_asset_json == second.reference_asset_json
+    assert first.split_system_prompt == second.split_system_prompt
+    assert first.split_knowledge_base == second.split_knowledge_base
+    assert first.split_system_prompt_mini == second.split_system_prompt_mini
+    assert first.split_knowledge_base_mini == second.split_knowledge_base_mini
 
 
 def test_compile_minimal_agent_with_compliance_profile_flags_the_missing_disclaimer():

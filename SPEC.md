@@ -183,7 +183,9 @@ A full read of every `app/` module plus both Jinja templates (see decision log e
                                 ▼
         ┌──────────────────────────────────────────────────┐
         │  dist/<agent_id>/                                  │
-        │    system_prompt.md   reference_asset.{md,json}    │
+        │    full/   system_prompt.md  reference_asset.*     │
+        │    split/  system_prompt.md (PERSONALITY/GOAL/     │
+        │            INSTRUCTIONS)  knowledge_base.md  …      │
         │    reports/{validation,deduplication,orphan}.md    │
         └──────────────────────────────────────────────────┘
 
@@ -377,6 +379,16 @@ B6 (disclaimer checker should scan `say`, not `goal`/`do`), B7 (tool vs. tool-co
 ---
 
 ## 13. Decision log
+
+### 2026-09-02 — `dist/<agent_id>/` split into `full/` + `split/`; deploy-platform "split" package
+
+**Context:** A target hosting platform caps the agent profile field that holds identity + goal + behavioral instructions (~2000 words) and indexes the conversational flow separately as a knowledge base. The monolithic `system_prompt.md` cannot be pasted into it whole.
+
+**Decision (repo owner):** On every build, also emit a deploy-platform package. `compile_agent()` now returns `split_system_prompt` / `split_knowledge_base` (+ `_mini`), produced by `app/split_package.py` as a **pure re-slice** of the already-rendered prompt — no new templates, no re-rendering, so the platform receives byte-for-byte the monolith's text. The split point is the `# CONVERSATION_FLOW` header; `# IDENTITY` → `# PERSONALITY`, `# OBJECTIVES` → `# GOAL`, and the remaining head sections (CONVENTIONS, SYSTEM CONSTANTS, INPUT VARIABLES, AGENT TOOLS, GLOBAL OPERATING POLICIES) become `# INSTRUCTIONS`. `FLOW_DSL_INTERPRETATION` goes to the knowledge base (matching the platform's own mapping — folding it into INSTRUCTIONS pushes that field to ~3.5k words). `build_prompt.py` now writes `dist/<agent_id>/full/` (the monolithic artifacts, formerly flat) and `dist/<agent_id>/split/` (the new package); `reports/` and `diagrams/` are unchanged. The build summary prints per-section word counts and flags any over 2000 (informational, never a build failure — INSTRUCTIONS alone can exceed it on a policy-heavy agent; trimming that is a content decision).
+
+**Subflows are always embedded.** Subflow states live inside `full/system_prompt.md` and `split/knowledge_base.md` — no `subflows/` side folder is ever written. The `--split-subflows` CLI flag was removed (the `embed_subflows` field stays on `CompilationParams`, defaulting to `True`, reachable only from tests); `build_prompt.py::_write_artifacts()` folds any subflow documents into the single file via `_subflow_appendix()`. The `main.py` TUI drops the "embed subflows?" question and now asks the channel *before* the "use defaults?" prompt (so compiling a text agent doesn't force the full options wizard).
+
+**Not done:** no CLI flag or `CompilationParams` field for the split package — it is always produced (SSOT: the classifier-style split stays non-configurable). No template, `schemas.py` DSL-grammar, validator or classifier change.
 
 ### 2026-08-28 — Bilingual mini template: acknowledged as untracked WIP, not committed pending phase 26
 

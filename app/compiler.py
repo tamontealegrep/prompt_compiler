@@ -19,7 +19,9 @@ ties together every previous phase into one pipeline:
 7. **Rendering** — System Prompt via Jinja2 and, when requested, the
    Reference Asset in Markdown and/or JSON (:mod:`app.renderers`). Also
    renders a compact-notation companion System Prompt ("mini") when the
-   agent's template has a ``*_mini.md.j2`` sibling on disk.
+   agent's template has a ``*_mini.md.j2`` sibling on disk, and re-slices
+   each rendered prompt into a deploy-platform "split" package
+   (:mod:`app.split_package`).
 
 The orchestrator never writes to disk — that is the CLI's job
 (:mod:`build_prompt`). It returns a :class:`CompilationOutputs`
@@ -58,6 +60,7 @@ from app.schemas import (
     CompilationStats,
     ReferenceAssetFormat,
 )
+from app.split_package import split_system_prompt
 from app.validators import build_orphan_state_report, validate_agent_spec
 
 
@@ -144,6 +147,16 @@ def compile_agent(
         if not params.embed_subflows:
             subflow_documents_mini = render_all_subflow_documents_mini(spec)
 
+    # Deploy-platform "split" package: re-slice the rendered prompt into a
+    # PERSONALITY/GOAL/INSTRUCTIONS profile document plus a standalone
+    # CONVERSATION_FLOW knowledge base. Pure string surgery on already-rendered
+    # output — nothing is re-rendered.
+    split_sp, split_kb = split_system_prompt(system_prompt)
+    if system_prompt_mini is not None:
+        split_sp_mini, split_kb_mini = split_system_prompt(system_prompt_mini)
+    else:
+        split_sp_mini = split_kb_mini = None
+
     reference_asset_markdown: str | None = None
     reference_asset_json: dict | None = None
 
@@ -179,6 +192,10 @@ def compile_agent(
         subflow_documents_mini=subflow_documents_mini,
         reference_asset_markdown=reference_asset_markdown,
         reference_asset_json=reference_asset_json,
+        split_system_prompt=split_sp,
+        split_knowledge_base=split_kb,
+        split_system_prompt_mini=split_sp_mini,
+        split_knowledge_base_mini=split_kb_mini,
         validation_report=validation_report,
         deduplication_report=dedup_report,
         orphan_report=orphan_report,

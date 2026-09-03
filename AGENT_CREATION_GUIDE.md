@@ -41,8 +41,9 @@ This guide walks through every step required to define a new agent in the Prompt
 
 An agent is defined entirely in YAML. The compiler reads those files, validates them, and produces:
 
-- **`system_prompt.md`** — the agent's behavioral logic (state machine, handlers, FAQs, policies)
-- **`reference_asset.md` / `.json`** — static facts optimized for RAG retrieval
+- **`full/system_prompt.md`** — the agent's behavioral logic (state machine, handlers, FAQs, policies)
+- **`full/reference_asset.md` / `.json`** — static facts optimized for RAG retrieval
+- **`split/`** — a re-slice of the same prompt for hosting platforms that cap the profile field: `system_prompt.md` (`# PERSONALITY` / `# GOAL` / `# INSTRUCTIONS`) plus `knowledge_base.md` (the `CONVERSATION_FLOW` block)
 
 The source of truth is always the YAML. Never edit the compiled output directly.
 
@@ -687,8 +688,8 @@ Use this checklist before deploying any new agent or any change that affects a t
 **Deployment gate**
 
 - Rebuild the affected agent and confirm validation reports show `0 errors` and `0 warnings`.
-- Inspect the rendered `system_prompt_mini.md` to ensure the `ACT` nodes still read as imperative execution steps rather than descriptive guidance.
-- Inspect the rendered `reference_asset.md` to ensure the contract wording remained canonical and readable after compilation.
+- Inspect the rendered `full/system_prompt_mini.md` to ensure the `ACT` nodes still read as imperative execution steps rather than descriptive guidance.
+- Inspect the rendered `full/reference_asset.md` to ensure the contract wording remained canonical and readable after compilation.
 - If possible, run at least one transcript or simulation that reaches each changed `action` node and verify the model actually calls the tool instead of hallucinating the answer.
 
 #### Short PR checklist
@@ -1171,7 +1172,6 @@ python app/build_prompt.py agents/defs/my_agent \
   --reference-formats markdown json \
   --compliance-profile medical_es \
   --fail-on-warnings \
-  --split-subflows \
   --dist-dir dist
 ```
 

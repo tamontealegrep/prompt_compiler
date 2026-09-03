@@ -343,7 +343,6 @@ _DEFAULT_OPTS: dict = {
     "compliance_profile": None,
     "fail_on_warnings": False,
     "no_reference_asset": False,
-    "embed_subflows": True,
 }
 
 
@@ -359,8 +358,6 @@ def _opts_summary(opts: dict) -> str:
         parts.append(f"compliance={opts['compliance_profile']}")
     if opts.get("fail_on_warnings"):
         parts.append("fail-on-warnings")
-    if not opts.get("embed_subflows", True):
-        parts.append("split-subflows")
 
     return ", ".join(parts)
 
@@ -419,11 +416,6 @@ def _configure_opts(current: dict, breadcrumb: str) -> dict:
         default=opts.get("fail_on_warnings", False),
     )
 
-    opts["embed_subflows"] = _confirm(
-        "¿Embeber subflows en el system_prompt? (archivo único, sin carpeta subflows/)",
-        default=opts.get("embed_subflows", True),
-    )
-
     return opts
 
 
@@ -443,9 +435,6 @@ def _build_cmd(config_name: str, opts: dict) -> list[str]:
 
     if opts.get("fail_on_warnings"):
         cmd += ["--fail-on-warnings"]
-
-    if not opts.get("embed_subflows", True):
-        cmd += ["--split-subflows"]
 
     return cmd
 
@@ -625,6 +614,15 @@ def _flow_compile() -> None:
 
     breadcrumb = f"compilar  >  {config}"
     opts = _DEFAULT_OPTS.copy()
+
+    channel = _select(
+        _list_channels(),
+        message="Canal",
+        breadcrumb=breadcrumb,
+        back_label=f"(mantener: {opts['channel']})",
+    )
+    if channel:
+        opts["channel"] = channel
 
     if not _confirm(f"¿Usar opciones por defecto ({_opts_summary(opts)})?", default=True):
         opts = _configure_opts(opts, breadcrumb)

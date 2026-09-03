@@ -1189,6 +1189,12 @@ class CompilationOutputs:
     section). ``system_prompt_mini`` is ``None`` when the agent's manifest
     template has no ``*_mini.md.j2`` companion on disk — mini rendering is
     skipped rather than failing the whole compile in that case.
+
+    ``split_system_prompt`` / ``split_knowledge_base`` (and their ``_mini``
+    companions) re-slice the rendered System Prompt into a deploy-platform
+    package: a 3-section profile document (PERSONALITY / GOAL / INSTRUCTIONS)
+    plus a standalone CONVERSATION_FLOW knowledge base, for platforms that cap
+    the profile field and index the flow separately (see ``app/split_package.py``).
     """
 
     agent_id: str
@@ -1198,6 +1204,10 @@ class CompilationOutputs:
     subflow_documents_mini: dict[str, str]
     reference_asset_markdown: str | None
     reference_asset_json: dict[str, Any] | None
+    split_system_prompt: str
+    split_knowledge_base: str
+    split_system_prompt_mini: str | None
+    split_knowledge_base_mini: str | None
     validation_report: ValidationReport
     deduplication_report: DeduplicationReport
     orphan_report: str

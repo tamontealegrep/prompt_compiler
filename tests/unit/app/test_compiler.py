@@ -33,6 +33,17 @@ def test_compile_agent_renders_mini_prompt_when_companion_template_exists():
     assert outputs.stats.estimated_system_prompt_mini_chars == len(outputs.system_prompt_mini)
 
 
+def test_compile_agent_produces_the_split_package():
+    outputs = compile_agent(MINIMAL_AGENT_DIR, CompilationParams(channel=ChannelType.VOICE))
+    assert outputs.split_system_prompt.startswith("# PERSONALITY\n")
+    assert "# GOAL" in outputs.split_system_prompt
+    assert "# INSTRUCTIONS" in outputs.split_system_prompt
+    assert outputs.split_knowledge_base.startswith("# CONVERSATION_FLOW\n")
+    # mini companion exists for the minimal fixture template
+    assert outputs.split_system_prompt_mini is not None
+    assert outputs.split_knowledge_base_mini is not None
+
+
 def test_compile_agent_skips_mini_prompt_when_companion_template_is_absent(
     tmp_path, monkeypatch
 ):
@@ -54,6 +65,10 @@ def test_compile_agent_skips_mini_prompt_when_companion_template_is_absent(
     assert outputs.system_prompt_mini is None
     assert outputs.subflow_documents_mini == {}
     assert outputs.stats.estimated_system_prompt_mini_chars is None
+    # the split package still comes from the full prompt; its mini side is None
+    assert outputs.split_system_prompt.startswith("# PERSONALITY\n")
+    assert outputs.split_system_prompt_mini is None
+    assert outputs.split_knowledge_base_mini is None
 
 
 def test_compile_agent_mini_respects_embed_subflows_false():

@@ -52,16 +52,27 @@ python app/build_prompt.py agents/defs/my_agent --channel voice --verbosity stan
 
 ```
 dist/my_agent/
-├── system_prompt.md
-├── system_prompt_mini.md   # compact-notation companion — only written when the
-│                           # agent's template has a *_mini.md.j2 companion on disk
-├── reference_asset.md
-├── reference_asset.json
-└── reports/
-    ├── validation_report.md
-    ├── deduplication_report.md
-    └── orphan_states_report.md
+├── full/                    # the monolithic prompt
+│   ├── system_prompt.md
+│   ├── system_prompt_mini.md   # compact-notation companion — only written when the
+│   │                           # agent's template has a *_mini.md.j2 companion on disk
+│   ├── reference_asset.md
+│   └── reference_asset.json
+├── split/                   # deploy-platform package (see below)
+│   ├── system_prompt.md        # # PERSONALITY / # GOAL / # INSTRUCTIONS
+│   ├── system_prompt_mini.md
+│   ├── knowledge_base.md       # the CONVERSATION_FLOW block, indexed separately
+│   ├── knowledge_base_mini.md
+│   ├── reference_asset.md
+│   └── reference_asset.json
+├── reports/
+│   ├── validation_report.md
+│   ├── deduplication_report.md
+│   └── orphan_states_report.md
+└── diagrams/                 # Mermaid state diagrams (generated from the TUI)
 ```
+
+`split/` is for hosting platforms that cap the agent profile field and index the flow as a knowledge base: `split/system_prompt.md` re-labels `IDENTITY`→`PERSONALITY` and `OBJECTIVES`→`GOAL`, groups the rest under `INSTRUCTIONS`, and moves the whole `CONVERSATION_FLOW` (DSL rules, handlers, FAQs, states) into `knowledge_base.md`. It is a pure re-slice — every byte comes from `full/system_prompt.md`. Subflow states are always embedded in `system_prompt.md` / `knowledge_base.md`, never written as separate files. The build summary prints each section's word count and flags any over 2000.
 
 `system_prompt_mini.md` encodes the exact same STATES/HANDLERS/FAQS content as `system_prompt.md`, just denser — no information is dropped, only fields that are already fully implied by context (e.g. `WAIT`/`FINAL`, which are now fully determined by each node's type) are left unstated. See `SPEC.md`'s decision log for the compression rules and measured results. It has **not** been empirically validated against a live LLM yet — treat it as a second, opt-in artifact for now, not a drop-in replacement for `system_prompt.md`.
 
@@ -127,7 +138,6 @@ python build_prompt.py <config_dir> [options]
 | `--compliance-profile` | *(none)* | Compliance rule set to apply (e.g. `medical_es`) |
 | `--no-reference-asset` | `false` | Skip generating the reference asset entirely |
 | `--fail-on-warnings` | `false` | Treat validation warnings as fatal errors |
-| `--split-subflows` | `false` | Write each subflow to its own file under `dist/subflows/` |
 | `--dist-dir` | `dist` | Root output directory |
 
 **Exit codes:** `0` success, `1` validation/fatal error, `2` argument error.
@@ -230,15 +240,17 @@ After a successful compilation, `dist/<agent_id>/` contains:
 
 | File | Description |
 |---|---|
-| `system_prompt.md` | The agent's control logic — state machine, handlers, FAQs, policies |
-| `reference_asset.md` | Static facts formatted for RAG retrieval (Markdown) |
-| `reference_asset.json` | Same content as a stable JSON object |
-| `subflows/<NS>.md` | Per-subflow documents (only with `--split-subflows`) |
+| `full/system_prompt.md` | The agent's control logic — state machine, handlers, FAQs, policies |
+| `full/system_prompt_mini.md` | Compact-notation companion (only with a `*_mini.md.j2` template) |
+| `full/reference_asset.md` / `.json` | Static facts formatted for RAG retrieval |
+| `split/system_prompt.md` | Deploy-platform profile fields: `# PERSONALITY` / `# GOAL` / `# INSTRUCTIONS` |
+| `split/knowledge_base.md` (+ `_mini`) | The `CONVERSATION_FLOW` block, for platforms that index it separately |
+| `split/reference_asset.md` / `.json` | Copy of the reference asset |
 | `reports/validation_report.md` | All errors and warnings from the 11 graph validators |
 | `reports/deduplication_report.md` | Groups of textually duplicate rules |
 | `reports/orphan_states_report.md` | States that are defined but not reachable from start |
 
-Reports are always written. `system_prompt.md` and `reference_asset.*` are written only when validation passes (no errors).
+Reports are always written. `full/` and `split/` are written only when validation passes (no errors).
 
 ---
 
