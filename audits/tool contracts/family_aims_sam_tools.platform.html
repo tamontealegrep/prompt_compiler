@@ -262,7 +262,6 @@ code.inl{font-family:"IBM Plex Mono",monospace;font-size:.9em;background:var(--c
   <a href="#cancel_appointment">cancel_appointment</a>
   <a href="#time_now">time_now</a>
   <a href="#callback">callback</a>
-  <a href="#contact_attempt">contact_attempt</a>
   <a href="#matriz">Matriz</a>
 </nav>
 
@@ -458,9 +457,9 @@ Captura &lt;output&gt; [en &lt;slot&gt;] antes de &lt;continuar | ofrecer X | co
       <tr><th>arg</th><th>oblig.</th><th>enum</th><th>descripción</th><th>ejemplo</th></tr>
       <tr>
         <td class="arg">calendar_type</td>
-        <td><span class="pill req">true</span></td>
+        <td><span class="pill const">const</span></td>
         <td><span class="enum">IVF · SUR</span></td>
-        <td>Literal del calendario a usar: fertilización in vitro (<code>IVF</code>) o gestación subrogada (<code>SUR</code>). Lo fija el nodo del flujo: <code>SC__SC_AV_I</code> → <code>IVF</code>, <code>SC__SC_AV_S</code> → <code>SUR</code>. No proviene de un slot.</td>
+        <td>Literal constante del calendario a usar, fijada por el nodo del flujo (no la captura ni la elige el modelo): <code>SC__SC_AV_I</code> → <code>IVF</code> (fertilización in vitro), <code>SC__SC_AV_S</code> → <code>SUR</code> (gestación subrogada). Mismo endpoint en ambos casos; solo cambia el valor de la constante.</td>
         <td><span class="ex">IVF</span></td>
       </tr>
       <tr>
@@ -471,7 +470,7 @@ Captura &lt;output&gt; [en &lt;slot&gt;] antes de &lt;continuar | ofrecer X | co
         <td><span class="ex">America/Bogota</span></td>
       </tr>
     </table></div>
-    <p style="font-size:.9rem;color:var(--muted);margin:10px 2px 0">Nota de coherencia: los bloques <code class="inl">do</code> de <code class="inl">SC_AV_I</code>/<code class="inl">SC_AV_S</code> en <code class="inl">subflows/scheduling.yaml</code> solo mencionan <code class="inl">iana_timezone</code>; <code class="inl">tool_contracts.yaml</code> y el JSON exigen además <code class="inl">calendar_type</code>. El contrato manda: <code class="inl">calendar_type</code> es obligatorio y lo determina el nodo.</p>
+    <p style="font-size:.9rem;color:var(--muted);margin:10px 2px 0"><code class="inl">SC_AV_I</code> y <code class="inl">SC_AV_S</code> llaman al mismo endpoint; <code class="inl">calendar_type</code> es una constante distinta por nodo. Por eso el bloque <code class="inl">do</code> del subflow no necesita mencionarla como argumento a mapear.</p>
 
     <details class="json"><summary>ejemplo de llamada</summary>
 <pre>// nodo SC__SC_AV_I — servicio activo = ivf
@@ -523,7 +522,7 @@ get_available_slots({ "calendar_type": "IVF", "iana_timezone": "America/Bogota" 
     <div class="field-label">argumentos</div>
     <div class="tbl-scroll"><table>
       <tr><th>arg</th><th>oblig.</th><th>enum</th><th>descripción</th><th>ejemplo</th></tr>
-      <tr><td class="arg">calendar_type</td><td><span class="pill req">true</span></td><td><span class="enum">IVF · SUR</span></td><td>Calendario donde se hace la reserva. Debe coincidir con la llamada de disponibilidad. Lo fija el nodo (<code>SC__SC_BOOK_I</code>/<code>_S</code>).</td><td><span class="ex">IVF</span></td></tr>
+      <tr><td class="arg">calendar_type</td><td><span class="pill const">const</span></td><td><span class="enum">IVF · SUR</span></td><td>Literal constante del calendario donde se hace la reserva, fijada por el nodo: <code>SC__SC_BOOK_I</code> → <code>IVF</code>, <code>SC__SC_BOOK_S</code> → <code>SUR</code>. Mismo endpoint; coincide con el usado en get_available_slots.</td><td><span class="ex">IVF</span></td></tr>
       <tr><td class="arg">start_date</td><td><span class="pill req">true</span></td><td><span class="dash">—</span></td><td>Inicio en ISO 8601 con offset. Copia LITERAL del campo <code>start_co</code> del objeto de <code>[available_slots]</code> elegido en <code>[slot]</code>. No conviertas, redondees ni reformatees el offset.</td><td><span class="ex">2026-06-04T08:00:00-05:00</span></td></tr>
       <tr><td class="arg">duration</td><td><span class="pill const">const</span></td><td><span class="dash">— (const)</span></td><td>Duración en minutos. Valor fijo del flujo (<code>APPOINTMENT_DURATION_MINUTES</code> = 30). No proviene de un slot.</td><td><span class="ex">30</span></td></tr>
       <tr><td class="arg">language</td><td><span class="pill const">const</span> / <span class="pill opt">enum</span></td><td><span class="enum">EN · ES · PT</span></td><td>Código de idioma de dos letras (<code>TOOL_LANGUAGE_CODE</code>) para la confirmación y las notificaciones. <b>Const</b> en las variantes de voz (ES / EN / PT); en <code>_text</code> sale del slot <code>[preferred_language]</code>, el idioma de la conversación activa.</td><td><span class="ex">ES</span></td></tr>
@@ -773,62 +772,15 @@ callback({
   </div>
 </section>
 
-<!-- ============ CONTACT_ATTEMPT ============ -->
-<section id="contact_attempt">
-  <h2><span class="n">09</span>contact_attempt</h2>
-  <div class="tool">
-    <div class="tool-head"><h3>contact_attempt</h3><span class="node write">CALL_NO_ANSWER_LOG</span></div>
-    <p class="role">Registra un intento de contacto fallido para el lead actual e incrementa el contador de intentos del CRM. Solo en las variantes de voz (no en <code class="inl">_text</code>).</p>
-
-    <div class="field-label grp">description</div>
-    <div class="field-label">description <span class="lang">ES</span> <span class="counter" data-count>·</span></div>
-    <div class="paste" data-measure>Herramienta autorizada para registrar un intento de contacto fallido del lead actual. Incrementa el contador de intentos en el CRM. Se llama en el nodo CALL_NO_ANSWER_LOG cuando nadie contesta la llamada, antes de cerrar la sesión. No confirma nada al lead: solo registra.</div>
-    <div class="field-label">description <span class="lang">EN</span> <span class="counter" data-count>·</span></div>
-    <div class="paste" data-measure>Authorized tool to log a failed contact attempt for the current lead. Increments the attempt counter in the CRM. Called in node CALL_NO_ANSWER_LOG when nobody answers the call, before closing the session. It confirms nothing to the lead: it only logs.</div>
-    <div class="field-label">description <span class="lang">PT</span> <span class="counter" data-count>·</span></div>
-    <div class="paste" data-measure>Ferramenta autorizada para registrar uma tentativa de contato malsucedida do lead atual. Incrementa o contador de tentativas no CRM. Chamada no nó CALL_NO_ANSWER_LOG quando ninguém atende a ligação, antes de encerrar a sessão. Não confirma nada ao lead: apenas registra.</div>
-
-    <div class="field-label grp">trigger_prompt · HARD</div>
-    <div class="field-label">trigger_prompt <span class="lang">ES</span> <span class="kind hard">hard</span> <span class="counter" data-count>·</span></div>
-    <div class="paste hard" data-measure>EJECUTA contact_attempt AHORA en el nodo CALL_NO_ANSWER_LOG, como única acción del turno, SIN EXCEPCIÓN. NO cierres la sesión antes de capturar attempt_registered. ARGUMENTO: contact_phone = {{contact.phone}}.</div>
-    <div class="field-label">trigger_prompt <span class="lang">EN</span> <span class="kind hard">hard</span> <span class="counter" data-count>·</span></div>
-    <div class="paste hard" data-measure>EXECUTE contact_attempt NOW in node CALL_NO_ANSWER_LOG, as the only action of the turn, WITHOUT EXCEPTION. Do NOT close the session before capturing attempt_registered. ARGUMENT: contact_phone = {{contact.phone}}.</div>
-    <div class="field-label">trigger_prompt <span class="lang">PT</span> <span class="kind hard">hard</span> <span class="counter" data-count>·</span></div>
-    <div class="paste hard" data-measure>EXECUTE contact_attempt AGORA no nó CALL_NO_ANSWER_LOG, como única ação do turno, SEM EXCEÇÃO. NÃO encerre a sessão antes de capturar attempt_registered. ARGUMENTO: contact_phone = {{contact.phone}}.</div>
-
-    <div class="field-label grp">trigger_prompt · SOFT <span style="text-transform:none;letter-spacing:0;font-size:11px">— va en el campo <code class="inl">description</code> del JSON</span></div>
-    <div class="field-label">trigger_prompt <span class="lang">ES</span> <span class="kind soft">soft</span> <span class="counter" data-count>·</span></div>
-    <div class="paste soft" data-measure>Llama a contact_attempt solo cuando el flujo esté en el nodo CALL_NO_ANSWER_LOG (nadie contestó la llamada). Argumento: contact_phone = {{contact.phone}}. Captura attempt_registered antes de cerrar la sesión.</div>
-    <div class="field-label">trigger_prompt <span class="lang">EN</span> <span class="kind soft">soft</span> <span class="counter" data-count>·</span></div>
-    <div class="paste soft" data-measure>Call contact_attempt only when the flow is in node CALL_NO_ANSWER_LOG (nobody answered the call). Argument: contact_phone = {{contact.phone}}. Capture attempt_registered before closing the session.</div>
-    <div class="field-label">trigger_prompt <span class="lang">PT</span> <span class="kind soft">soft</span> <span class="counter" data-count>·</span></div>
-    <div class="paste soft" data-measure>Chame contact_attempt só quando o fluxo estiver no nó CALL_NO_ANSWER_LOG (ninguém atendeu a ligação). Argumento: contact_phone = {{contact.phone}}. Capture attempt_registered antes de encerrar a sessão.</div>
-
-    <div class="field-label">argumentos</div>
-    <div class="tbl-scroll"><table>
-      <tr><th>arg</th><th>oblig.</th><th>enum</th><th>descripción</th><th>ejemplo</th></tr>
-      <tr><td class="arg">contact_phone</td><td><span class="pill const">const</span></td><td><span class="dash">— (const)</span></td><td>Teléfono del lead al que se intentó contactar. Se inyecta desde la variable de sistema <code>{{contact.phone}}</code>, no desde un slot del subflujo.</td><td><span class="ex">+573001234567</span></td></tr>
-    </table></div>
-
-    <details class="json"><summary>ejemplo de llamada</summary>
-<pre>// nodo CALL_NO_ANSWER_LOG — nadie contestó
-contact_attempt({ "contact_phone": "{{contact.phone}}" })
-
-{ "attempt_registered": "yes" }
-// → el flujo cierra vía CALL_END_NO_ANSWER</pre>
-    </details>
-  </div>
-</section>
-
 <!-- ============ MATRIZ ============ -->
 <section id="matriz">
-  <h2><span class="n">10</span>Matriz de obligatoriedad y enumeración</h2>
+  <h2><span class="n">09</span>Matriz de obligatoriedad y enumeración</h2>
   <p class="section-note">Regla general: <code class="inl">required: true</code> solo cuando el grafo garantiza estructuralmente el valor antes del nodo. <code class="inl">const</code> nunca va en <code class="inl">required</code>. Todo lo que puede llegar vacío en el momento de la llamada → <code class="inl">required: false</code>. Nombres de argumento en <code class="inl">snake_case</code> en las tres capas.</p>
   <div class="tbl-scroll"><table class="matrix">
     <tr><th>herramienta</th><th>argumento</th><th>slot / origen</th><th>obligatorio</th><th>enum</th><th>nota</th></tr>
-    <tr><td class="arg">get_available_slots</td><td class="arg">calendar_type</td><td>nodo del flujo</td><td><span class="pill req">true</span></td><td><code>IVF · SUR</code></td><td>lo fija <code>SC__SC_AV_I</code>/<code>_S</code>; el bloque <code>do</code> del subflow no lo menciona — el contrato manda</td></tr>
+    <tr><td class="arg">get_available_slots</td><td class="arg">calendar_type</td><td>constante del nodo</td><td><span class="pill const">const</span></td><td><code>IVF · SUR</code></td><td>mismo endpoint; <code>SC__SC_AV_I</code> → <code>IVF</code>, <code>SC__SC_AV_S</code> → <code>SUR</code></td></tr>
     <tr><td class="arg">get_available_slots</td><td class="arg">iana_timezone</td><td><code>[user_timezone]</code></td><td><span class="pill req">true</span></td><td>—</td><td><code>SC__SC_NORM_TZ</code> lo resuelve del país/ciudad</td></tr>
-    <tr><td class="arg">book_appointment</td><td class="arg">calendar_type</td><td>nodo del flujo</td><td><span class="pill req">true</span></td><td><code>IVF · SUR</code></td><td>debe coincidir con la disponibilidad</td></tr>
+    <tr><td class="arg">book_appointment</td><td class="arg">calendar_type</td><td>constante del nodo</td><td><span class="pill const">const</span></td><td><code>IVF · SUR</code></td><td>mismo endpoint; coincide con la disponibilidad</td></tr>
     <tr><td class="arg">book_appointment</td><td class="arg">start_date</td><td><code>[slot]</code> → <code>start_co</code></td><td><span class="pill req">true</span></td><td>—</td><td>copia literal; sin reformatear el offset</td></tr>
     <tr><td class="arg">book_appointment</td><td class="arg">duration</td><td>— (const)</td><td><span class="pill const">const 30</span></td><td>—</td><td><code>APPOINTMENT_DURATION_MINUTES</code></td></tr>
     <tr><td class="arg">book_appointment</td><td class="arg">language</td><td>const / <code>[preferred_language]</code></td><td><span class="pill const">const</span> / <span class="pill opt">enum</span></td><td><code>EN · ES · PT</code></td><td>const en voz; enum desde <code>[preferred_language]</code> en <code>_text</code></td></tr>
@@ -851,12 +803,11 @@ contact_attempt({ "contact_phone": "{{contact.phone}}" })
     <tr><td class="arg">callback</td><td class="arg">preferred_days</td><td><code>[pref_days]</code></td><td><span class="pill opt">false</span></td><td><code>monday…sunday · weekdays · weekend · any</code></td><td>solo si expresó preferencia</td></tr>
     <tr><td class="arg">callback</td><td class="arg">preferred_time_window</td><td><code>[pref_win]</code></td><td><span class="pill opt">false</span></td><td><code>morning · midday · afternoon · evening · any</code></td><td>solo si expresó preferencia</td></tr>
     <tr><td class="arg">callback</td><td class="arg">iana_timezone</td><td><code>[tz]</code></td><td><span class="pill req">true</span></td><td>—</td><td>la misma de get_available_slots</td></tr>
-    <tr><td class="arg">contact_attempt</td><td class="arg">contact_phone</td><td><code>{{contact.phone}}</code></td><td><span class="pill const">const</span></td><td>—</td><td>solo en las variantes de voz</td></tr>
   </table></div>
 </section>
 
 <div class="foot">
-  <p>Fuente: <code>agents/defs/family_aims_sam_{es,en,pt,text}/</code> (<code>tool_contracts.yaml</code>, <code>constants.yaml</code>, subflows <code>scheduling.yaml</code>) y contratos/subflows compartidos <code>time_now</code>, <code>callback</code>, <code>contact_attempt</code>. Los IDs de nodo asumen el namespace del manifest (<code>sc</code> → <code>SC__SC_*</code>, <code>c</code> → <code>C__CB_*</code>); <code>CALL_NO_ANSWER_LOG</code> es un estado raíz sin namespace. Nombres de slot tomados de <code>local_memory_slots</code> de cada subflujo.</p>
+  <p>Fuente: <code>agents/defs/family_aims_sam_{es,en,pt,text}/</code> (<code>tool_contracts.yaml</code>, <code>constants.yaml</code>, subflows <code>scheduling.yaml</code>) y contratos/subflows compartidos <code>time_now</code> y <code>callback</code>. Los IDs de nodo asumen el namespace del manifest (<code>sc</code> → <code>SC__SC_*</code>, <code>c</code> → <code>C__CB_*</code>); <code>CALL_NO_ANSWER_LOG</code> es un estado raíz sin namespace. Nombres de slot tomados de <code>local_memory_slots</code> de cada subflujo. <code>contact_attempt</code> (nodo <code>CALL_NO_ANSWER_LOG</code>, arg único <code>contact_phone</code> = <code>{{contact.phone}}</code>) sigue existiendo en las variantes de voz; el JSON lo mantiene, pero no se documenta aquí con ficha propia.</p>
   <p>El patrón <b>soft</b> es el que va en el campo <code>description</code> del JSON de plataforma (decisión de config). Los contadores de caracteres se calculan sobre el texto tal como se pegaría en la plataforma; el límite es 500.</p>
 </div>
 

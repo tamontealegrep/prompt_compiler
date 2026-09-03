@@ -175,8 +175,8 @@
         {
           "name": "calendar_type",
           "type": "string",
-          "description": "Literal que define o calendário a ser usado: 'IVF' para fertilização in vitro ou 'SUR' para gestação por substituição (sub-rogação). Determinado pelo nó do fluxo onde o contato se encontra (SC__SC_AV_I -> 'IVF', SC__SC_AV_S -> 'SUR').",
-          "required": true,
+          "description": "Literal constante fixado pelo nó do fluxo (não é capturado nem escolhido pelo modelo): SC__SC_AV_I -> 'IVF' (fertilização in vitro), SC__SC_AV_S -> 'SUR' (gestação por substituição). Mesmo endpoint nos dois casos.",
+          "required": false,
           "example": "IVF",
           "enum": [
             "IVF",
@@ -210,8 +210,8 @@
         {
           "name": "calendar_type",
           "type": "string",
-          "description": "Literal que define o calendário onde será feita a reserva: 'IVF' para fertilização in vitro ou 'SUR' para gestação por substituição. Deve coincidir com a chamada de disponibilidade.",
-          "required": true,
+          "description": "Literal constante fixado pelo nó do fluxo: SC__SC_BOOK_I -> 'IVF', SC__SC_BOOK_S -> 'SUR'. Mesmo endpoint; coincide com a chamada de disponibilidade.",
+          "required": false,
           "example": "IVF",
           "enum": [
             "IVF",

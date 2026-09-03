@@ -175,8 +175,8 @@
         {
           "name": "calendar_type",
           "type": "string",
-          "description": "Literal defining the calendar to use: 'IVF' for in vitro fertilization or 'SUR' for surrogacy. Determined by the flow node where the contact is located (SC__SC_AV_I -> 'IVF', SC__SC_AV_S -> 'SUR').",
-          "required": true,
+          "description": "Fixed literal set by the flow node (constant, not captured from the contact): SC__SC_AV_I -> 'IVF' (in vitro fertilization), SC__SC_AV_S -> 'SUR' (surrogacy). Same endpoint in both cases.",
+          "required": false,
           "example": "IVF",
           "enum": [
             "IVF",
@@ -210,8 +210,8 @@
         {
           "name": "calendar_type",
           "type": "string",
-          "description": "Literal defining the calendar where the booking is made: 'IVF' for in vitro fertilization or 'SUR' for surrogacy. Must match the availability call.",
-          "required": true,
+          "description": "Fixed literal set by the flow node (constant): SC__SC_BOOK_I -> 'IVF', SC__SC_BOOK_S -> 'SUR'. Same endpoint; must match the availability call.",
+          "required": false,
           "example": "IVF",
           "enum": [
             "IVF",
