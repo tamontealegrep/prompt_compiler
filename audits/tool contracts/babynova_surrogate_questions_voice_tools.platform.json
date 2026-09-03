@@ -8,8 +8,8 @@
       "tool_name": "time_now",
       "tool_id": "6a92e7e15c164443ad54ad54",
       "action_type": "CAP",
-      "description": "Llama a time_now solo cuando el flujo est? en el nodo Q__SQ_GET_CURRENT_TIME.\nArgumento fijo: iana_timezone = \"America/Bogota\".\nCaptura el resultado en [now] antes de continuar al siguiente nodo.",
-      "trigger_message": "DEBUG time_now: obteniendo hora actual en Bogot?",
+      "description": "Llama a time_now solo cuando el flujo esté en el nodo Q__SQ_GET_CURRENT_TIME.\nArgumento fijo: iana_timezone = \"America/Bogota\".\nCaptura el campo now en [now] antes de normalizar [last_birth_date] a YYYY-MM-DD.",
+      "trigger_message": "DEBUG time_now: obteniendo la hora actual en Bogotá",
       "http_config": {
         "url": "https://appraiser-reactive-stunner.ngrok-free.dev/utils/v1/time-now",
         "method": "POST",
@@ -23,7 +23,7 @@
         {
           "name": "iana_timezone",
           "type": "string",
-          "description": "Zona horaria IANA (continente/ciudad) para la que se calcula la hora. Valor fijo del flujo: America/Bogota. No proviene de ning?n slot. Nunca uses abreviaturas (COT, EST).",
+          "description": "Zona horaria IANA (continente/ciudad) para la que se calcula la hora. Valor fijo del flujo: America/Bogota. No proviene de ningún slot. Nunca uses abreviaturas (COT, EST) ni la adivines.",
           "required": false,
           "const": "America/Bogota",
           "example": "America/Bogota"
@@ -34,8 +34,8 @@
       "tool_name": "calculate_bmi",
       "tool_id": "6a92e7e1b796171e301b3d66",
       "action_type": "CAP",
-      "description": "Llama a calculate_bmi solo cuando el flujo est? en el nodo Q__SQ_CALCULATE_BMI.\nArgumentos: weight_kg = [weight] en kg, height_cm = [height] en cm (convierte si el usuario us? libras o pies).\nCaptura el resultado imc en [imc] antes de continuar.",
-      "trigger_message": "DEBUG calculate_bmi: calculando ?ndice de masa corporal",
+      "description": "Llama a calculate_bmi solo cuando el flujo esté en el nodo Q__SQ_CALCULATE_BMI.\nArgumentos: weight_kg = [weight] en kg, height_cm = [height] en cm (convierte si la candidata respondió en libras o pies/pulgadas).\nCaptura el resultado imc en [imc], sin redondear, antes de continuar.",
+      "trigger_message": "DEBUG calculate_bmi: calculando índice de masa corporal",
       "http_config": {
         "url": "https://appraiser-reactive-stunner.ngrok-free.dev/utils/v1/calculate-bmi",
         "method": "POST",
@@ -49,14 +49,14 @@
         {
           "name": "weight_kg",
           "type": "string",
-          "description": "Peso actual de la candidata en kilogramos, num?rico, del slot [weight]. Si respondi? en libras, convierte antes (lb ? 0.453592). Sin unidad.",
+          "description": "Peso actual de la candidata en kilogramos, numérico, del slot [weight]. Si respondió en libras, convierte antes (lb × 0.453592). El valor no lleva unidad.",
           "required": true,
           "example": "70"
         },
         {
           "name": "height_cm",
           "type": "string",
-          "description": "Altura actual de la candidata en cent?metros, num?rico, del slot [height]. Si respondi? en pies/pulgadas, convierte antes (ft ? 30.48 + in ? 2.54). Sin unidad.",
+          "description": "Altura actual de la candidata en centímetros, numérico, del slot [height]. Si respondió en pies/pulgadas, convierte antes (ft × 30.48 + in × 2.54). El valor no lleva unidad.",
           "required": true,
           "example": "165"
         }
@@ -66,8 +66,8 @@
       "tool_name": "check_documentation",
       "tool_id": "6a92ec7122d9fb85938c7fb7",
       "action_type": "CAP",
-      "description": "Llama a check_documentation solo cuando el flujo est? en el nodo Q__SQ_CHECK_DOCUMENTATION.\nArgumento: nationality = [nationality] en ISO 3166-1 alfa-3 may?sculas (Colombia -> COL).\nSolo env?a document_type si nationality != COL.\nCaptura document_result antes de continuar.",
-      "trigger_message": "DEBUG check_documentation: verificando documentaci?n requerida",
+      "description": "Llama a check_documentation solo cuando el flujo esté en el nodo Q__SQ_CHECK_DOCUMENTATION, como primera acción y sin preguntar nada antes.\nArgumentos: nationality = [nationality] en ISO 3166-1 alfa-3 mayúsculas (Colombia -> COL).\nEnvía document_type (array normalizado desde [has_cc]) solo si nationality != COL; para colombianas no se envía.\nCaptura document_result antes de continuar.",
+      "trigger_message": "DEBUG check_documentation: verificando documentación requerida",
       "http_config": {
         "url": "https://appraiser-reactive-stunner.ngrok-free.dev/novafem_surrogacy/v1/check-documentation-sur",
         "method": "POST",
@@ -81,23 +81,22 @@
         {
           "name": "nationality",
           "type": "string",
-          "description": "Nacionalidad de la candidata como c?digo ISO 3166-1 alfa-3 en may?sculas (COL, VEN, ECU, PER, ARG?). Se infiere del pa?s que menciona, nunca del acento ni del tel?fono. El flujo ya lo normaliza al capturarlo.",
+          "description": "Nacionalidad de la candidata como código ISO 3166-1 alfa-3 en mayúsculas (COL, VEN, ECU, PER, ARG, USA, MEX, BOL, BRA…). Se infiere del país que menciona, nunca del acento ni del teléfono. El flujo ya lo normaliza al capturarlo.",
           "required": true,
           "example": "COL"
         },
         {
           "name": "document_type",
-          "type": "string",
-          "description": "Documento(s) que la candidata dice tener en Colombia, del slot [has_cc], normalizado(s). Solo se env?a si nationality != COL. Varios valores separados por coma. Aprueban: cedula_ciudadania, ppt. Rechazan: cedula_extranjeria, pasaporte, otro. Vac?o si es colombiana o [has_cc] es NULL.",
+          "type": "array",
+          "description": "Array de tipos de documento que la candidata dice tener, cada elemento normalizado al literal, del slot [has_cc]. Solo se envía si nationality != COL; para colombianas NO se envía (aprobación automática). Aprueba si CUALQUIER elemento es válido: cedula_ciudadania, ppt. Rechazan: cedula_extranjeria, pasaporte, otro. Si la plataforma solo admite string, envía los literales separados por coma.",
           "required": false,
-          "example": "cedula_ciudadania,ppt",
+          "example": "[\"cedula_ciudadania\",\"ppt\"]",
           "enum": [
             "cedula_ciudadania",
             "cedula_extranjeria",
             "ppt",
             "pasaporte",
-            "otro",
-            ""
+            "otro"
           ]
         }
       ]
@@ -106,8 +105,8 @@
       "tool_name": "surrogate_classification",
       "tool_id": "6a92ec7222d9fb04068c7fb8",
       "action_type": "CAP",
-      "description": "Llama a surrogate_classification solo cuando el flujo est? en el nodo Q__SQ_RUN_CLASSIFICATION.\nEnv?a los 10 argumentos desde sus slots. Usa last_birth_date en formato YYYY-MM-DD.\nSi falta un dato y [force_cls] != true, no llames a?n: regresa a preguntar el dato faltante.\nCaptura classification_result antes de continuar.",
-      "trigger_message": "DEBUG surrogate_classification: ejecutando clasificaci?n de candidata",
+      "description": "Llama a surrogate_classification solo cuando el flujo esté en el nodo Q__SQ_RUN_CLASSIFICATION.\nEnvía SIEMPRE los 10 argumentos desde sus slots; el slot vacío va como string vacío (\"\"). Usa last_birth_date en formato YYYY-MM-DD (ya normalizada con time_now), nunca relativa.\nSi falta un dato y aún quedan reintentos, no llames aún: regresa a preguntar el dato faltante.\nCaptura classification_result antes de continuar.",
+      "trigger_message": "DEBUG surrogate_classification: ejecutando clasificación de candidata",
       "http_config": {
         "url": "https://appraiser-reactive-stunner.ngrok-free.dev/novafem_surrogacy/v1/surrogate-classification",
         "method": "POST",
@@ -121,29 +120,29 @@
         {
           "name": "age",
           "type": "string",
-          "description": "Edad de la candidata en a?os.",
+          "description": "Edad de la candidata en años, numérico, del slot [surrogate_age]. \"\" si no se capturó.",
           "required": true,
           "example": "28"
         },
         {
           "name": "city",
           "type": "string",
-          "description": "Ciudad de residencia.",
+          "description": "Ciudad de residencia, del slot [city_residence], ya normalizada a la lista permitida; cualquier otra -> Otro. \"\" si no se capturó.",
           "required": true,
-          "example": "Bogot?",
+          "example": "Bogotá",
           "enum": [
-            "Bogot?",
+            "Bogotá",
             "Soacha",
-            "Zipaquir?",
-            "Ch?a",
+            "Zipaquirá",
+            "Chía",
             "Mosquera",
             "Funza",
-            "Cajic?",
+            "Cajicá",
             "Madrid",
             "La Calera",
             "Cota",
-            "Facatativ?",
-            "Sibat?",
+            "Facatativá",
+            "Sibaté",
             "Otro",
             ""
           ]
@@ -151,28 +150,28 @@
         {
           "name": "number_of_children",
           "type": "string",
-          "description": "N?mero de hijos biol?gicos.",
+          "description": "Número de hijos biológicos, numérico, del slot [children_count]. \"\" si no se capturó.",
           "required": true,
           "example": "2"
         },
         {
           "name": "last_birth_date",
           "type": "string",
-          "description": "Fecha del ?ltimo parto en YYYY-MM-DD.",
+          "description": "Fecha del último parto en YYYY-MM-DD, del slot [last_birth_date], ya normalizada con time_now. NUNCA una expresión relativa. Solo año conocido -> YYYY-07-01. \"\" si no ha tenido partos o no se capturó.",
           "required": true,
           "example": "2023-07-01"
         },
         {
           "name": "number_of_c_sections",
           "type": "string",
-          "description": "N?mero de ces?reas; 0 si ninguna.",
+          "description": "Número de cesáreas, numérico; 0 si ninguna. Del slot [csections_count]. \"\" si no se capturó.",
           "required": true,
           "example": "1"
         },
         {
           "name": "abortions",
           "type": "string",
-          "description": "Antecedente de abortos o p?rdidas previas.",
+          "description": "Antecedente de abortos o pérdidas previas, del slot [abortos]. Acepta si/no, yes/no, true/false o 1/0. \"\" si no se capturó.",
           "required": true,
           "example": "no",
           "enum": [
@@ -184,7 +183,7 @@
         {
           "name": "preeclampsia",
           "type": "string",
-          "description": "Antecedente de preeclampsia.",
+          "description": "Antecedente de preeclampsia, del slot [pree]. Acepta si/no, yes/no, true/false o 1/0. \"\" si no se capturó.",
           "required": true,
           "example": "no",
           "enum": [
@@ -196,14 +195,14 @@
         {
           "name": "bmi",
           "type": "string",
-          "description": "IMC devuelto por calculate_bmi.",
+          "description": "IMC devuelto por calculate_bmi, copiado literal y sin redondear, del slot [imc]. \"\" si no se calculó.",
           "required": true,
           "example": "24.2"
         },
         {
           "name": "documentation",
           "type": "string",
-          "description": "Cumple el requisito documental.",
+          "description": "Cumple el requisito documental: el document_result de check_documentation, del slot [document_result]. Para candidatas colombianas es si fijo. Acepta si/no, yes/no, true/false o 1/0.",
           "required": true,
           "example": "si",
           "enum": [
@@ -215,7 +214,7 @@
         {
           "name": "drug_use",
           "type": "string",
-          "description": "Consumo actual de drogas recreativas.",
+          "description": "Consumo actual de drogas recreativas, del slot [uses_drugs]. Acepta si/no, yes/no, true/false o 1/0. \"\" si no se capturó.",
           "required": true,
           "example": "no",
           "enum": [
@@ -230,8 +229,8 @@
       "tool_name": "callback",
       "tool_id": "6a92ec7422d9fbc32a8c7fba",
       "action_type": "CAP",
-      "description": "Llama a callback solo cuando el flujo est? en el nodo C__CB_RUN y ya tengas n?mero ([c__num]) y zona horaria ([c__tz]) confirmados.\nMapea contact_name, contact_phone, reason, context, iana_timezone, preferred_days y preferred_time_window desde sus slots.\nCaptura errors antes de continuar.",
-      "trigger_message": "DEBUG callback: escalando a devoluci?n de llamada humana",
+      "description": "Llama a callback solo cuando el flujo esté en el nodo C__CB_RUN y ya tengas número ([c__num]) y zona horaria ([c__tz]) confirmados, o cuando get_available_slots no dé cupos, book_appointment falle repetidamente, un dato quede ambiguo, o la candidata pida hablar con una persona.\nMapea contact_name, contact_phone, contact_email, reason, context, iana_timezone, preferred_days y preferred_time_window desde sus slots.\nCaptura errors antes de prometer el contacto.",
+      "trigger_message": "DEBUG callback: escalando a devolución de llamada humana",
       "http_config": {
         "url": "https://appraiser-reactive-stunner.ngrok-free.dev/utils/v1/request-callback",
         "method": "POST",
@@ -245,14 +244,14 @@
         {
           "name": "contact_name",
           "type": "string",
-          "description": "Nombre completo del contacto.",
+          "description": "Nombre completo del contacto tal como lo mencionó durante la llamada. Se inyecta desde {{contact.name}}.",
           "required": true,
           "const": "{{contact.name}}"
         },
         {
           "name": "contact_phone",
           "type": "string",
-          "description": "Tel?fono en formato internacional.",
+          "description": "Teléfono en formato internacional, del slot [num] (número confirmado para la devolución). Al menos uno entre contact_phone y contact_email.",
           "required": false,
           "const": "{{contact.phone}}",
           "example": "+573000000000"
@@ -260,7 +259,7 @@
         {
           "name": "contact_email",
           "type": "string",
-          "description": "Correo del contacto.",
+          "description": "Correo del contacto. Se inyecta desde {{contact.email}} si es una dirección válida. Al menos uno entre contact_phone y contact_email.",
           "required": false,
           "const": "{{contact.email}}",
           "example": "maria@example.com"
@@ -268,7 +267,7 @@
         {
           "name": "reason",
           "type": "string",
-          "description": "Motivo del callback.",
+          "description": "Motivo del callback, mapeado al valor más cercano: no_availability (sin cupos), booking_failed (la reserva falló repetidamente), user_requested (pidió un humano), ambiguous_data (dato ambiguo tras reintentar), technical_error (fallo técnico del flujo).",
           "required": true,
           "example": "no_availability",
           "enum": [
@@ -282,13 +281,14 @@
         {
           "name": "context",
           "type": "string",
-          "description": "Resumen breve de qu? pas? en la conversaci?n.",
-          "required": false
+          "description": "Resumen breve de qué pasó en la conversación, para que quien devuelva la llamada tenga contexto.",
+          "required": false,
+          "example": "Candidata apta. Sin cupos en los próximos 14 días."
         },
         {
           "name": "preferred_days",
           "type": "string",
-          "description": "D?a(s) preferido(s) para la llamada.",
+          "description": "Día(s) preferido(s) para la llamada. Solo si la candidata expresó preferencia. Acepta un día, varios por coma, o los atajos weekdays / weekend / any.",
           "required": false,
           "enum": [
             "monday",
@@ -306,7 +306,7 @@
         {
           "name": "preferred_time_window",
           "type": "string",
-          "description": "Franja horaria preferida.",
+          "description": "Franja horaria preferida para la llamada. Solo si la candidata expresó preferencia.",
           "required": false,
           "example": "morning",
           "enum": [
@@ -320,7 +320,7 @@
         {
           "name": "iana_timezone",
           "type": "string",
-          "description": "Zona horaria IANA del usuario.",
+          "description": "Zona horaria IANA del usuario, la misma ya determinada para get_available_slots. Este agente opera solo en Colombia: America/Bogota.",
           "required": true,
           "example": "America/Bogota"
         }
@@ -329,8 +329,8 @@
     {
       "tool_name": "get_available_slots",
       "action_type": "CAP",
-      "description": "Herramienta autorizada de disponibilidad para las citas comerciales de BabyNova (Subrogaci?n). Su salida es la ?nica fuente autorizada de d?as y horas. MANDATORY EXECUTION TRIGGER: al entrar al nodo S__SC_AVAIL, llama get_available_slots como primera acci?n del turno ? imperativo, sin excepci?n. Tambi?n ante cualquier intenci?n de agendar, reagendar, ver m?s opciones o reintentar una cita.",
-      "trigger_message": "DEBUG get_available_slots: checking availability",
+      "description": "Llama a get_available_slots cuando el flujo esté en el nodo S__SC_AVAIL, o ante cualquier intención de agendar, reagendar, ver más opciones o reintentar una cita.\nArgumento: iana_timezone = \"America/Bogota\" (valor fijo, agente solo Colombia).\nCaptura el resultado en [available_slots] antes de ofrecer fechas u horas.",
+      "trigger_message": "DEBUG get_available_slots: consultando disponibilidad",
       "http_config": {
         "url": "{{PENDING_WEBHOOK_URL}}",
         "method": "POST",
@@ -344,7 +344,7 @@
         {
           "name": "iana_timezone",
           "type": "string",
-          "description": "Identificador IANA continente/ciudad. Valor fijo America/Bogota.",
+          "description": "Identificador IANA continente/ciudad de la zona horaria de la candidata. Este agente opera solo en Colombia: valor fijo America/Bogota. Si se omite, el backend usa America/Bogota. Al hablar usa solo start_local/end_local del resultado; start_co/end_co son hora de Colombia, de uso interno.",
           "required": true,
           "example": "America/Bogota"
         }
@@ -353,8 +353,8 @@
     {
       "tool_name": "book_appointment",
       "action_type": "CAP",
-      "description": "Herramienta autorizada de reserva para las citas comerciales de BabyNova (Subrogaci?n). Crea la cita a partir de un slot v?lido de get_available_slots. MANDATORY EXECUTION TRIGGER: al entrar al nodo S__SC_BOOK, llama book_appointment como primera acci?n del turno ? imperativo, sin excepci?n. Nunca la llames sin haber ejecutado antes get_available_slots.",
-      "trigger_message": "DEBUG book_appointment: booking appointment",
+      "description": "Llama a book_appointment solo cuando el flujo esté en el nodo S__SC_BOOK y get_available_slots ya fue ejecutado.\nArgumentos: start_date = start_co literal del slot elegido, duration = \"10\", language = \"ES\", contact_name/contact_email/contact_phone confirmados, iana_timezone = \"America/Bogota\".\nCaptura success y reason antes de confirmar la cita.",
+      "trigger_message": "DEBUG book_appointment: creando la cita",
       "http_config": {
         "url": "{{PENDING_WEBHOOK_URL}}",
         "method": "POST",
@@ -368,46 +368,53 @@
         {
           "name": "start_date",
           "type": "string",
-          "description": "Fecha y hora de inicio en ISO 8601 con offset. Copia literal de start_co.",
+          "description": "Fecha y hora de inicio en ISO 8601 con offset. Copia literal del campo start_co del objeto de [available_slots] elegido en [slot]. No conviertas, redondees ni reformatees el offset.",
           "required": true,
-          "example": "2026-06-04T08:00:00-05:00"
+          "example": "2026-09-03T09:00:00-05:00"
         },
         {
           "name": "duration",
           "type": "string",
-          "description": "Duraci?n de la cita en minutos.",
+          "description": "Duración de la cita en minutos. Valor fijo del flujo (APPOINTMENT_DURATION_MINUTES). No proviene de ningún slot.",
           "required": false,
-          "const": "10"
+          "const": "10",
+          "example": "10"
         },
         {
           "name": "language",
           "type": "string",
-          "description": "C?digo de idioma de dos letras.",
+          "description": "Código de idioma de dos letras en mayúsculas para la confirmación y las notificaciones. Valor fijo para este agente (TOOL_LANGUAGE_CODE).",
           "required": false,
-          "const": "ES"
+          "const": "ES",
+          "example": "ES"
         },
         {
           "name": "contact_name",
           "type": "string",
-          "description": "Nombre completo confirmado.",
-          "required": true
+          "description": "Nombre completo de la candidata, ya confirmado en el flujo. Se inyecta desde {{contact.name}}.",
+          "required": true,
+          "const": "{{contact.name}}",
+          "example": "María Gómez"
         },
         {
           "name": "contact_email",
           "type": "string",
-          "description": "Correo confirmado.",
-          "required": true
+          "description": "Correo de la candidata en minúsculas, ya confirmado en el flujo. Se usa para enviar la confirmación de la cita.",
+          "required": true,
+          "example": "maria@example.com"
         },
         {
           "name": "contact_phone",
           "type": "string",
-          "description": "Tel?fono confirmado.",
-          "required": true
+          "description": "Teléfono de la candidata en formato internacional E.164, ya confirmado en el flujo. Se inyecta desde {{contact.phone}}.",
+          "required": true,
+          "const": "{{contact.phone}}",
+          "example": "+573000000000"
         },
         {
           "name": "iana_timezone",
           "type": "string",
-          "description": "Identificador IANA de la zona horaria del contacto, valor fijo America/Bogota.",
+          "description": "Identificador IANA de la zona horaria de la candidata, la misma usada en get_available_slots. Valor fijo America/Bogota.",
           "required": true,
           "example": "America/Bogota"
         }
@@ -416,45 +423,67 @@
     {
       "tool_name": "find_appointment",
       "action_type": "CAP",
-      "description": "Herramienta autorizada para buscar citas existentes de un contacto por su nombre en los calendarios de BabyNova.",
+      "description": "Llama a find_appointment cuando la candidata quiera consultar, verificar o conocer los detalles de una cita que cree haber agendado.\nArgumentos: contact_name = nombre completo (como en el CRM o la cita), iana_timezone = \"America/Bogota\", language = \"ES\".\nCaptura [appointments] antes de responder sobre la cita.",
+      "trigger_message": "DEBUG find_appointment: buscando citas existentes",
+      "http_config": {
+        "url": "{{PENDING_WEBHOOK_URL}}",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "timeout_seconds": 10,
+        "retry_on_failure": true
+      },
       "arguments": [
         {
           "name": "contact_name",
           "type": "string",
-          "description": "Nombre completo para la b?squeda.",
-          "required": true
+          "description": "Nombre completo de la candidata para realizar la búsqueda, tal como figura en el CRM o como se registró en la cita.",
+          "required": true,
+          "example": "María Gómez"
         },
         {
           "name": "iana_timezone",
           "type": "string",
-          "description": "Zona horaria IANA para mostrar las horas. Defecto: America/Bogota.",
+          "description": "Zona horaria IANA para mostrar las horas de las citas encontradas. Defecto: America/Bogota.",
           "required": false,
           "example": "America/Bogota"
         },
         {
           "name": "language",
           "type": "string",
-          "description": "Idioma para formatear resultados. Defecto: ES.",
+          "description": "Idioma para formatear los resultados. Defecto: ES.",
           "required": false,
-          "const": "ES"
+          "example": "ES"
         }
       ]
     },
     {
       "tool_name": "cancel_appointment",
       "action_type": "CAP",
-      "description": "Herramienta autorizada para cancelar/eliminar una cita existente en los calendarios de BabyNova.",
+      "description": "Llama a cancel_appointment solo cuando la candidata pida explícitamente cancelar su cita y ya tengas el event_id confirmado (de find_appointment).\nArgumentos: event_id = el ID exacto devuelto por la API, iana_timezone = \"America/Bogota\".\nCaptura success antes de confirmar la cancelación.",
+      "trigger_message": "DEBUG cancel_appointment: cancelando la cita",
+      "http_config": {
+        "url": "{{PENDING_WEBHOOK_URL}}",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "timeout_seconds": 10,
+        "retry_on_failure": false
+      },
       "arguments": [
         {
           "name": "event_id",
           "type": "string",
-          "description": "Identificador ?nico del evento a cancelar.",
-          "required": true
+          "description": "Identificador único del evento de Google Calendar a cancelar, exactamente como lo devolvió find_appointment / la API.",
+          "required": true,
+          "example": "evt_8f21c9"
         },
         {
           "name": "iana_timezone",
           "type": "string",
-          "description": "Zona horaria IANA del contacto.",
+          "description": "Zona horaria IANA de la candidata. Defecto: America/Bogota.",
           "required": false,
           "example": "America/Bogota"
         }
