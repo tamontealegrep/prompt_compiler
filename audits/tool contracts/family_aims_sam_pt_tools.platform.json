@@ -23,7 +23,7 @@
         {
           "name": "iana_timezone",
           "type": "string",
-          "description": "Fuso IANA continente/cidade para a hora atual. Envie [user_timezone], o mesmo já resolvido para disponibilidade. (Em babynova esta ferramenta usa const America/Bogota; family é multi-fuso.)",
+          "description": "Identificador IANA (continente/cidade) do fuso horário em que se quer a hora atual. Envie [user_timezone], o mesmo já resolvido para disponibilidade. Nunca use abreviações como EST ou COT.",
           "required": true,
           "example": "Europe/Lisbon"
         }
@@ -33,7 +33,7 @@
       "tool_name": "callback",
       "tool_id": "{{PENDING}}",
       "action_type": "CAP",
-      "description": "Chame callback só quando o fluxo estiver no nó C__CB_RUN e você tiver um número e um fuso confirmados.\nMapeie contact_name, contact_phone, contact_email, reason, context, iana_timezone, preferred_days e preferred_time_window a partir dos seus slots.\nCapture errors antes de continuar.",
+      "description": "Chame callback só quando o fluxo estiver no nó C__CB_RUN, ou quando get_available_slots não der vagas, book_appointment falhar repetidamente, um dado ficar ambíguo, ou o contato pedir para falar com uma pessoa.\nMapeie contact_name, contact_phone, contact_email, reason, context, iana_timezone, preferred_days e preferred_time_window a partir dos seus slots.\nCapture errors antes de prometer o contato.",
       "trigger_message": "DEBUG callback: escalando para uma ligação humana",
       "http_config": {
         "url": "{{PENDING_WEBHOOK_URL}}",
@@ -48,14 +48,14 @@
         {
           "name": "contact_name",
           "type": "string",
-          "description": "Nome completo do contato. Injetado de {{contact.name}}.",
+          "description": "Nome completo do contato tal como ele mencionou durante a chamada. Injetado de {{contact.name}}.",
           "required": true,
           "const": "{{contact.name}}"
         },
         {
           "name": "contact_phone",
           "type": "string",
-          "description": "Telefone em formato internacional. Envie ao menos um de contact_phone e contact_email.",
+          "description": "Telefone em formato internacional, do slot [num] (número confirmado para a devolução). Envie ao menos um de contact_phone e contact_email.",
           "required": false,
           "const": "{{contact.phone}}",
           "example": "+5511990000000"
@@ -63,7 +63,7 @@
         {
           "name": "contact_email",
           "type": "string",
-          "description": "E-mail do contato. Envie ao menos um de contact_phone e contact_email.",
+          "description": "E-mail do contato. Injetado de {{contact.email}} se for um endereço válido. Envie ao menos um de contact_phone e contact_email.",
           "required": false,
           "const": "{{contact.email}}",
           "example": "maria@example.com"
@@ -71,7 +71,7 @@
         {
           "name": "reason",
           "type": "string",
-          "description": "Motivo do callback, mapeado ao valor mais próximo.",
+          "description": "Motivo do callback, mapeado ao valor mais próximo: no_availability (sem vagas), booking_failed (a reserva falhou repetidamente), user_requested (pediu uma pessoa), ambiguous_data (dado ambíguo após repetir), technical_error (falha técnica do fluxo).",
           "required": true,
           "example": "no_availability",
           "enum": [
@@ -85,14 +85,16 @@
         {
           "name": "context",
           "type": "string",
-          "description": "Resumo breve do que aconteceu na conversa.",
-          "required": false
+          "description": "Resumo breve do que aconteceu na conversa, para que quem retornar a ligação tenha contexto. Do slot [ctx].",
+          "required": false,
+          "example": "Sem vagas em 14 dias; contato apto, quer consulta de fertilização in vitro."
         },
         {
           "name": "preferred_days",
           "type": "string",
-          "description": "Dia(s) preferido(s) para a ligação. Só se expressou preferência.",
+          "description": "Dia(s) preferido(s) para a ligação, do slot [pref_days]. Só se o contato expressou preferência. Aceita um dia, vários por vírgula, ou os atalhos weekdays / weekend / any.",
           "required": false,
+          "example": "weekdays",
           "enum": [
             "monday",
             "tuesday",
@@ -109,7 +111,7 @@
         {
           "name": "preferred_time_window",
           "type": "string",
-          "description": "Faixa de horário preferida. Só se expressou preferência.",
+          "description": "Faixa de horário preferida para a ligação, do slot [pref_win]. Só se o contato expressou preferência.",
           "required": false,
           "example": "morning",
           "enum": [
@@ -123,7 +125,7 @@
         {
           "name": "iana_timezone",
           "type": "string",
-          "description": "Fuso horário IANA do contato — o mesmo já usado para disponibilidade. Não pergunte de novo.",
+          "description": "Fuso horário IANA do contato, do slot [tz] — o mesmo já determinado para get_available_slots. Não pergunte de novo.",
           "required": true,
           "example": "America/Bogota"
         }
@@ -133,7 +135,7 @@
       "tool_name": "contact_attempt",
       "tool_id": "{{PENDING}}",
       "action_type": "CAP",
-      "description": "Chame contact_attempt só quando o fluxo estiver no nó CALL_NO_ANSWER_LOG.\nArgumento: contact_phone = {{contact.phone}}.\nCapture attempt_registered antes de encerrar a sessão.",
+      "description": "Chame contact_attempt só quando o fluxo estiver no nó CALL_NO_ANSWER_LOG (ninguém atendeu a ligação).\nArgumento: contact_phone = {{contact.phone}}.\nCapture attempt_registered antes de encerrar a sessão.",
       "trigger_message": "DEBUG contact_attempt: registrando tentativa de contato malsucedida",
       "http_config": {
         "url": "{{PENDING_WEBHOOK_URL}}",
@@ -158,7 +160,7 @@
     {
       "tool_name": "get_available_slots",
       "action_type": "CAP",
-      "description": "Ferramenta autorizada de disponibilidade para as consultas comerciais da Family Aims (FIV ou Sub-rogação). Sua saída é a única fonte autorizada de dias e horários. MANDATORY EXECUTION TRIGGER: ao entrar no nó SC__SC_AV_I (use calendar_type: 'IVF') ou SC__SC_AV_S (use calendar_type: 'SUR'), chame get_available_slots como primeira ação do turno — imperativo, sem exceção. Também diante de qualquer intenção de agendar, reagendar, ver mais opções ou repetir uma consulta.",
+      "description": "Chame get_available_slots quando o fluxo estiver no nó SC__SC_AV_I (calendar_type 'IVF') ou SC__SC_AV_S (calendar_type 'SUR'), ou diante de qualquer intenção de agendar, reagendar, ver mais opções ou repetir uma consulta.\nArgumentos: calendar_type = 'IVF' | 'SUR', iana_timezone = [user_timezone].\nCapture o resultado em [available_slots] antes de oferecer datas ou horários.",
       "trigger_message": "DEBUG get_available_slots: checking availability",
       "http_config": {
         "url": "{{PENDING_WEBHOOK_URL}}",
@@ -171,27 +173,29 @@
       },
       "arguments": [
         {
-          "name": "iana_timezone",
-          "type": "string",
-          "description": "Contact's IANA timezone.",
-          "required": true
-        },
-        {
           "name": "calendar_type",
           "type": "string",
-          "description": "Literal 'IVF' or 'SUR'.",
+          "description": "Literal que define o calendário a ser usado: 'IVF' para fertilização in vitro ou 'SUR' para gestação por substituição (sub-rogação). Determinado pelo nó do fluxo onde o contato se encontra (SC__SC_AV_I -> 'IVF', SC__SC_AV_S -> 'SUR').",
           "required": true,
+          "example": "IVF",
           "enum": [
             "IVF",
             "SUR"
           ]
+        },
+        {
+          "name": "iana_timezone",
+          "type": "string",
+          "description": "Identificador IANA (continente/cidade) do fuso horário do contato, já determinado no fluxo a partir do país e da cidade (Colômbia -> America/Bogota). Nunca adivinhado nem em abreviações como EST ou COT. Ao falar com o contato use apenas start_local/end_local do resultado; start_co/end_co são hora da Colômbia, de uso interno.",
+          "required": true,
+          "example": "America/Bogota"
         }
       ]
     },
     {
       "tool_name": "book_appointment",
       "action_type": "CAP",
-      "description": "Ferramenta autorizada de reserva para as consultas comerciais da Family Aims (FIV ou Sub-rogação). Cria a consulta a partir de um slot válido de get_available_slots. MANDATORY EXECUTION TRIGGER: ao entrar no nó SC__SC_BOOK_I (use calendar_type: 'IVF') ou SC__SC_BOOK_S (use calendar_type: 'SUR'), chame book_appointment como primeira ação do turno — imperativo, sem exceção. Nunca a chame sem ter executado antes get_available_slots.",
+      "description": "Chame book_appointment só quando o fluxo estiver no nó SC__SC_BOOK_I (calendar_type 'IVF') ou SC__SC_BOOK_S (calendar_type 'SUR') e get_available_slots já tiver sido executado.\nArgumentos: calendar_type, start_date (start_co literal do slot escolhido), duration = '30', language = 'PT', contact_name, contact_email, contact_phone, iana_timezone.\nCapture success e reason antes de confirmar a consulta.",
       "trigger_message": "DEBUG book_appointment: booking appointment",
       "http_config": {
         "url": "{{PENDING_WEBHOOK_URL}}",
@@ -206,8 +210,9 @@
         {
           "name": "calendar_type",
           "type": "string",
-          "description": "Literal 'IVF' or 'SUR'.",
+          "description": "Literal que define o calendário onde será feita a reserva: 'IVF' para fertilização in vitro ou 'SUR' para gestação por substituição. Deve coincidir com a chamada de disponibilidade.",
           "required": true,
+          "example": "IVF",
           "enum": [
             "IVF",
             "SUR"
@@ -216,59 +221,84 @@
         {
           "name": "start_date",
           "type": "string",
-          "description": "Start date (start_co) in ISO 8601.",
-          "required": true
+          "description": "Data e hora de início em ISO 8601 com offset. Cópia literal do campo start_co do objeto de [available_slots] escolhido em [slot] — não converta, arredonde, reformate nem altere o offset.",
+          "required": true,
+          "example": "2026-06-04T08:00:00-05:00"
         },
         {
           "name": "duration",
           "type": "string",
+          "description": "Duração da consulta em minutos. Valor fixo do fluxo (APPOINTMENT_DURATION_MINUTES). Não vem de nenhum slot.",
           "const": "30",
-          "required": false
+          "required": false,
+          "example": "30"
         },
         {
           "name": "language",
           "type": "string",
+          "description": "Código de idioma de duas letras em maiúsculas para a confirmação e as notificações. Valor fixo para este agente (TOOL_LANGUAGE_CODE).",
           "const": "PT",
-          "required": false
+          "required": false,
+          "example": "PT"
         },
         {
           "name": "contact_name",
           "type": "string",
-          "required": true
+          "description": "Nome completo do contato, já confirmado no fluxo ([c_name]). Pode vir do CRM ({{contact.name}}) ou ser capturado em SC__SC_ASK_N.",
+          "required": true,
+          "example": "Maria Gomez"
         },
         {
           "name": "contact_email",
           "type": "string",
-          "required": true
+          "description": "E-mail do contato em minúsculas, já confirmado no fluxo ([c_email]). Usado para enviar a confirmação da consulta.",
+          "required": true,
+          "example": "maria@example.com"
         },
         {
           "name": "contact_phone",
           "type": "string",
-          "required": true
+          "description": "Telefone do contato no formato internacional E.164, já confirmado no fluxo ([c_phone]).",
+          "required": true,
+          "example": "+573001234567"
         },
         {
           "name": "iana_timezone",
           "type": "string",
-          "required": true
+          "description": "Identificador IANA do fuso horário do contato, o mesmo usado em get_available_slots ([user_timezone]).",
+          "required": true,
+          "example": "America/Bogota"
         }
       ]
     },
     {
       "tool_name": "find_appointment",
       "action_type": "CAP",
-      "description": "Ferramenta autorizada para buscar consultas existentes de um contato pelo nome nos calendários da Family Aims.",
+      "description": "Chame find_appointment quando o contato quiser consultar, verificar ou saber os detalhes de uma consulta que acredita já ter agendado.\nArgumentos: contact_name = nome completo (como no CRM ou na consulta), calendar_type = 'IVF' | 'SUR' | 'BOTH' ('BOTH' se não especificado), iana_timezone, language.\nCapture [appointments] antes de responder sobre a consulta.",
+      "trigger_message": "DEBUG find_appointment: buscando consultas existentes",
+      "http_config": {
+        "url": "{{PENDING_WEBHOOK_URL}}",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "timeout_seconds": 10,
+        "retry_on_failure": true
+      },
       "arguments": [
         {
           "name": "contact_name",
           "type": "string",
-          "description": "Nome completo do contato para realizar a busca.",
-          "required": true
+          "description": "Nome completo do contato para realizar a busca, tal como aparece no CRM ou como foi registrado na consulta.",
+          "required": true,
+          "example": "Maria Gomez"
         },
         {
           "name": "calendar_type",
           "type": "string",
           "description": "Filtro de calendário: 'IVF', 'SUR' ou 'BOTH' (padrão) para buscar em ambos.",
           "required": false,
+          "example": "BOTH",
           "enum": [
             "IVF",
             "SUR",
@@ -279,32 +309,51 @@
           "name": "iana_timezone",
           "type": "string",
           "description": "Fuso horário IANA para exibir os horários das consultas encontradas. Padrão: America/Bogota.",
-          "required": false
+          "required": false,
+          "example": "America/Bogota"
         },
         {
           "name": "language",
           "type": "string",
           "description": "Idioma para formatar os resultados. Padrão: PT.",
-          "required": false
+          "required": false,
+          "example": "PT",
+          "enum": [
+            "EN",
+            "ES",
+            "PT"
+          ]
         }
       ]
     },
     {
       "tool_name": "cancel_appointment",
       "action_type": "CAP",
-      "description": "Ferramenta autorizada para cancelar/excluir uma consulta existente nos calendários da Family Aims.",
+      "description": "Chame cancel_appointment só quando o contato pedir explicitamente para cancelar sua consulta e você já tiver o event_id confirmado (de find_appointment).\nArgumentos: event_id = o ID exato retornado pela API, calendar_type = 'IVF' | 'SUR' conforme a consulta, iana_timezone.\nCapture success antes de confirmar o cancelamento.",
+      "trigger_message": "DEBUG cancel_appointment: cancelando consulta",
+      "http_config": {
+        "url": "{{PENDING_WEBHOOK_URL}}",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "timeout_seconds": 10,
+        "retry_on_failure": false
+      },
       "arguments": [
         {
           "name": "event_id",
           "type": "string",
-          "description": "Identificador único do evento do Google Calendar a ser cancelado, exatamente como retornado pela API.",
-          "required": true
+          "description": "Identificador único do evento do Google Calendar a ser cancelado, exatamente como retornado por find_appointment / pela API.",
+          "required": true,
+          "example": "evt_123456"
         },
         {
           "name": "calendar_type",
           "type": "string",
           "description": "Tipo de calendário onde reside a consulta: 'IVF' ou 'SUR'.",
           "required": true,
+          "example": "IVF",
           "enum": [
             "IVF",
             "SUR"
@@ -313,8 +362,9 @@
         {
           "name": "iana_timezone",
           "type": "string",
-          "description": "Fuso horário IANA do contato.",
-          "required": false
+          "description": "Fuso horário IANA do contato. Padrão: America/Bogota.",
+          "required": false,
+          "example": "America/Bogota"
         }
       ]
     }
