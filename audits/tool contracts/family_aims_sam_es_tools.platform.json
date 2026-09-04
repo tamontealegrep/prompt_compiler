@@ -2,7 +2,7 @@
   "agent_id": "{{PENDING}}",
   "agent_name": "family_aims_sam_es",
   "location_id": "{{PENDING}}",
-  "total_tools": 7,
+  "total_tools": 8,
   "tools": [
     {
       "tool_name": "time_now",
@@ -160,7 +160,7 @@
     {
       "tool_name": "get_available_slots",
       "action_type": "CAP",
-      "description": "Llama a get_available_slots cuando el flujo esté en el nodo SC__SC_AV_I (calendar_type 'IVF') o SC__SC_AV_S (calendar_type 'SUR'), o ante cualquier intención de agendar, reagendar, ver más opciones o reintentar una cita.\nArgumentos: calendar_type = 'IVF' | 'SUR', iana_timezone = [user_timezone].\nCaptura el resultado en [available_slots] antes de ofrecer fechas u horas.",
+      "description": "Llama a get_available_slots cuando el flujo esté en el nodo SC__SC_AV_I, SC__SC_AV_S o AM_RESCHED_AV, o ante cualquier intención de agendar, reagendar, ver más opciones o reintentar una cita.\nArgumentos: calendar_type = 'IVF' | 'SUR', iana_timezone = [user_timezone].\nCaptura el resultado en [available_slots] antes de ofrecer fechas u horas.",
       "trigger_message": "DEBUG get_available_slots: checking availability",
       "http_config": {
         "url": "{{PENDING_WEBHOOK_URL}}",
@@ -274,7 +274,7 @@
     {
       "tool_name": "find_appointment",
       "action_type": "CAP",
-      "description": "Llama a find_appointment cuando el contacto quiera consultar, verificar o conocer los detalles de una cita que cree haber agendado.\nArgumentos: contact_name = nombre completo (como en el CRM o la cita), calendar_type = 'IVF' | 'SUR' | 'BOTH' ('BOTH' si no se especifica), iana_timezone, language.\nCaptura [appointments] antes de responder sobre la cita.",
+      "description": "Llama a find_appointment cuando el flujo esté en el nodo AM_FIND o cuando el contacto quiera consultar, verificar o conocer los detalles de una cita que cree haber agendado.\nArgumentos: contact_name = nombre completo (como en el CRM o la cita), calendar_type = 'IVF' | 'SUR' | 'BOTH' ('BOTH' si no se especifica), iana_timezone, language.\nCaptura [appointments] antes de responder sobre la cita.",
       "trigger_message": "DEBUG find_appointment: buscando citas existentes",
       "http_config": {
         "url": "{{PENDING_WEBHOOK_URL}}",
@@ -365,6 +365,67 @@
           "description": "Zona horaria IANA del contacto. Defecto: America/Bogota.",
           "required": false,
           "example": "America/Bogota"
+        }
+      ]
+    },
+    {
+      "tool_name": "edit_appointment",
+      "action_type": "CAP",
+      "description": "Llama a edit_appointment solo cuando el flujo esté en el nodo AM_DO_RESCHED y ya tengas el event_id (de find_appointment) y el new_slot (de get_available_slots).\nArgumentos: event_id, calendar_type, new_start_date (start_co del slot), iana_timezone, language.\nCaptura success antes de confirmar.",
+      "trigger_message": "DEBUG edit_appointment: reprogramando cita",
+      "http_config": {
+        "url": "{{PENDING_WEBHOOK_URL}}",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "timeout_seconds": 10,
+        "retry_on_failure": false
+      },
+      "arguments": [
+        {
+          "name": "event_id",
+          "type": "string",
+          "description": "Identificador único del evento de Google Calendar a modificar, exactamente como lo devolvió find_appointment / la API.",
+          "required": true,
+          "example": "evt_123456"
+        },
+        {
+          "name": "calendar_type",
+          "type": "string",
+          "description": "Tipo de calendario donde reside la cita: 'IVF' o 'SUR'.",
+          "required": true,
+          "example": "IVF",
+          "enum": [
+            "IVF",
+            "SUR"
+          ]
+        },
+        {
+          "name": "new_start_date",
+          "type": "string",
+          "description": "Nueva fecha y hora de inicio en ISO 8601 con offset. Copia literal del campo start_co del objeto de [available_slots] elegido en [new_slot] — no conviertas, redondees ni reformatees.",
+          "required": false,
+          "example": "2026-06-04T09:00:00-05:00"
+        },
+        {
+          "name": "iana_timezone",
+          "type": "string",
+          "description": "Zona horaria IANA del contacto. Defecto: America/Bogota.",
+          "required": false,
+          "example": "America/Bogota"
+        },
+        {
+          "name": "language",
+          "type": "string",
+          "description": "Código de idioma de dos letras para la confirmación. Envía [preferred_language] cuando se conozca.",
+          "required": false,
+          "example": "ES",
+          "enum": [
+            "EN",
+            "ES",
+            "PT"
+          ]
         }
       ]
     }

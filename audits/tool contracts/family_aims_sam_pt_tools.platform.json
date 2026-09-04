@@ -2,7 +2,7 @@
   "agent_id": "{{PENDING}}",
   "agent_name": "family_aims_sam_pt",
   "location_id": "{{PENDING}}",
-  "total_tools": 7,
+  "total_tools": 8,
   "tools": [
     {
       "tool_name": "time_now",
@@ -160,7 +160,7 @@
     {
       "tool_name": "get_available_slots",
       "action_type": "CAP",
-      "description": "Chame get_available_slots quando o fluxo estiver no nó SC__SC_AV_I (calendar_type 'IVF') ou SC__SC_AV_S (calendar_type 'SUR'), ou diante de qualquer intenção de agendar, reagendar, ver mais opções ou repetir uma consulta.\nArgumentos: calendar_type = 'IVF' | 'SUR', iana_timezone = [user_timezone].\nCapture o resultado em [available_slots] antes de oferecer datas ou horários.",
+      "description": "Chame get_available_slots quando o fluxo estiver no nó SC__SC_AV_I, SC__SC_AV_S ou AM_RESCHED_AV, ou diante de qualquer intenção de agendar, reagendar, ver más opções ou repetir uma consulta.\nArgumentos: calendar_type = 'IVF' | 'SUR', iana_timezone = [user_timezone].\nCapture o resultado em [available_slots] antes de oferecer datas ou horários.",
       "trigger_message": "DEBUG get_available_slots: checking availability",
       "http_config": {
         "url": "{{PENDING_WEBHOOK_URL}}",
@@ -274,7 +274,7 @@
     {
       "tool_name": "find_appointment",
       "action_type": "CAP",
-      "description": "Chame find_appointment quando o contato quiser consultar, verificar ou saber os detalhes de uma consulta que acredita já ter agendado.\nArgumentos: contact_name = nome completo (como no CRM ou na consulta), calendar_type = 'IVF' | 'SUR' | 'BOTH' ('BOTH' se não especificado), iana_timezone, language.\nCapture [appointments] antes de responder sobre a consulta.",
+      "description": "Chame find_appointment quando o fluxo estiver no nó AM_FIND ou quando o contato quiser consultar, verificar o saber os detalhes de uma consulta que acredita já ter agendado.\nArgumentos: contact_name = nome completo (como no CRM ou na consulta), calendar_type = 'IVF' | 'SUR' | 'BOTH' ('BOTH' se não especificado), iana_timezone, language.\nCapture [appointments] antes de responder sobre a consulta.",
       "trigger_message": "DEBUG find_appointment: buscando consultas existentes",
       "http_config": {
         "url": "{{PENDING_WEBHOOK_URL}}",
@@ -329,7 +329,7 @@
     {
       "tool_name": "cancel_appointment",
       "action_type": "CAP",
-      "description": "Chame cancel_appointment só quando o contato pedir explicitamente para cancelar sua consulta e você já tiver o event_id confirmado (de find_appointment).\nArgumentos: event_id = o ID exato retornado pela API, calendar_type = 'IVF' | 'SUR' conforme a consulta, iana_timezone.\nCapture success antes de confirmar o cancelamento.",
+      "description": "Chame cancel_appointment só quando o fluxo estiver no nó AM_DO_CANCEL ou quando o contato pedir explicitamente para cancelar sua consulta e você já tiver o event_id confirmado (de find_appointment).\nArgumentos: event_id = o ID exato retornado pela API, calendar_type = 'IVF' | 'SUR' conforme a consulta, iana_timezone.\nCapture success antes de confirmar o cancelamento.",
       "trigger_message": "DEBUG cancel_appointment: cancelando consulta",
       "http_config": {
         "url": "{{PENDING_WEBHOOK_URL}}",
@@ -365,6 +365,67 @@
           "description": "Fuso horário IANA do contato. Padrão: America/Bogota.",
           "required": false,
           "example": "America/Bogota"
+        }
+      ]
+    },
+    {
+      "tool_name": "edit_appointment",
+      "action_type": "CAP",
+      "description": "Chame edit_appointment só quando o fluxo estiver no nó AM_DO_RESCHED e você já tiver o event_id (de find_appointment) e o new_slot (de get_available_slots).\nArgumentos: event_id, calendar_type, new_start_date (start_co do slot), iana_timezone, language.\nCapture success antes de confirmar.",
+      "trigger_message": "DEBUG edit_appointment: reprogramando consulta",
+      "http_config": {
+        "url": "{{PENDING_WEBHOOK_URL}}",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "timeout_seconds": 10,
+        "retry_on_failure": false
+      },
+      "arguments": [
+        {
+          "name": "event_id",
+          "type": "string",
+          "description": "Identificador único do evento do Google Calendar a ser modificado, exatamente como retornado por find_appointment / pela API.",
+          "required": true,
+          "example": "evt_123456"
+        },
+        {
+          "name": "calendar_type",
+          "type": "string",
+          "description": "Tipo de calendário donde reside a consulta: 'IVF' ou 'SUR'.",
+          "required": true,
+          "example": "IVF",
+          "enum": [
+            "IVF",
+            "SUR"
+          ]
+        },
+        {
+          "name": "new_start_date",
+          "type": "string",
+          "description": "Nova data e hora de início em ISO 8601 com offset. Cópia literal do campo start_co do objeto de [available_slots] escolhido em [new_slot] — não converta, arredonde ou reformate.",
+          "required": false,
+          "example": "2026-06-04T09:00:00-05:00"
+        },
+        {
+          "name": "iana_timezone",
+          "type": "string",
+          "description": "Fuso horário IANA do contato. Padrão: America/Bogota.",
+          "required": false,
+          "example": "America/Bogota"
+        },
+        {
+          "name": "language",
+          "type": "string",
+          "description": "Código de idioma de dos letras para a confirmação. Envie [preferred_language] quando souber.",
+          "required": false,
+          "example": "PT",
+          "enum": [
+            "EN",
+            "ES",
+            "PT"
+          ]
         }
       ]
     }

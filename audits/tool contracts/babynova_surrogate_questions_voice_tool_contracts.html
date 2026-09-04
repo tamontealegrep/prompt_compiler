@@ -279,6 +279,7 @@ code.inl{font-family:"IBM Plex Mono",monospace;font-size:.9em;background:var(--c
   <a href="#book_appointment">book_appointment</a>
   <a href="#find_appointment">find_appointment</a>
   <a href="#cancel_appointment">cancel_appointment</a>
+  <a href="#edit_appointment">edit_appointment</a>
   <a href="#callback">callback</a>
   <a href="#matriz">Matriz</a>
 </nav>
@@ -671,7 +672,7 @@ surrogate_classification({
   <div class="tool">
     <div class="tool-head">
       <h3>get_available_slots</h3>
-      <span class="node">S__SC_AVAIL</span>
+      <span class="node">S__SC_AVAIL / AM_RESCHED_AV</span>
     </div>
     <p class="role">Disponibilidad de citas, capturada en <code class="inl">[available_slots]</code>. El array de la llamada más reciente es la única fuente de días y horas.</p>
 
@@ -682,7 +683,7 @@ surrogate_classification({
     <div class="paste hard" data-measure>EJECUTA get_available_slots AHORA en el nodo S__SC_AVAIL, como primera acción, SIN EXCEPCIÓN, y también cada vez que la candidata quiera agendar, cambiar fecha u hora, o ver más opciones. NO menciones, infieras ni prometas disponibilidad antes de capturar [available_slots]. PROHIBIDO adivinar la zona horaria o citar un horario que no esté en el array. ARGUMENTO: user_timezone = identificador IANA continente/ciudad (Colombia -> America/Bogota); si se omite, el backend usa America/Bogota.</div>
 
     <div class="field-label">trigger_prompt <span class="kind soft">soft</span> <span class="counter" data-count>·</span></div>
-    <div class="paste soft" data-measure>Llama a get_available_slots cuando el flujo esté en el nodo S__SC_AVAIL, o cuando la candidata quiera agendar, cambiar fecha u hora, o ver más opciones.
+    <div class="paste soft" data-measure>Llama a get_available_slots cuando el flujo esté en el nodo S__SC_AVAIL o AM_RESCHED_AV, o cuando la candidata quiera agendar, cambiar fecha u hora, o ver más opciones.
 Argumento fijo: userTimezone = "America/Bogota".
 Captura el resultado en [available_slots] antes de ofrecer fechas u horas.</div>
 
@@ -790,7 +791,7 @@ book_appointment({
   <div class="tool">
     <div class="tool-head">
       <h3>find_appointment</h3>
-      <span class="node" style="background:var(--code-bg);color:var(--muted)">intención de la candidata</span>
+      <span class="node">AM_FIND / intención</span>
     </div>
     <p class="role">Busca las citas existentes de la candidata por su nombre en los calendarios de BabyNova. El array <code class="inl">appointments</code> es la única fuente; si viene vacío, no hay registros con ese nombre.</p>
 
@@ -801,7 +802,7 @@ book_appointment({
     <div class="paste hard" data-measure>EJECUTA find_appointment AHORA cuando la candidata pida consultar, verificar o conocer los detalles de una cita que cree haber agendado, como primera acción del turno, SIN EXCEPCIÓN. NO afirmes ni niegues que existe una cita antes de capturar [appointments]. ARGUMENTOS: contact_name = nombre completo (como figura en el CRM o en la cita); iana_timezone = "America/Bogota"; language = "ES".</div>
 
     <div class="field-label">trigger_prompt <span class="kind soft">soft</span> <span class="counter" data-count>·</span></div>
-    <div class="paste soft" data-measure>Llama a find_appointment cuando la candidata quiera consultar, verificar o conocer los detalles de una cita que cree haber agendado.
+    <div class="paste soft" data-measure>Llama a find_appointment cuando el flujo esté en el nodo AM_FIND o cuando la candidata quiera consultar, verificar o conocer los detalles de una cita que cree haber agendado.
 Argumentos: contact_name = nombre completo, iana_timezone = "America/Bogota", language = "ES".
 Captura [appointments] antes de responder sobre la cita.</div>
 
@@ -838,7 +839,7 @@ Captura [appointments] antes de responder sobre la cita.</div>
 { "success": true,
   "appointments": [
     { "event_id": "evt_8f21c9", "summary": "Cita comercial subrogación — BabyNova",
-      "start_time": "2026-09-03T09:00:00-05:00", "calendar_type": "SUR" }
+      "start_time": "2026-09-03T09:00:00-05:00" }
   ],
   "errors": null }
 // sin resultados  →  "appointments": []  →  informar que no hay registros con ese nombre
@@ -854,7 +855,7 @@ Captura [appointments] antes de responder sobre la cita.</div>
   <div class="tool">
     <div class="tool-head">
       <h3>cancel_appointment</h3>
-      <span class="node" style="background:var(--req-soft);color:var(--req)">intención de la candidata</span>
+      <span class="node">AM_DO_CANCEL / intención</span>
     </div>
     <p class="role">Cancela/elimina una cita existente en los calendarios de BabyNova. No confirmes la cancelación antes de <code class="inl">success == true</code>.</p>
 
@@ -865,7 +866,7 @@ Captura [appointments] antes de responder sobre la cita.</div>
     <div class="paste hard" data-measure>EJECUTA cancel_appointment AHORA cuando la candidata confirme que quiere cancelar y tengas el event_id (de find_appointment), como primera acción del turno, SIN EXCEPCIÓN. NO digas que la cita quedó cancelada antes de capturar success == true. ARGUMENTOS: event_id = ID exacto devuelto por la API; iana_timezone = "America/Bogota".</div>
 
     <div class="field-label">trigger_prompt <span class="kind soft">soft</span> <span class="counter" data-count>·</span></div>
-    <div class="paste soft" data-measure>Llama a cancel_appointment solo cuando la candidata pida explícitamente cancelar su cita y ya tengas el event_id confirmado (de find_appointment).
+    <div class="paste soft" data-measure>Llama a cancel_appointment solo cuando el flujo esté en el nodo AM_DO_CANCEL o cuando la candidata pida explícitamente cancelar su cita y ya tengas el event_id confirmado (de find_appointment).
 Argumentos: event_id = el ID exacto devuelto por la API, iana_timezone = "America/Bogota".
 Captura success antes de confirmar la cancelación.</div>
 
@@ -897,9 +898,42 @@ Captura success antes de confirmar la cancelación.</div>
   </div>
 </section>
 
+<!-- ============ EDIT_APPOINTMENT ============ -->
+<section id="edit_appointment">
+  <h2><span class="n">10</span>edit_appointment</h2>
+
+  <div class="tool">
+    <div class="tool-head">
+      <h3>edit_appointment</h3>
+      <span class="node">AM_DO_RESCHED</span>
+    </div>
+    <p class="role">Modifica o reprograma una cita existente. success == true es la única confirmación válida.</p>
+
+    <div class="field-label">description <span class="counter" data-count>·</span></div>
+    <div class="paste" data-measure>Herramienta autorizada para modificar o reprogramar una cita existente en los calendarios de BabyNova. Su campo success == true es la única confirmación válida. PROHIBIDO afirmar que el cambio se realizó antes de capturar ese resultado. La herramienta verifica disponibilidad automáticamente.</div>
+
+    <div class="field-label">trigger_prompt <span class="kind hard">hard</span> <span class="counter" data-count>·</span></div>
+    <div class="paste hard" data-measure>EJECUTA edit_appointment AHORA en el nodo AM_DO_RESCHED cuando el contacto confirme el nuevo horario, como primera acción del turno, SIN EXCEPCIÓN. NO digas que la cita quedó reprogramada antes de capturar success == true. ARGUMENTOS: event_id; new_start_date = start_co LITERAL del [new_slot] elegido; iana_timezone = "America/Bogota"; language = "ES".</div>
+
+    <div class="field-label">trigger_prompt <span class="kind soft">soft</span> <span class="counter" data-count>·</span></div>
+    <div class="paste soft" data-measure>Llama a edit_appointment solo cuando el flujo esté en el nodo AM_DO_RESCHED y ya tengas el event_id (de find_appointment) y el new_slot (de get_available_slots).
+  Argumentos: event_id, new_start_date (start_co del slot), iana_timezone = "America/Bogota", language = "ES".
+Captura success antes de confirmar.</div>
+
+    <div class="field-label">argumentos</div>
+    <div class="tbl-scroll"><table>
+      <tr><th>arg</th><th>oblig.</th><th>enum</th><th>descripción</th><th>ejemplo</th></tr>
+      <tr><td class="arg">event_id</td><td><span class="pill req">true</span></td><td><span class="dash">—</span></td><td>ID exacto de la cita a modificar, devuelto por find_appointment.</td><td><span class="ex">evt_8f21c9</span></td></tr>
+      <tr><td class="arg">new_start_date</td><td><span class="pill opt">false</span></td><td><span class="dash">—</span></td><td>Nuevo inicio en ISO 8601. Copia literal de <code>start_co</code> del slot elegido.</td><td><span class="ex">2026-06-04T09:00:00-05:00</span></td></tr>
+      <tr><td class="arg">iana_timezone</td><td><span class="pill opt">false</span></td><td><span class="dash">—</span></td><td>Zona horaria de la candidata. <code>America/Bogota</code>.</td><td><span class="ex">America/Bogota</span></td></tr>
+      <tr><td class="arg">language</td><td><span class="pill const">const</span></td><td><span class="dash">—</span></td><td>Idioma de confirmación. Valor fijo: <code>ES</code>.</td><td><span class="ex">ES</span></td></tr>
+    </table></div>
+  </div>
+</section>
+
 <!-- ============ CALLBACK ============ -->
 <section id="callback">
-  <h2><span class="n">10</span>callback</h2>
+  <h2><span class="n">11</span>callback</h2>
 
   <div class="tool">
     <div class="tool-head">
@@ -959,7 +993,7 @@ callback({
 
 <!-- ============ MATRIZ ============ -->
 <section id="matriz">
-  <h2><span class="n">11</span>Matriz de obligatoriedad y enumeración</h2>
+  <h2><span class="n">12</span>Matriz de obligatoriedad y enumeración</h2>
   <p class="section-note">Regla general: <code class="inl">required: true</code> solo cuando el flujo garantiza estructuralmente el valor antes del nodo. Todo lo que puede llegar vacío en el momento de la llamada → <code class="inl">required: false</code> con <code class="inl">""</code> documentado y añadido al enum. Nombres de argumento en snake_case en las tres capas.</p>
 
   <div class="tbl-scroll"><table class="matrix">
@@ -989,6 +1023,10 @@ callback({
     <tr><td class="arg">find_appointment</td><td class="arg">language</td><td>const del agente</td><td><span class="pill opt">false</span></td><td>—</td><td>defecto <code>ES</code></td></tr>
     <tr><td class="arg">cancel_appointment</td><td class="arg">event_id</td><td>de <code>find_appointment</code></td><td><span class="pill req">true</span></td><td>—</td><td>nueva ficha (§09)</td></tr>
     <tr><td class="arg">cancel_appointment</td><td class="arg">iana_timezone</td><td>const del agente</td><td><span class="pill opt">false</span></td><td>—</td><td>defecto <code>America/Bogota</code></td></tr>
+    <tr><td class="arg">edit_appointment</td><td class="arg">event_id</td><td>de <code>find_appointment</code></td><td><span class="pill req">true</span></td><td>—</td><td>ID exacto de la API</td></tr>
+    <tr><td class="arg">edit_appointment</td><td class="arg">new_start_date</td><td><code>[new_slot]</code> → <code>start_co</code></td><td><span class="pill opt">false</span></td><td>—</td><td>copia literal</td></tr>
+    <tr><td class="arg">edit_appointment</td><td class="arg">iana_timezone</td><td>const del agente</td><td><span class="pill opt">false</span></td><td>—</td><td>defecto <code>America/Bogota</code></td></tr>
+    <tr><td class="arg">edit_appointment</td><td class="arg">language</td><td>const del agente</td><td><span class="pill const">const</span></td><td>—</td><td>fijo <code>ES</code></td></tr>
     <tr><td class="arg">callback</td><td class="arg">contact_name</td><td><code>{{contact.name}}</code></td><td><span class="pill req">true</span></td><td>—</td><td>false → true</td></tr>
     <tr><td class="arg">callback</td><td class="arg">contact_phone</td><td><code>[num]</code></td><td><span class="pill opt">false</span></td><td>—</td><td>sin cambio</td></tr>
     <tr><td class="arg">callback</td><td class="arg">contact_email</td><td><code>{{contact.email}}</code></td><td><span class="pill opt">false</span></td><td>—</td><td>sin cambio</td></tr>
@@ -1001,7 +1039,7 @@ callback({
 </section>
 
 <div class="foot">
-  <p>Fuente: <code>agents/defs/babynova_surrogate_questions_voice/</code> (<code>tools.yaml</code>, <code>tool_contracts.yaml</code>; subflows <code>surrogate_questions.yaml</code>, <code>scheduling.yaml</code>) y contratos/subflows compartidos <code>time_now</code> y <code>callback</code>. Los IDs de nodo asumen el namespace del manifest (<code>q</code> → <code>Q__SQ_*</code>, <code>s</code> → <code>S__SC_*</code>, <code>c</code> → <code>C__CB_*</code>). Nombres de slot tomados de <code>local_memory_slots</code> de cada subflujo. <code>find_appointment</code> y <code>cancel_appointment</code> no viven en ningún nodo: las dispara la intención de la candidata (consultar / cancelar una cita).</p>
+  <p>Fuente: <code>agents/defs/babynova_surrogate_questions_voice/</code> (<code>tools.yaml</code>, <code>tool_contracts.yaml</code>; subflows <code>surrogate_questions.yaml</code>, <code>scheduling.yaml</code>, <code>appointment_management.yaml</code>) y contratos/subflows compartidos <code>time_now</code> y <code>callback</code>. Los IDs de nodo asumen el namespace del manifest (<code>q</code> → <code>Q__SQ_*</code>, <code>s</code> → <code>S__SC_*</code>, <code>am</code> → <code>AM_*</code>, <code>c</code> → <code>C__CB_*</code>). Nombres de slot tomados de <code>local_memory_slots</code> de cada subflujo.</p>
   <p>Los contadores de caracteres se calculan sobre el texto tal como se pegaría en la plataforma; el límite es 500.</p>
 </div>
 

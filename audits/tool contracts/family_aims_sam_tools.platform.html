@@ -245,7 +245,7 @@ code.inl{font-family:"IBM Plex Mono",monospace;font-size:.9em;background:var(--c
   <p class="lede">Para cada herramienta de los agentes <em>Sam</em> —voz&nbsp;ES, voz&nbsp;EN, voz&nbsp;PT&nbsp;(pt-BR) y texto trilingüe—: la <b>description</b> autorizada, el <b>trigger_prompt</b> en patrón <b>hard</b> y <b>soft</b> en <b>español, inglés y portugués</b>, y los argumentos con obligatoriedad, enumeraciones, ejemplos y un ejemplo de llamada. El texto del <code class="inl">trigger_prompt</code> se mide contra el límite de 500&nbsp;caracteres de la plataforma; el patrón <b>soft</b> es el que va en el campo <code class="inl">description</code> del JSON.</p>
   <div class="meta">
     <span>family_aims_sam_es · _en · _pt · _text</span>
-    <span>7 herramientas (voz) / 5 (texto)</span>
+    <span>8 herramientas (voz) / 6 (texto)</span>
     <span>parámetros en snake_case</span>
     <span>backend = mismo patrón que babynova</span>
     <span>2026-09-03</span>
@@ -260,6 +260,7 @@ code.inl{font-family:"IBM Plex Mono",monospace;font-size:.9em;background:var(--c
   <a href="#book_appointment">book_appointment</a>
   <a href="#find_appointment">find_appointment</a>
   <a href="#cancel_appointment">cancel_appointment</a>
+  <a href="#edit_appointment">edit_appointment</a>
   <a href="#time_now">time_now</a>
   <a href="#callback">callback</a>
   <a href="#matriz">Matriz</a>
@@ -413,7 +414,7 @@ Captura &lt;output&gt; [en &lt;slot&gt;] antes de &lt;continuar | ofrecer X | co
     <tr><td class="arg">canal</td><td>voz (es-CO)</td><td>voz (en-US)</td><td>voz (pt-BR)</td><td>texto asíncrono (ES/EN/PT)</td></tr>
     <tr><td class="arg">idioma trigger</td><td>español</td><td>inglés</td><td>portugués</td><td>inglés</td></tr>
     <tr><td class="arg">book… <code>language</code></td><td><span class="pill const">const ES</span></td><td><span class="pill const">const EN</span></td><td><span class="pill const">const PT</span></td><td><span class="pill opt">enum</span> EN/ES/PT según <code>[preferred_language]</code></td></tr>
-    <tr><td class="arg">herramientas</td><td>7</td><td>7</td><td>7</td><td>5</td></tr>
+    <tr><td class="arg">herramientas</td><td>8</td><td>8</td><td>8</td><td>6</td></tr>
     <tr><td class="arg">callback / contact_attempt</td><td>sí</td><td>sí</td><td>sí</td><td>no</td></tr>
     <tr><td class="arg">salida en fallo de agenda</td><td>callback</td><td>callback</td><td>callback</td><td>objections</td></tr>
     <tr><td class="arg">JSON</td><td><code>family_aims_sam_es_tools.platform.json</code></td><td><code>…_en_…</code></td><td><code>…_pt_…</code></td><td><code>…_text_…</code></td></tr>
@@ -660,9 +661,52 @@ book_appointment({
   </div>
 </section>
 
+<!-- ============ EDIT_APPOINTMENT ============ -->
+<section id="edit_appointment">
+  <h2><span class="n">07</span>edit_appointment</h2>
+  <div class="tool">
+    <div class="tool-head"><h3>edit_appointment</h3><span class="node write">AM_DO_RESCHED</span></div>
+    <p class="role">Herramienta autorizada para modificar o reprogramar una cita existente en los calendarios de Family Aims. El campo success == true es la única confirmación válida.</p>
+
+    <div class="field-label grp">description</div>
+    <div class="field-label">description <span class="lang">ES</span> <span class="counter" data-count>·</span></div>
+    <div class="paste" data-measure>Herramienta autorizada para modificar o reprogramar una cita existente en los calendarios de Family Aims. Su campo success == true es la única confirmación válida. PROHIBIDO afirmar que el cambio se realizó antes de capturar ese resultado. La herramienta verifica disponibilidad automáticamente.</div>
+    <div class="field-label">description <span class="lang">EN</span> <span class="counter" data-count>·</span></div>
+    <div class="paste" data-measure>Authorized tool for modifying or rescheduling an existing appointment in Family Aims calendars. Its success == true field is the only valid confirmation. FORBIDDEN to claim the change was made before capturing that result. The tool automatically verifies availability.</div>
+    <div class="field-label">description <span class="lang">PT</span> <span class="counter" data-count>·</span></div>
+    <div class="paste" data-measure>Ferramenta autorizada para modificar ou reprogramar uma consulta existente nos calendários da Family Aims. Seu campo success == true é a única confirmação válida. PROIBIDO afirmar que a alteração foi feita antes de capturar esse resultado. A ferramenta verifica a disponibilidade automaticamente.</div>
+
+    <div class="field-label grp">trigger_prompt · HARD</div>
+    <div class="field-label">trigger_prompt <span class="lang">ES</span> <span class="kind hard">hard</span> <span class="counter" data-count>·</span></div>
+    <div class="paste hard" data-measure>EJECUTA edit_appointment AHORA en el nodo AM_DO_RESCHED cuando el contacto confirme el nuevo horario, como primera acción del turno, SIN EXCEPCIÓN. NO digas que la cita quedó reprogramada antes de capturar success == true. ARGUMENTOS: event_id; calendar_type; new_start_date = start_co LITERAL del [new_slot] elegido; iana_timezone; language.</div>
+    <div class="field-label">trigger_prompt <span class="lang">EN</span> <span class="kind hard">hard</span> <span class="counter" data-count>·</span></div>
+    <div class="paste hard" data-measure>EXECUTE edit_appointment NOW in node AM_DO_RESCHED when the contact confirms the new time, as the first action of the turn, WITHOUT EXCEPTION. Do NOT say the appointment was rescheduled before capturing success == true. ARGUMENTS: event_id; calendar_type; new_start_date = LITERAL start_co of the chosen [new_slot]; iana_timezone; language.</div>
+    <div class="field-label">trigger_prompt <span class="lang">PT</span> <span class="kind hard">hard</span> <span class="counter" data-count>·</span></div>
+    <div class="paste hard" data-measure>EXECUTE edit_appointment AGORA no nó AM_DO_RESCHED quando o contato confirmar o novo horário, como primeira ação do turno, SEM EXCEÇÃO. NÃO diga que a consulta foi reprogramada antes de capturar success == true. ARGUMENTOS: event_id; calendar_type; new_start_date = start_co LITERAL do [new_slot] escolhido; iana_timezone; language.</div>
+
+    <div class="field-label grp">trigger_prompt · SOFT <span style="text-transform:none;letter-spacing:0;font-size:11px">— va en el campo <code class="inl">description</code> del JSON</span></div>
+    <div class="field-label">trigger_prompt <span class="lang">ES</span> <span class="kind soft">soft</span> <span class="counter" data-count>·</span></div>
+    <div class="paste soft" data-measure>Llama a edit_appointment solo cuando el flujo esté en el nodo AM_DO_RESCHED y ya tengas el event_id (de find_appointment) y el new_slot (de get_available_slots). Argumentos: event_id, calendar_type, new_start_date (start_co del slot), iana_timezone, language. Captura success antes de confirmar.</div>
+    <div class="field-label">trigger_prompt <span class="lang">EN</span> <span class="kind soft">soft</span> <span class="counter" data-count>·</span></div>
+    <div class="paste soft" data-measure>Call edit_appointment only when the flow is in node AM_DO_RESCHED and you already have the event_id (from find_appointment) and the new_slot (from get_available_slots). Arguments: event_id, calendar_type, new_start_date (start_co of the slot), iana_timezone, language. Capture success before confirming.</div>
+    <div class="field-label">trigger_prompt <span class="lang">PT</span> <span class="kind soft">soft</span> <span class="counter" data-count>·</span></div>
+    <div class="paste soft" data-measure>Chame edit_appointment só quando o fluxo estiver no nó AM_DO_RESCHED e você já tiver o event_id (de find_appointment) e o new_slot (de get_available_slots). Argumentos: event_id, calendar_type, new_start_date (start_co do slot), iana_timezone, language. Capture success antes de confirmar.</div>
+
+    <div class="field-label">argumentos</div>
+    <div class="tbl-scroll"><table>
+      <tr><th>arg</th><th>oblig.</th><th>enum</th><th>descripción</th><th>ejemplo</th></tr>
+      <tr><td class="arg">event_id</td><td><span class="pill req">true</span></td><td><span class="dash">—</span></td><td>ID exacto de la cita a modificar, devuelto por find_appointment.</td><td><span class="ex">evt_8f21c9</span></td></tr>
+      <tr><td class="arg">calendar_type</td><td><span class="pill req">true</span></td><td><span class="enum">IVF · SUR</span></td><td>Tipo de calendario de la cita.</td><td><span class="ex">IVF</span></td></tr>
+      <tr><td class="arg">new_start_date</td><td><span class="pill opt">false</span></td><td><span class="dash">—</span></td><td>Nuevo inicio en ISO 8601. Copia literal de <code>start_co</code> del slot elegido.</td><td><span class="ex">2026-06-04T09:00:00-05:00</span></td></tr>
+      <tr><td class="arg">iana_timezone</td><td><span class="pill opt">false</span></td><td><span class="dash">—</span></td><td>Zona horaria del contacto.</td><td><span class="ex">America/Bogota</span></td></tr>
+      <tr><td class="arg">language</td><td><span class="pill opt">false</span></td><td><span class="enum">EN · ES · PT</span></td><td>Idioma de confirmación.</td><td><span class="ex">ES</span></td></tr>
+    </table></div>
+  </div>
+</section>
+
 <!-- ============ TIME_NOW ============ -->
 <section id="time_now">
-  <h2><span class="n">07</span>time_now</h2>
+  <h2><span class="n">08</span>time_now</h2>
   <div class="tool">
     <div class="tool-head"><h3>time_now</h3><span class="node">SC__SC_TIME</span></div>
     <p class="role">Ancla la fecha y hora actuales antes del resumen. El campo <code class="inl">now</code>, capturado en <code class="inl">[now]</code>, es la única referencia temporal válida del flujo.</p>
@@ -710,7 +754,7 @@ time_now({ "iana_timezone": "America/Bogota" })
 
 <!-- ============ CALLBACK ============ -->
 <section id="callback">
-  <h2><span class="n">08</span>callback</h2>
+  <h2><span class="n">09</span>callback</h2>
   <div class="tool">
     <div class="tool-head"><h3>callback</h3><span class="node write">C__CB_RUN</span></div>
     <p class="role">Escala la conversación a una llamada humana. Solo valida y normaliza; la notificación real la ejecuta un paso posterior. Lista para escalar solo si <code class="inl">errors == null</code>.</p>
@@ -774,7 +818,7 @@ callback({
 
 <!-- ============ MATRIZ ============ -->
 <section id="matriz">
-  <h2><span class="n">09</span>Matriz de obligatoriedad y enumeración</h2>
+  <h2><span class="n">10</span>Matriz de obligatoriedad y enumeración</h2>
   <p class="section-note">Regla general: <code class="inl">required: true</code> solo cuando el grafo garantiza estructuralmente el valor antes del nodo. <code class="inl">const</code> nunca va en <code class="inl">required</code>. Todo lo que puede llegar vacío en el momento de la llamada → <code class="inl">required: false</code>. Nombres de argumento en <code class="inl">snake_case</code> en las tres capas.</p>
   <div class="tbl-scroll"><table class="matrix">
     <tr><th>herramienta</th><th>argumento</th><th>slot / origen</th><th>obligatorio</th><th>enum</th><th>nota</th></tr>
@@ -795,6 +839,11 @@ callback({
     <tr><td class="arg">cancel_appointment</td><td class="arg">event_id</td><td>de <code>find_appointment</code></td><td><span class="pill req">true</span></td><td>—</td><td>ID exacto de la API</td></tr>
     <tr><td class="arg">cancel_appointment</td><td class="arg">calendar_type</td><td>la cita encontrada</td><td><span class="pill req">true</span></td><td><code>IVF · SUR</code></td><td>—</td></tr>
     <tr><td class="arg">cancel_appointment</td><td class="arg">iana_timezone</td><td><code>[user_timezone]</code></td><td><span class="pill opt">false</span></td><td>—</td><td>defecto <code>America/Bogota</code></td></tr>
+    <tr><td class="arg">edit_appointment</td><td class="arg">event_id</td><td>de <code>find_appointment</code></td><td><span class="pill req">true</span></td><td>—</td><td>ID exacto de la API</td></tr>
+    <tr><td class="arg">edit_appointment</td><td class="arg">calendar_type</td><td>la cita encontrada</td><td><span class="pill req">true</span></td><td><code>IVF · SUR</code></td><td>—</td></tr>
+    <tr><td class="arg">edit_appointment</td><td class="arg">new_start_date</td><td><code>[new_slot]</code> → <code>start_co</code></td><td><span class="pill opt">false</span></td><td>—</td><td>copia literal</td></tr>
+    <tr><td class="arg">edit_appointment</td><td class="arg">iana_timezone</td><td><code>[user_timezone]</code></td><td><span class="pill opt">false</span></td><td>—</td><td>defecto <code>America/Bogota</code></td></tr>
+    <tr><td class="arg">edit_appointment</td><td class="arg">language</td><td><code>[preferred_language]</code></td><td><span class="pill opt">false</span></td><td><code>EN · ES · PT</code></td><td>—</td></tr>
     <tr><td class="arg">time_now</td><td class="arg">iana_timezone</td><td><code>[user_timezone]</code></td><td><span class="pill req">true</span></td><td>—</td><td>multi-zona: NO es const (a diferencia de babynova)</td></tr>
     <tr><td class="arg">callback</td><td class="arg">contact_name</td><td><code>{{contact.name}}</code></td><td><span class="pill req">true</span></td><td>—</td><td>—</td></tr>
     <tr><td class="arg">callback</td><td class="arg">contact_phone / contact_email</td><td><code>[num]</code> / <code>{{contact.email}}</code></td><td><span class="pill opt">false</span></td><td>—</td><td><b>al menos uno</b> de los dos</td></tr>

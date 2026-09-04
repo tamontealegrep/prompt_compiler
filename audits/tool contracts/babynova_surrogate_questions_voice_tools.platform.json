@@ -2,7 +2,7 @@
   "agent_id": "6a92e7006c7be62ebd3da105",
   "agent_name": "babynova_surrogate_questions_voice",
   "location_id": "jl0WzvELeQ85ifJhAFPN",
-  "total_tools": 9,
+  "total_tools": 10,
   "tools": [
     {
       "tool_name": "time_now",
@@ -329,7 +329,7 @@
     {
       "tool_name": "get_available_slots",
       "action_type": "CAP",
-      "description": "Llama a get_available_slots cuando el flujo esté en el nodo S__SC_AVAIL, o ante cualquier intención de agendar, reagendar, ver más opciones o reintentar una cita.\nArgumento: iana_timezone = \"America/Bogota\" (valor fijo, agente solo Colombia).\nCaptura el resultado en [available_slots] antes de ofrecer fechas u horas.",
+      "description": "Llama a get_available_slots cuando el flujo esté en el nodo S__SC_AVAIL o AM_RESCHED_AV, o ante cualquier intención de agendar, reagendar, ver más opciones o reintentar una cita.\nArgumento: iana_timezone = \"America/Bogota\" (valor fijo, agente solo Colombia).\nCaptura el resultado en [available_slots] antes de ofrecer fechas u horas.",
       "trigger_message": "DEBUG get_available_slots: consultando disponibilidad",
       "http_config": {
         "url": "{{PENDING_WEBHOOK_URL}}",
@@ -423,7 +423,7 @@
     {
       "tool_name": "find_appointment",
       "action_type": "CAP",
-      "description": "Llama a find_appointment cuando la candidata quiera consultar, verificar o conocer los detalles de una cita que cree haber agendado.\nArgumentos: contact_name = nombre completo (como en el CRM o la cita), iana_timezone = \"America/Bogota\", language = \"ES\".\nCaptura [appointments] antes de responder sobre la cita.",
+      "description": "Llama a find_appointment cuando el flujo esté en el nodo AM_FIND o cuando la candidata quiera consultar, verificar o conocer los detalles de una cita que cree haber agendado.\nArgumentos: contact_name = nombre completo (como en el CRM o la cita), iana_timezone = \"America/Bogota\", language = \"ES\".\nCaptura [appointments] antes de responder sobre la cita.",
       "trigger_message": "DEBUG find_appointment: buscando citas existentes",
       "http_config": {
         "url": "{{PENDING_WEBHOOK_URL}}",
@@ -461,7 +461,7 @@
     {
       "tool_name": "cancel_appointment",
       "action_type": "CAP",
-      "description": "Llama a cancel_appointment solo cuando la candidata pida explícitamente cancelar su cita y ya tengas el event_id confirmado (de find_appointment).\nArgumentos: event_id = el ID exacto devuelto por la API, iana_timezone = \"America/Bogota\".\nCaptura success antes de confirmar la cancelación.",
+      "description": "Llama a cancel_appointment solo cuando el flujo esté en el nodo AM_DO_CANCEL o cuando la candidata pida explícitamente cancelar su cita y ya tengas el event_id confirmado (de find_appointment).\nArgumentos: event_id = el ID exacto devuelto por la API, iana_timezone = \"America/Bogota\".\nCaptura success antes de confirmar la cancelación.",
       "trigger_message": "DEBUG cancel_appointment: cancelando la cita",
       "http_config": {
         "url": "{{PENDING_WEBHOOK_URL}}",
@@ -486,6 +486,52 @@
           "description": "Zona horaria IANA de la candidata. Defecto: America/Bogota.",
           "required": false,
           "example": "America/Bogota"
+        }
+      ]
+    },
+    {
+      "tool_name": "edit_appointment",
+      "action_type": "CAP",
+      "description": "Llama a edit_appointment solo cuando el flujo esté en el nodo AM_DO_RESCHED y ya tengas el event_id (de find_appointment) y el new_slot (de get_available_slots).\nArgumentos: event_id, new_start_date (start_co del slot), iana_timezone, language.\nCaptura success antes de confirmar.",
+      "trigger_message": "DEBUG edit_appointment: reprogramando cita",
+      "http_config": {
+        "url": "{{PENDING_WEBHOOK_URL}}",
+        "method": "POST",
+        "headers": {
+          "Content-Type": "application/json"
+        },
+        "timeout_seconds": 10,
+        "retry_on_failure": false
+      },
+      "arguments": [
+        {
+          "name": "event_id",
+          "type": "string",
+          "description": "Identificador único del evento de Google Calendar a modificar, exactamente como lo devolvió find_appointment / la API.",
+          "required": true,
+          "example": "evt_123456"
+        },
+        {
+          "name": "new_start_date",
+          "type": "string",
+          "description": "Nueva fecha y hora de inicio en ISO 8601 con offset. Copia literal del campo start_co del objeto de [available_slots] elegido en [new_slot] — no conviertas, redondees ni reformatees.",
+          "required": false,
+          "example": "2026-06-04T09:00:00-05:00"
+        },
+        {
+          "name": "iana_timezone",
+          "type": "string",
+          "description": "Zona horaria IANA de la candidata. Defecto: America/Bogota.",
+          "required": false,
+          "example": "America/Bogota"
+        },
+        {
+          "name": "language",
+          "type": "string",
+          "description": "Código de idioma de dos letras para la confirmación. Para este agente: 'ES'.",
+          "required": false,
+          "example": "ES",
+          "const": "ES"
         }
       ]
     }
